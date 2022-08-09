@@ -1,0 +1,9 @@
+pydantic
+rich
+pycryptodome
+pandas
+numpy
+PyYAML
+requests
+joblib
+sox
