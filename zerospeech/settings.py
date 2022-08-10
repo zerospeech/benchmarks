@@ -5,13 +5,14 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseSettings, AnyHttpUrl, parse_obj_as, validator, DirectoryPath
+from pydantic import BaseSettings, AnyHttpUrl, parse_obj_as, validator, DirectoryPath, EmailStr
 
 
 class ZerospeechBenchmarkSettings(BaseSettings):
     APP_DIR: Path = Path.home() / "zr-data"
     TMP_DIR: DirectoryPath = Path('/tmp')
     repo_origin: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://download.zerospeech.com/repo.json")
+    admin_email: EmailStr = parse_obj_as(EmailStr, "nicolas.hamilakis@ens.psl.eu")
 
     @validator('repo_origin', pre=True)
     def cast_url(cls, v):

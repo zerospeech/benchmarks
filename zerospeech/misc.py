@@ -1,4 +1,5 @@
 import enum
+import re
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -15,11 +16,11 @@ class SizeUnit(enum.Enum):
     def get_unit(text):
         """ Check contents of text to find units of measurement"""
 
-        if ("KB", "Ko", "K") in text:
+        if any(x in text for x in ("KB", "Ko", "K")):
             return SizeUnit.KB
-        elif ("MB", "Mo", "M") in text:
+        elif any(x in text for x in ("MB", "Mo", "M")):
             return SizeUnit.MB
-        elif ("GB", "Go", "G") in text:
+        elif any(x in text for x in ("GB", "Go", "G")):
             return SizeUnit.GB
         else:
             return SizeUnit.BYTES
@@ -37,17 +38,27 @@ class SizeUnit(enum.Enum):
             return size_in_bytes
 
     @staticmethod
-    def convert_to_bytes(size_with_unit: str):
+    def convert_to_bytes(size_with_unit: str) -> float:
         unit = SizeUnit.get_unit(size_with_unit)
+        size = re.sub(r"[^0-9]", "", size_with_unit)
+        size = float(size)
 
         if unit == SizeUnit.KB:
-            return size_with_unit * 1024
+            return size * 1024
         elif unit == SizeUnit.MB:
-            return size_with_unit * (1024 * 1024)
+            return size * (1024 * 1024)
         elif unit == SizeUnit.GB:
-            return size_with_unit * (1024 * 1024 * 1024)
+            return size * (1024 * 1024 * 1024)
         else:
-            return size_with_unit
+            return size
+
+    @staticmethod
+    def fmt(num, suffix="B"):
+        for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+            if abs(num) < 1024.0:
+                return f"{num:3.1f} {unit}{suffix}"
+            num /= 1024.0
+        return f"{num:.1f}Y{suffix}"
 
 
 def md5sum(file_path: Path, chunk_size: int = 8192):

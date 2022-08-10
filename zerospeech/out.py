@@ -4,7 +4,8 @@ from types import TracebackType
 from typing import IO, Type, AnyStr, Iterator, Iterable, Union, Optional
 
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn, \
+    FileSizeColumn, TotalFileSizeColumn
 from rich.table import Column
 
 
@@ -76,15 +77,26 @@ void_console = Console(file=DevNull())
 
 
 @contextlib.contextmanager
-def with_progress(show: bool = True) -> Progress:
+def with_progress(show: bool = True, file_transfer: bool = False) -> Progress:
     if show:
         con = console
     else:
         con = void_console
 
-    text_column = TextColumn("{task.description}", table_column=Column(ratio=1))
-    bar_column = BarColumn(bar_width=None, table_column=Column(ratio=2))
-    progress = Progress( text_column, bar_column, console=con, expand=True)
+    bar_items = [
+        TextColumn("{task.description}", table_column=Column(ratio=1)),
+        BarColumn(bar_width=None, table_column=Column(ratio=2))
+    ]
+    if file_transfer:
+        bar_items.append(FileSizeColumn())
+        bar_items.append(TotalFileSizeColumn())
+
+    else:
+        bar_items.append(TaskProgressColumn())
+
+    bar_items.append(TimeElapsedColumn())
+
+    progress = Progress(*bar_items, console=con, expand=True, transient=True)
 
     with progress:
         yield progress

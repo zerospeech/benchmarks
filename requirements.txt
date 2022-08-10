@@ -1,4 +1,4 @@
-pydantic
+"pydantic[email]"
 rich
 pycryptodome
 pandas
@@ -7,3 +7,4 @@ PyYAML
 requests
 joblib
 sox
+treelib
