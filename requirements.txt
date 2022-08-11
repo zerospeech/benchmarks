@@ -1,4 +1,4 @@
-"pydantic[email]"
+pydantic[email]
 rich
 pycryptodome
 pandas

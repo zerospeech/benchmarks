@@ -1,14 +1,13 @@
-import abc
 import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Generic, TypeVar, Type
 
 import requests
-from numpy.random._common import benchmark
 from pydantic import BaseModel, DirectoryPath, AnyHttpUrl, validator, parse_obj_as, Field
 
+from .data_items import Item, ItemType, FileListItem, FileItem
 from .misc import md5sum, unzip, SizeUnit
 from .out import with_progress, console
 from .settings import get_settings
@@ -17,7 +16,9 @@ st = get_settings()
 
 
 class RepositoryItem(BaseModel):
+    """ An item represents a dataset inside the repository that can be pulled locally """
     name: str
+    # todo see if different forms of download can be used : single zip, multi-part zip, other?
     zip_url: AnyHttpUrl
     md5sum: str
     total_size: float
@@ -39,12 +40,14 @@ class RepositoryItem(BaseModel):
 
     @validator('total_size', pre=True)
     def correct_size_format(cls, v):
+        """ Converts total_size from a SIZE + UNIT string to a float representing Bytes"""
         if isinstance(v, str):
             return SizeUnit.convert_to_bytes(v)
         return v
 
 
 class RepositoryIndex(BaseModel):
+    """ Item Indexing all datasets available online various repositories."""
     last_modified: datetime
     datasets: List[RepositoryItem]
 
@@ -56,38 +59,79 @@ class RepositoryIndex(BaseModel):
         return cls(**data)
 
 
-class Namespace:
+T = TypeVar("T")
+
+
+class Namespace(Generic[T]):
     """Simple object for storing attributes.
 
     Implements equality by attribute names and values, and provides a simple
     string representation.
     """
 
-    def __init__(self, **kwargs):
-        for name in kwargs:
-            setattr(self, name, kwargs[name])
+    def __init__(self, data: Dict[str, T]):
+        # self._store: Dict[str, T] = {}
+        for name in data:
+            setattr(self, name, data[name])
 
 
-class Subset(BaseModel, abc.ABC):
+class Subset(BaseModel):
     """ A subset of a dataset containing various items."""
     items_dict: Dict[str, Item]
 
+    @validator("items_dict", pre=True)
+    def items_parse(cls, values):
+        """ Allow items to be cast to the correct subclass """
+        casted_items = dict()
+        for k, v, in values.items():
+            item_type = ItemType(v.get('item_type', "base_item"))
+            if item_type == ItemType.filelist_item:
+                casted_items[k] = FileListItem.parse_obj(v)
+            elif item_type == ItemType.file_item:
+                casted_items[k] = FileItem.parse_obj(v)
+            else:
+                v["item_type"] = item_type
+                casted_items[k] = Item(**v)
+
+        return casted_items
+
     @property
-    def items(self) -> Namespace:
-        return Namespace(**self.items_dict)
+    def items(self) -> Namespace[Item]:
+        return Namespace[Item](self.items_dict)
+
+    def make_relative(self, relative_to: Path):
+        """ Convert all the items to relative paths """
+        for _, item in self.items_dict.items():
+            item.relative_to(relative_to)
+
+    def make_absolute(self, root_dir: Path):
+        """ Convert all items to absolute paths """
+        for _, item in self.items_dict.items():
+            item.absolute_to(root_dir)
 
 
-class DatasetIndex(BaseModel, abc.ABC):
+class DatasetIndex(BaseModel):
     """ A metadata object indexing all items in a dataset."""
     root_dir: Path
     subsets_dict: Dict[str, Subset] = Field(default_factory=dict)
 
     @property
-    def subsets(self) -> Namespace:
-        return Namespace(**self.subsets_dict)
+    def subsets(self) -> Namespace[Subset]:
+        return Namespace[Subset](self.subsets_dict)
+
+    def make_relative(self):
+        """ Convert all the subsets to relative paths """
+        for _, item in self.subsets_dict.items():
+            item.make_relative(self.root_dir)
+
+    def make_absolute(self):
+        """ Convert all the subsets to absolute paths """
+        for _, item in self.subsets_dict.items():
+            item.make_absolute(self.root_dir)
 
 
 class Dataset(BaseModel):
+    """ Generic definition of a dataset """
     location: Path
     origin: RepositoryItem
     index: Optional[DatasetIndex] = None
@@ -113,7 +157,6 @@ class Dataset(BaseModel):
         with self.index_path.open() as fp:
             self.index = DatasetIndex(root_dir=self.location, **json.load(fp))
 
-    # todo: set verify to default to True (when index is correctly setup
     def pull(self, *, verify: bool = True, show_progress: bool = False):
         """ Pull a dataset from remote to the local repository."""
         tmp_dir = st.mkdtemp()
@@ -178,9 +221,9 @@ class DatasetsDir(BaseModel):
                 return d
         return None
 
-    def get(self, name) -> Optional[Dataset]:
+    def get(self, name, cls: Type[Dataset] = Dataset) -> Optional[Dataset]:
         loc = self.root_dir / name
         repo = self.find_repository(name)
         if repo is None:
             return None
-        return Dataset(location=loc, origin=repo)
+        return cls(location=loc, origin=repo)
