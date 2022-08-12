@@ -3,20 +3,20 @@ import argparse
 from rich.table import Table
 
 from .cli_lib import CMD
-from ..datasets import DatasetsDir
+from ..checkpoints import CheckpointDir
 from ..out import console, error_console
 
 
-class DatasetCMD(CMD):
-    """ Manipulate Datasets """
-    COMMAND = "datasets"
+class CheckpointsCMD(CMD):
+    """Manipulate Checkpoints """
+    COMMAND = "checkpoints"
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("--local", action="store_true", help="List local datasets only")
+        parser.add_argument("--local", action="store_true", help="List local checkpoint only")
 
     def run(self, argv: argparse.Namespace):
-        datasets_dir = DatasetsDir.load()
+        checkpoints_dir = CheckpointDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
@@ -25,12 +25,12 @@ class DatasetCMD(CMD):
         table.add_column("Installed")
 
         if argv.local:
-            dt_list = datasets_dir.items
+            dt_list = checkpoints_dir.items
         else:
-            dt_list = datasets_dir.available_items
+            dt_list = checkpoints_dir.available_items
 
         for d in dt_list:
-            dts = datasets_dir.get(d)
+            dts = checkpoints_dir.get(d)
             table.add_row(
                 dts.name, dts.origin.origin_host, dts.origin.size_label, f"{dts.installed}"
             )
@@ -38,34 +38,34 @@ class DatasetCMD(CMD):
         console.print(table)
 
 
-class PullDatasetCMD(CMD):
-    """ Download a dataset """
+class PullCheckpointCMD(CMD):
+    """ Download a checkpoint item """
     COMMAND = "pull"
-    NAMESPACE = "datasets"
+    NAMESPACE = "checkpoints"
 
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument('name')
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        datasets = DatasetsDir.load()
+        datasets = CheckpointDir.load()
         dataset = datasets.get(argv.name)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
 
-class RemoveDatasetCMD(CMD):
-    """ Remove a dataset item """
+class RemoveCheckpointCMD(CMD):
+    """ Remove a checkpoint item """
     COMMAND = "rm"
-    NAMESPACE = "datasets"
+    NAMESPACE = "checkpoints"
 
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument('name')
 
     def run(self, argv: argparse.Namespace):
-        dataset_dir = DatasetsDir.load()
-        dts = dataset_dir.get(argv.name)
-        if dts:
-            dts.uninstall()
-            console.log("[green] Dataset uninstalled successfully !")
+        checkpoints_dir = CheckpointDir.load()
+        cpt = checkpoints_dir.get(argv.name)
+        if cpt:
+            cpt.uninstall()
+            console.log("[green] Checkpoint uninstalled successfully !")
         else:
-            error_console.log(f"Failed to find dataset named :{argv.name}")
+            error_console.log(f"Failed to find checkpoint named :{argv.name}")

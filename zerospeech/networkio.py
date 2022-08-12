@@ -3,7 +3,7 @@ import sys
 
 from .settings import get_settings
 from .out import console, error_console
-from .datasets import RepositoryIndex
+from .repository import RepositoryIndex
 
 import requests
 from pydantic import ValidationError

@@ -26,6 +26,14 @@ class ZerospeechBenchmarkSettings(BaseSettings):
         return self.APP_DIR / "datasets"
 
     @property
+    def samples_path(self) -> Path:
+        return self.APP_DIR / "samples"
+
+    @property
+    def checkpoint_path(self) -> Path:
+        return self.APP_DIR / "checkpoints"
+
+    @property
     def repository_index(self) -> Path:
         return self.APP_DIR / 'repo.json'
 

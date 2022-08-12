@@ -1,63 +1,16 @@
 import json
-import sys
-from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Generic, TypeVar, Type
+from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type
 
-import requests
-from pydantic import BaseModel, DirectoryPath, AnyHttpUrl, validator, parse_obj_as, Field
+from pydantic import BaseModel, validator, Field
 
 from .data_items import Item, ItemType, FileListItem, FileItem
-from .misc import md5sum, unzip, SizeUnit
-from .out import with_progress, console
+from .misc import download_extract_zip
+from .out import console
+from .repository import DownloadableItemDir, DownloadableItem
 from .settings import get_settings
 
 st = get_settings()
-
-
-class RepositoryItem(BaseModel):
-    """ An item represents a dataset inside the repository that can be pulled locally """
-    name: str
-    # todo see if different forms of download can be used : single zip, multi-part zip, other?
-    zip_url: AnyHttpUrl
-    md5sum: str
-    total_size: float
-
-    @property
-    def origin_host(self) -> str:
-        return self.zip_url.host
-
-    @property
-    def size_label(self) -> str:
-        return SizeUnit.fmt(self.total_size)
-
-    @validator('zip_url', pre=True)
-    def cast_url(cls, v):
-        """ Cast strings to AnyHttpUrl """
-        if isinstance(v, str):
-            return parse_obj_as(AnyHttpUrl, v)
-        return v
-
-    @validator('total_size', pre=True)
-    def correct_size_format(cls, v):
-        """ Converts total_size from a SIZE + UNIT string to a float representing Bytes"""
-        if isinstance(v, str):
-            return SizeUnit.convert_to_bytes(v)
-        return v
-
-
-class RepositoryIndex(BaseModel):
-    """ Item Indexing all datasets available online various repositories."""
-    last_modified: datetime
-    datasets: List[RepositoryItem]
-
-    @classmethod
-    def load(cls):
-        """ Load index from disk """
-        with st.repository_index.open() as fp:
-            data = json.load(fp)
-        return cls(**data)
-
 
 T = TypeVar("T")
 
@@ -130,19 +83,10 @@ class DatasetIndex(BaseModel):
             item.make_absolute(self.root_dir)
 
 
-class Dataset(BaseModel):
+class Dataset(DownloadableItem):
     """ Generic definition of a dataset """
-    location: Path
-    origin: RepositoryItem
+    key_name: ClassVar[str] = "dataset"
     index: Optional[DatasetIndex] = None
-
-    @property
-    def installed(self) -> bool:
-        return self.location.is_dir()
-
-    @property
-    def name(self) -> str:
-        return self.origin.name
 
     @property
     def index_path(self):
@@ -157,73 +101,23 @@ class Dataset(BaseModel):
         with self.index_path.open() as fp:
             self.index = DatasetIndex(root_dir=self.location, **json.load(fp))
 
-    def pull(self, *, verify: bool = True, show_progress: bool = False):
+    def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         """ Pull a dataset from remote to the local repository."""
-        tmp_dir = st.mkdtemp()
-        response = requests.get(self.origin.zip_url, stream=True)
+        md5_hash = ""
+        if verify:
+            md5_hash = self.origin.md5sum
 
-        with with_progress(show=show_progress, file_transfer=True) as progress:
-            total = int(self.origin.total_size)
-            task1 = progress.add_task(f"[red]Downloading {self.location.name}...", total=total)
-
-            with (tmp_dir / f"{self.origin.name}.zip").open("wb") as stream:
-                for chunk in response.iter_content(chunk_size=1024):
-                    stream.write(chunk)
-                    progress.update(task1, advance=1024)
-
-            progress.update(task1, completed=total, visible=False)
-            console.print("[green]Download completed Successfully!")
-
-        with with_progress(show=show_progress) as progress:
-            task2 = progress.add_task(f"[red]Verifying md5sum from repository...", total=None, visible=False)
-            task3 = progress.add_task(f"[red]Unzipping archive...", total=None, visible=False)
-
-            if verify:
-                progress.update(task2, visible=True)
-                h = md5sum(tmp_dir / f"{self.origin.name}.zip")
-
-                if h == self.origin.md5sum:
-                    console.print("[green]MD5 sum verified!")
-                else:
-                    console.print("[green]MD5sum Failed, Check with repository administrator.\nExiting...")
-                    sys.exit(1)
-                progress.update(task2, visible=False)
-
-            progress.update(task3, visible=True)
-            unzip(tmp_dir / f"{self.origin.name}.zip", self.location)
-            progress.update(task3, visible=False)
+        # download & extract archive
+        download_extract_zip(self.origin.zip_url, self.location, int(self.origin.total_size),
+                             filename=self.name, md5sum_hash=md5_hash, quiet=quiet, show_progress=show_progress)
+        if not quiet:
             console.print(f"[green]Dataset {self.name} installed successfully !!")
 
 
-class DatasetsDir(BaseModel):
-    root_dir: DirectoryPath
+class DatasetsDir(DownloadableItemDir):
+    """ Dataset directory manager """
+    item_type: Type[DownloadableItem] = Dataset
 
     @classmethod
     def load(cls):
         return cls(root_dir=st.dataset_path)
-
-    @property
-    def datasets(self) -> List[str]:
-        """ Returns a list of installed datasets """
-        return [d.name for d in self.root_dir.iterdir() if d.is_dir()]
-
-    @property
-    def available_datasets(self) -> List[str]:
-        """ Return a list of available_datasets """
-        index = RepositoryIndex.load()
-        return [d.name for d in index.datasets]
-
-    @staticmethod
-    def find_repository(dataset_name: str) -> Optional[RepositoryItem]:
-        index = RepositoryIndex.load()
-        for d in index.datasets:
-            if d.name == dataset_name:
-                return d
-        return None
-
-    def get(self, name, cls: Type[Dataset] = Dataset) -> Optional[Dataset]:
-        loc = self.root_dir / name
-        repo = self.find_repository(name)
-        if repo is None:
-            return None
-        return cls(location=loc, origin=repo)

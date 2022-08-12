@@ -1,7 +1,9 @@
 from .cmd import (
     CommandTree, CLI,
-    DatasetCMD, PullDatasetCMD,
-    HelpCMD, AskHelpCMD, DocumentationCMD
+    DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
+    HelpCMD, AskHelpCMD, DocumentationCMD,
+    SamplesCMD, PullSampleCMD, RemoveSampleCMD,
+    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD
 )
 from .networkio import update_repo_index
 from .out import console
@@ -9,8 +11,10 @@ from .settings import get_settings
 
 # List of subcommands
 SUBCOMMANDS = [
-    DatasetCMD, PullDatasetCMD,
-    HelpCMD, AskHelpCMD, DocumentationCMD
+    DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
+    HelpCMD, AskHelpCMD, DocumentationCMD,
+    SamplesCMD, PullSampleCMD, RemoveSampleCMD,
+    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD
 ]
 
 st = get_settings()
@@ -26,6 +30,12 @@ def init():
 
     if not st.dataset_path.is_dir():
         st.dataset_path.mkdir(exist_ok=True, parents=True)
+
+    if not st.checkpoint_path.is_dir():
+        st.checkpoint_path.mkdir(exist_ok=True, parents=True)
+
+    if not st.samples_path.is_dir():
+        st.samples_path.mkdir(exist_ok=True, parents=True)
 
     if not st.repository_index.is_file():
         update_repo_index()
