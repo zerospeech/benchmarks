@@ -29,6 +29,8 @@ class DatasetCMD(CMD):
         else:
             dt_list = datasets_dir.available_items
 
+        print(datasets_dir.available_items)
+
         for d in dt_list:
             dts = datasets_dir.get(d)
             table.add_row(

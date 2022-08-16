@@ -1,9 +1,9 @@
 import abc
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Callable, Tuple, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 
 class FileTypes(str, Enum):
@@ -12,6 +12,13 @@ class FileTypes(str, Enum):
     csv = "csv"
     wav = "wav"
     item = "item"
+    tsv = "tsv"
+    json = "json"
+    yaml = "yaml"
+
+    @property
+    def ext(self) -> str:
+        return f".{self.value}"
 
 
 class ItemType(str, Enum):
@@ -47,6 +54,24 @@ class FileListItem(Item):
     item_type: ItemType = ItemType.filelist_item
     files_list: List[Path]
 
+    @classmethod
+    def from_dir(cls, path: Path, f_types: List[FileTypes]):
+        """ Build a FileListItem from a directory"""
+        file_type = ""
+        file_list = []
+
+        for ft in f_types:
+            file_type = ft
+            file_list = list(path.rglob(f"*{ft.ext}"))
+            if len(file_list) > 0:
+                break
+
+        return cls(
+            file_type=file_type,
+            files_list=file_list,
+            relative_path=False
+        )
+
     def relative_to(self, path: Path):
         """ Convert all paths to relative if they are absolute """
         if not self.relative_path:
@@ -67,9 +92,26 @@ class FileListItem(Item):
         extra = "ignore"
 
 
+FileValidator = Callable[["FileItem"], bool]
+
+
 class FileItem(Item):
     item_type: ItemType = ItemType.file_item
     file: Path
+
+    @classmethod
+    def from_file(cls, path: Path, relative: bool = False):
+        """ Build a FileItem from a path """
+        suffix = path.suffix.replace('.', '')
+        return cls(
+            file=path,
+            file_type=FileTypes(suffix),
+            relative_path=relative
+        )
+
+    def valid(self, validate: FileValidator) -> bool:
+        # todo rethink a bit this validation pattern
+        return self.file.resolve().is_file() and validate(self)
 
     def relative_to(self, path: Path):
         """ Convert all paths to relative if they are absolute """

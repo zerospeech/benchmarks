@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type
 
 from pydantic import BaseModel, validator, Field
+from pydantic.generics import GenericModel
 
 from .data_items import Item, ItemType, FileListItem, FileItem
 from .misc import download_extract_zip
@@ -15,24 +16,37 @@ st = get_settings()
 T = TypeVar("T")
 
 
-class Namespace(Generic[T]):
-    """Simple object for storing attributes.
+class DatasetNotInstalledError(Exception):
+    """ Exception used for a non locally installed dataset """
+    pass
 
-    Implements equality by attribute names and values, and provides a simple
-    string representation.
-    """
 
-    def __init__(self, data: Dict[str, T]):
-        # self._store: Dict[str, T] = {}
-        for name in data:
-            setattr(self, name, data[name])
+class DatasetNotFoundError(Exception):
+    """ Exception used for a non available dataset """
+    pass
+
+
+class Namespace(GenericModel, Generic[T]):
+    """ Simple object for storing attributes. """
+    store: Dict[str, T] = Field(default_factory=dict)
+
+    @property
+    def as_dict(self) -> Dict[str, T]:
+        return self.store
+
+    def __getattr__(self, name) -> Optional[T]:
+        a: T = self.store.get(name, None)
+        return a
+
+    def __iter__(self):
+        return self.store.items()
 
 
 class Subset(BaseModel):
     """ A subset of a dataset containing various items."""
-    items_dict: Dict[str, Item]
+    items: Namespace[Item]
 
-    @validator("items_dict", pre=True)
+    @validator("items", pre=True)
     def items_parse(cls, values):
         """ Allow items to be cast to the correct subclass """
         casted_items = dict()
@@ -46,46 +60,38 @@ class Subset(BaseModel):
                 v["item_type"] = item_type
                 casted_items[k] = Item(**v)
 
-        return casted_items
-
-    @property
-    def items(self) -> Namespace[Item]:
-        return Namespace[Item](self.items_dict)
+        return Namespace[Item](store=casted_items)
 
     def make_relative(self, relative_to: Path):
         """ Convert all the items to relative paths """
-        for _, item in self.items_dict.items():
+        for _, item in self.items:
             item.relative_to(relative_to)
 
     def make_absolute(self, root_dir: Path):
         """ Convert all items to absolute paths """
-        for _, item in self.items_dict.items():
+        for _, item in self.items:
             item.absolute_to(root_dir)
 
 
 class DatasetIndex(BaseModel):
     """ A metadata object indexing all items in a dataset."""
     root_dir: Path
-    subsets_dict: Dict[str, Subset] = Field(default_factory=dict)
-
-    @property
-    def subsets(self) -> Namespace[Subset]:
-        return Namespace[Subset](self.subsets_dict)
+    subsets: Namespace[Subset]
 
     def make_relative(self):
         """ Convert all the subsets to relative paths """
-        for _, item in self.subsets_dict.items():
+        for _, item in self.subsets:
             item.make_relative(self.root_dir)
 
     def make_absolute(self):
         """ Convert all the subsets to absolute paths """
-        for _, item in self.subsets_dict.items():
+        for _, item in self.subsets:
             item.make_absolute(self.root_dir)
 
 
 class Dataset(DownloadableItem):
     """ Generic definition of a dataset """
-    key_name: ClassVar[str] = "dataset"
+    key_name: ClassVar[str] = "datasets"
     index: Optional[DatasetIndex] = None
 
     @property

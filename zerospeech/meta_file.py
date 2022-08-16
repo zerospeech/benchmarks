@@ -1,9 +1,13 @@
+from pathlib import Path
 from typing import Optional, Any
 
 from pydantic import BaseModel, AnyUrl
 
+from zerospeech.misc import load_obj
+
 
 class PublicationInfo(BaseModel):
+    author_label: str = ""
     authors: str
     paper_title: Optional[str]
     paper_url: Optional[str]
@@ -23,4 +27,8 @@ class MetaFile(BaseModel):
     model_info: ModelInfo
     publication: PublicationInfo
     open_source: bool
-    code_url: AnyUrl
+    code_url: Optional[AnyUrl]
+
+    @classmethod
+    def from_file(cls, file: Path):
+        return cls.parse_obj(load_obj(file))

@@ -1,12 +1,22 @@
 import enum
+import json
 import re
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Union
 from zipfile import ZipFile
 
 import requests
 from Crypto.Hash import MD5
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
+try:
+    import tomli
+except ImportError:
+    tomli = None
 
 from .out import with_progress, void_console, console
 from .settings import get_settings
@@ -67,6 +77,21 @@ class SizeUnit(enum.Enum):
                 return f"{num:3.1f} {unit}{suffix}"
             num /= 1024.0
         return f"{num:.1f}Y{suffix}"
+
+
+def load_obj(location: Path) -> Union[Dict, List]:
+    """ Loads an object from standard formats (.json, yaml, ...) to a standard structure (Dict, List)"""
+    with location.open() as fp, location.open('rb') as bfp:
+        if location.suffix == '.json':
+            return json.load(fp)
+        elif yaml and location.suffix in ('.yaml', '.yml'):
+            return yaml.load(fp, Loader=yaml.FullLoader)
+        elif tomli and location.suffix in ('.toml', '.tml'):
+            return tomli.load(bfp)
+        elif location.suffix in ('.txt', '.list'):
+            return fp.readlines()
+        else:
+            raise ValueError('File of unknown format !!')
 
 
 def md5sum(file_path: Path, chunk_size: int = 8192):
