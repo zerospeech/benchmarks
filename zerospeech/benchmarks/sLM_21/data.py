@@ -1,10 +1,10 @@
 import abc
 from pathlib import Path
+from typing import Tuple
 
-from pydantic import Field
 from rich.console import Console
 
-from ..generic import Submission, Task, TaskList, ScoreList, Benchmark
+from ..generic import Submission, Task, ScoresDir
 from ...data_items import FileItem, FileListItem, FileTypes, Item
 from ...datasets import Dataset, DatasetsDir, Namespace, DatasetNotInstalledError, DatasetNotFoundError
 from ...meta_file import MetaFile
@@ -17,7 +17,7 @@ class SLM21Dataset(Dataset):
     @classmethod
     def load(cls, load_index: bool = True) -> "SLM21Dataset":
         """ Load """
-        dataset = DatasetsDir.load().get("sLM21-dataset", cls=cls)
+        dataset = DatasetsDir.load().get("sLM21-dataset", cls)
 
         if dataset is None:
             raise DatasetNotFoundError(f"The sLM21-dataset does not exist")
@@ -25,7 +25,7 @@ class SLM21Dataset(Dataset):
         if not dataset.installed:
             raise DatasetNotInstalledError("The sLM21-dataset is not installed locally")
 
-        if dataset and load_index:
+        if load_index:
             dataset.load_index()
             # convert all paths to absolute paths
             dataset.index.make_absolute()
@@ -35,9 +35,11 @@ class SLM21Dataset(Dataset):
 
 class SLM21Submission(Submission):
     """ Submission for SLM21 Benchmark """
+    sets: Tuple = ('dev', 'test')
+    tasks: Tuple = ('lexical', 'syntactic', 'semantic')
 
     @classmethod
-    def load(cls, path: Path, *,
+    def load(cls, path: Path, score_dir: Path = Path("scores"), *,
              tasks=('lexical', 'syntactic', 'semantic'),
              sets=('dev', 'test')):
         """ Load submission for sLM21 benchmark (filter by available tasks & sets) """
@@ -79,20 +81,25 @@ class SLM21Submission(Submission):
 
         # Return submission object
         return cls(
+            sets=sets,
+            tasks=tasks,
             meta=MetaFile.from_file(path / 'meta.yaml'),
             location=path,
-            items=Namespace[Item](store=items)
+            items=Namespace[Item](store=items),
+            score_dir=score_dir
         )
 
     # todo implement a check method for sLM21 submission
-    def check(self):
+    def is_valid(self):
+        pass
+
+    def get_scores(self) -> ScoresDir:
         pass
 
 
 class SLM21Task(Task, abc.ABC):
     """ Abstract sLM21 task """
-    sets = ('dev', 'test')
-    console: Console = console
+    _console: Console = console
 
     class Config:
         arbitrary_types_allowed = True

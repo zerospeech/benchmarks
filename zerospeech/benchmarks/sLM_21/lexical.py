@@ -1,12 +1,10 @@
-from pathlib import Path
-
 import pandas as pd
 
+from .data import SLM21Task, SLM21Submission
 from ..generic import Submission
 from ...data_items import FileItem
 from ...data_loaders import load_dataframe
 from ...datasets import Dataset
-from .data import SLM21Task
 
 
 class LexicalTask(SLM21Task):
@@ -140,6 +138,7 @@ class LexicalTask(SLM21Task):
             n='count', score='mean', std='std').reset_index()
 
     def run_lexical_eval(self, lexical_item: FileItem, gold_item: FileItem):
+        print(f"{type(lexical_item)=}, {type(lexical_item)=}")
         data = self.load_and_format(lexical_item, gold_item)
         by_pair, by_frequency, by_length = None, None, None
         by_pair = self.eval_by_pair(data)
@@ -157,9 +156,12 @@ class LexicalTask(SLM21Task):
 
         return by_pair, by_frequency, by_length
 
-    def eval(self, submission: Submission, dataset: Dataset, output_dir: Path):
+    def eval(self, submission: SLM21Submission, dataset: Dataset):
         """ Run the selected lexical evaluations & write results """
-        if 'dev' in self.sets:
+        output_dir = submission.score_dir
+        sets = submission.sets
+
+        if 'dev' in sets:
             sub = submission.items.lexical_dev
             gold = dataset.index.subsets.lexical_dev.items.gold
             results = self.run_lexical_eval(sub, gold)
@@ -169,7 +171,7 @@ class LexicalTask(SLM21Task):
                     filename = output_dir / f"{self.result_filenames['dev'][i]}"
                     res.to_csv(filename, index=False, float_format='%.4f')
 
-        if 'test' in self.sets:
+        if 'test' in sets:
             sub = submission.items.lexical_test
             data = dataset.index.subsets.lexical_test
             results = self.run_lexical_eval(sub, data)

@@ -55,9 +55,6 @@ def build_cli(cmd_name):
 
 def main():
     """ Main Function """
-    # Initialize environment
-    init()
-    # Run CLI
     cli = build_cli("zr")
     cli.run()
 

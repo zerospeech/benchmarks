@@ -72,6 +72,9 @@ class FileListItem(Item):
             relative_path=False
         )
 
+    def __iter__(self):
+        return iter(self.files_list)
+
     def relative_to(self, path: Path):
         """ Convert all paths to relative if they are absolute """
         if not self.relative_path:

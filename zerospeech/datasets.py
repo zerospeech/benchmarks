@@ -39,7 +39,7 @@ class Namespace(GenericModel, Generic[T]):
         return a
 
     def __iter__(self):
-        return self.store.items()
+        return iter(self.store.items())
 
 
 class Subset(BaseModel):
@@ -77,6 +77,10 @@ class DatasetIndex(BaseModel):
     """ A metadata object indexing all items in a dataset."""
     root_dir: Path
     subsets: Namespace[Subset]
+
+    @validator("subsets", pre=True)
+    def subsets_parse(cls, values):
+        return Namespace[Subset](store=values)
 
     def make_relative(self):
         """ Convert all the subsets to relative paths """

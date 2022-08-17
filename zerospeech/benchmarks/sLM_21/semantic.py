@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from .data import SLM21Task
 from ..generic import Submission
 from ...datasets import Dataset
@@ -9,5 +7,5 @@ from ...datasets import Dataset
 class SemanticTask(SLM21Task):
     _name = "semantic"
 
-    def eval(self, submission: Submission, dataset: Dataset, output_dir: Path):
+    def eval(self, submission: Submission, dataset: Dataset):
         pass

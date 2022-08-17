@@ -115,9 +115,9 @@ class DownloadableItemDir(BaseModel, abc.ABC):
                 return d
         return None
 
-    def get(self, name):
+    def get(self, name, cls):
         loc = self.root_dir / name
         repo = self.find_in_repository(name)
         if repo is None:
             return None
-        return self.item_type(location=loc, origin=repo)
+        return cls(location=loc, origin=repo)

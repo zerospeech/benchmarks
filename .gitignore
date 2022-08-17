@@ -1,4 +1,4 @@
 test_data/
 *.env
 __pycache__/
-*.ipynb
+dataset_tests.ipynb
