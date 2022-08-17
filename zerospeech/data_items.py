@@ -1,7 +1,7 @@
 import abc
 from enum import Enum
 from pathlib import Path
-from typing import List, Callable, Tuple, Union
+from typing import List, Callable, Tuple, Union, Iterator
 
 from pydantic import BaseModel, validator, Field
 
@@ -72,7 +72,7 @@ class FileListItem(Item):
             relative_path=False
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Path]:
         return iter(self.files_list)
 
     def relative_to(self, path: Path):

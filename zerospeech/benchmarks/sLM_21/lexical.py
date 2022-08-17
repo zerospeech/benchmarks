@@ -1,10 +1,8 @@
 import pandas as pd
 
-from .data import SLM21Task, SLM21Submission
-from ..generic import Submission
+from .data import SLM21Task, SLM21Submission, SLM21Dataset
 from ...data_items import FileItem
 from ...data_loaders import load_dataframe
-from ...datasets import Dataset
 
 
 class LexicalTask(SLM21Task):
@@ -12,6 +10,7 @@ class LexicalTask(SLM21Task):
     by_pair: bool = True
     by_length: bool = True
     by_frequency: bool = True
+    # todo make filename simpler with flat dict & property fn
     result_filenames = dict(
         dev=[
             'score_lexical_dev_by_pair.csv', 'score_lexical_dev_by_frequency.csv', 'score_lexical_dev_by_length.csv'],
@@ -156,7 +155,7 @@ class LexicalTask(SLM21Task):
 
         return by_pair, by_frequency, by_length
 
-    def eval(self, submission: SLM21Submission, dataset: Dataset):
+    def eval(self, submission: SLM21Submission, dataset: SLM21Dataset):
         """ Run the selected lexical evaluations & write results """
         output_dir = submission.score_dir
         sets = submission.sets
