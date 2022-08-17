@@ -16,6 +16,12 @@ class InvalidSubmissionError(Exception):
 
 
 class ScoresDir(BaseModel):
+    # todo implement this
+    pass
+
+
+class BenchmarkParameters(BaseModel, abc.ABC):
+    """ Abstract Parameter class """
     pass
 
 
@@ -25,9 +31,17 @@ class Submission(BaseModel, abc.ABC):
     items: Optional[Namespace[Item]]
     score_dir: Path = Path('scores')
 
+    @property
+    def params_file(self):
+        return self.location / 'params.json'
+
     @classmethod
     @abc.abstractmethod
     def load(cls, path: Path, score_dir: Path = Path("scores"), **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def load_parameters(self) -> BenchmarkParameters:
         pass
 
     @abc.abstractmethod
@@ -67,15 +81,9 @@ class Task(BaseModel, abc.ABC):
         pass
 
 
-class TaskList(BaseModel, abc.ABC):
-    # todo method to configure tasklist from a big set of params
-    pass
-
-
 class Benchmark(BaseModel, abc.ABC):
     """ A Generic benchmark class """
     dataset: Dataset
-    task_list: TaskList
 
     @property
     def name(self) -> str:
@@ -90,4 +98,3 @@ class Benchmark(BaseModel, abc.ABC):
     def run(self, submission: Submission):
         """ Run the benchmark """
         pass
-

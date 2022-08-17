@@ -1,14 +1,27 @@
 import abc
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Dict
 
 from rich.console import Console
 
-from ..generic import Submission, Task, ScoresDir
+from ..generic import Submission, Task, ScoresDir, BenchmarkParameters
 from ...data_items import FileItem, FileListItem, FileTypes, Item
 from ...datasets import Dataset, DatasetsDir, Namespace, DatasetNotInstalledError, DatasetNotFoundError
 from ...meta_file import MetaFile
+from ...misc import load_obj
 from ...out import console
+
+
+class SLM21BenchmarkParameters(BenchmarkParameters):
+
+    def get_lexical(self) -> Dict:
+        ...
+
+    def get_semantic(self) -> Dict:
+        ...
+
+    def get_syntactic(self) -> Dict:
+        ...
 
 
 class SLM21Dataset(Dataset):
@@ -88,6 +101,12 @@ class SLM21Submission(Submission):
             items=Namespace[Item](store=items),
             score_dir=score_dir
         )
+
+    def get_parameters(self) -> SLM21BenchmarkParameters:
+        if self.params_file.is_file():
+            obj = load_obj(self.params_file)
+            return SLM21BenchmarkParameters.parse_obj(obj)
+        return SLM21BenchmarkParameters()
 
     # todo implement a check method for sLM21 submission
     def is_valid(self):

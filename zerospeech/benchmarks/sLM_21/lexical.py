@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .data import SLM21Task, SLM21Submission, SLM21Dataset
+from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
 from ...data_items import FileItem
 from ...data_loaders import load_dataframe
 

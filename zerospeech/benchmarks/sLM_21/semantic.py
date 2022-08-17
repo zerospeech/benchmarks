@@ -9,7 +9,7 @@ import pandas as pd
 import scipy.spatial
 import scipy.stats
 
-from .data import SLM21Task, SLM21Submission, SLM21Dataset
+from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
 from ...data_items import FileListItem, FileItem
 from ...data_loaders import load_dataframe, load_numpy_array
 
@@ -211,4 +211,3 @@ class SemanticTask(SLM21Task):
             if self.correlations and correlation:
                 filename = outputs_dir / self.result_filenames['test'][1]
                 correlation.to_csv(filename, index=False, float_format='%.4f')
-
