@@ -1,0 +1,132 @@
+import enum
+import functools
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+import numpy as np
+import yaml
+from pydantic import BaseModel
+
+from zerospeech.benchmarks.generic import BenchmarkParameters
+
+FileNameType = Dict[str, Dict[str, str]]
+
+# using metrics from scipy.spatial.distance.cdist
+_SciPyMetrics = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
+                 'euclidean', 'hamming', 'jaccard', 'jensenshannon', 'kulczynski1', 'mahalanobis',
+                 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+                 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
+# Enumeration of metrics used for semantics benchmark
+SemanticMetrics = enum.Enum('SemanticMetrics', {f"{k}": k for k in _SciPyMetrics})
+
+
+class SemanticPooling(str, enum.Enum):
+    min = 'min'
+    max = 'max'
+    mean = 'mean'
+    sum = 'sum'
+    last = 'last'
+    lastlast = 'lastlast'
+    off = 'off'
+
+    @property
+    def fn(self):
+        if self == self.max:
+            return functools.partial(np.max, axis=0)
+        elif self == self.min:
+            return functools.partial(np.min, axis=0)
+        elif self == self.mean:
+            return functools.partial(np.mean, axis=0)
+        elif self == self.sum:
+            return functools.partial(np.sum, axis=0)
+        elif self == self.last:
+            return lambda x: x[-1]
+        elif self == self.lastlast:
+            return lambda x: x[-2]
+        elif self == self.off:
+            return lambda x: x
+        else:
+            raise ValueError(
+                f'pooling method must be {",".join([f.value for f in self])}'
+            )
+
+
+class SemanticParams(BaseModel):
+    metric: SemanticMetrics = SemanticMetrics('euclidean')
+    pooling: SemanticPooling = SemanticPooling.mean
+    synthetic: bool = True
+    librispeech: bool = True
+    correlations: bool = True
+    n_jobs: int = 1
+    result_filenames: FileNameType = dict(
+        dev=dict(
+            pairs='score_semantic_dev_pairs.csv',
+            correlations='score_semantic_dev_correlation.csv'
+        ),
+        test=dict(
+            pairs='score_semantic_test_pairs.csv',
+            correlations='score_semantic_test_correlation.csv'
+        )
+    )
+
+    class Config:
+        json_encoders = {
+            SemanticMetrics: lambda x: str(x.value),
+        }
+
+
+class LexicalParams(BaseModel):
+    by_pair: bool = True
+    by_length: bool = True
+    by_frequency: bool = True
+    result_filenames: FileNameType = dict(
+        dev=dict(
+            by_pair='score_lexical_dev_by_pair.csv',
+            by_frequency='score_lexical_dev_by_frequency.csv',
+            by_length='score_lexical_dev_by_length.csv'
+        ),
+        test=dict(
+            by_pair='score_lexical_test_by_pair.csv',
+            by_frequency='score_lexical_test_by_frequency.csv',
+            by_length='score_lexical_test_by_length.csv'
+        )
+    )
+
+
+class SyntacticParams(BaseModel):
+    result_filenames: FileNameType = dict(
+        dev=dict(
+            by_pair='score_syntactic_dev_by_pair.csv',
+            by_type='score_syntactic_dev_by_type.csv'
+        ),
+        test=dict(
+            by_pair='score_syntactic_test_by_pair.csv',
+            by_type='score_syntactic_test_by_type.csv'
+        )
+    )
+
+
+class SLM21BenchmarkParameters(BenchmarkParameters):
+    lexical: LexicalParams = LexicalParams()
+    syntactic: SyntacticParams = SyntacticParams()
+    semantic: SemanticParams = SemanticParams()
+
+    def get_lexical(self) -> dict[str, Any]:
+        return self.lexical.dict()
+
+    def get_semantic(self) -> dict[str, Any]:
+        return self.semantic.dict()
+
+    def get_syntactic(self) -> dict[str, Any]:
+        return self.syntactic.dict()
+
+    def export(self, file: Path):
+        as_obj = json.loads(self.json(exclude={
+            'lexical': {'result_filenames'},
+            'syntactic': {'result_filenames'},
+            'semantic': {'result_filenames'}
+        }))
+        with file.open('w') as fp:
+            yaml.dump(as_obj, fp)

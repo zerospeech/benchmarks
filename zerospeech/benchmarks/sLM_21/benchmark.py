@@ -12,8 +12,10 @@ class SLM21Benchmark(Benchmark):
     dataset: SLM21Dataset = Field(default_factory=lambda: SLM21Dataset.load())
 
     def run(self, submission: SLM21Submission):
-        params = submission.get_parameters()
+        params = submission.load_parameters()
 
+        # create output dir
+        submission.score_dir.mkdir(exist_ok=True, parents=True)
         if 'lexical' in submission.tasks:
             task1 = LexicalTask(**params.get_lexical())
             task1.eval(submission, self.dataset)

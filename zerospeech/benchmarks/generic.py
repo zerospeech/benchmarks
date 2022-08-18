@@ -22,7 +22,10 @@ class ScoresDir(BaseModel):
 
 class BenchmarkParameters(BaseModel, abc.ABC):
     """ Abstract Parameter class """
-    pass
+
+    @abc.abstractmethod
+    def export(self, file: Path):
+        pass
 
 
 class Submission(BaseModel, abc.ABC):
@@ -33,7 +36,7 @@ class Submission(BaseModel, abc.ABC):
 
     @property
     def params_file(self):
-        return self.location / 'params.json'
+        return self.location / 'params.yaml'
 
     @classmethod
     @abc.abstractmethod

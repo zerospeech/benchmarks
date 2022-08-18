@@ -1,22 +1,22 @@
+from typing import Tuple
+
 import pandas as pd
 
 from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
+from .params import LexicalParams
 from ...data_items import FileItem
 from ...data_loaders import load_dataframe
+
+default_params = LexicalParams()
 
 
 class LexicalTask(SLM21Task):
     _name = "lexical"
-    by_pair: bool = True
-    by_length: bool = True
-    by_frequency: bool = True
-    # todo make filename simpler with flat dict & property fn
-    result_filenames = dict(
-        dev=[
-            'score_lexical_dev_by_pair.csv', 'score_lexical_dev_by_frequency.csv', 'score_lexical_dev_by_length.csv'],
-        test=[
-            'score_lexical_test_by_pair.csv', 'score_lexical_test_by_frequency.csv', 'score_lexical_test_by_length.csv']
-    )
+    by_pair: bool = default_params.by_pair
+    by_length: bool = default_params.by_length
+    by_frequency: bool = default_params.by_frequency
+    result_filenames = default_params.result_filenames
+    sets: Tuple = ('dev', 'test')
 
     @staticmethod
     def load_and_format(lexical_item: FileItem, gold_item: FileItem):
@@ -137,7 +137,6 @@ class LexicalTask(SLM21Task):
             n='count', score='mean', std='std').reset_index()
 
     def run_lexical_eval(self, lexical_item: FileItem, gold_item: FileItem):
-        print(f"{type(lexical_item)=}, {type(lexical_item)=}")
         data = self.load_and_format(lexical_item, gold_item)
         by_pair, by_frequency, by_length = None, None, None
         by_pair = self.eval_by_pair(data)
@@ -158,23 +157,38 @@ class LexicalTask(SLM21Task):
     def eval(self, submission: SLM21Submission, dataset: SLM21Dataset):
         """ Run the selected lexical evaluations & write results """
         output_dir = submission.score_dir
-        sets = submission.sets
+        self.sets = submission.sets
 
-        if 'dev' in sets:
+        if 'dev' in self.sets:
             sub = submission.items.lexical_dev
             gold = dataset.index.subsets.lexical_dev.items.gold
-            results = self.run_lexical_eval(sub, gold)
+            by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
 
-            for i, res in enumerate(results):
-                if res is not None:
-                    filename = output_dir / f"{self.result_filenames['dev'][i]}"
-                    res.to_csv(filename, index=False, float_format='%.4f')
+            if by_pair is not None:
+                filename = output_dir / f"{self.result_filenames['dev']['by_pair']}"
+                by_pair.to_csv(filename, index=False, float_format='%.4f')
 
-        if 'test' in sets:
+            if by_frequency is not None:
+                filename = output_dir / f"{self.result_filenames['dev']['by_frequency']}"
+                by_frequency.to_csv(filename, index=False, float_format='%.4f')
+
+            if by_length is not None:
+                filename = output_dir / f"{self.result_filenames['dev']['by_length']}"
+                by_length.to_csv(filename, index=False, float_format='%.4f')
+
+        if 'test' in self.sets:
             sub = submission.items.lexical_test
-            data = dataset.index.subsets.lexical_test
-            results = self.run_lexical_eval(sub, data)
-            for i, res in enumerate(results):
-                if res is not None:
-                    filename = output_dir / f"{self.result_filenames['test'][i]}"
-                    res.to_csv(filename, index=False, float_format='%.4f')
+            gold = dataset.index.subsets.lexical_test.items.gold
+            by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
+
+            if by_pair is not None:
+                filename = output_dir / f"{self.result_filenames['test']['by_pair']}"
+                by_pair.to_csv(filename, index=False, float_format='%.4f')
+
+            if by_frequency is not None:
+                filename = output_dir / f"{self.result_filenames['test']['by_frequency']}"
+                by_frequency.to_csv(filename, index=False, float_format='%.4f')
+
+            if by_length is not None:
+                filename = output_dir / f"{self.result_filenames['test']['by_length']}"
+                by_length.to_csv(filename, index=False, float_format='%.4f')

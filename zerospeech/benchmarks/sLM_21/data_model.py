@@ -1,10 +1,14 @@
 import abc
+import functools
+import json
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Tuple
 
+import yaml
 from rich.console import Console
 
-from ..generic import Submission, Task, ScoresDir, BenchmarkParameters
+from .params import SLM21BenchmarkParameters
+from ..generic import Submission, Task, ScoresDir
 from ...data_items import FileItem, FileListItem, FileTypes, Item
 from ...datasets import Dataset, DatasetsDir, Namespace, DatasetNotInstalledError, DatasetNotFoundError
 from ...meta_file import MetaFile
@@ -12,24 +16,13 @@ from ...misc import load_obj
 from ...out import console
 
 
-class SLM21BenchmarkParameters(BenchmarkParameters):
-
-    def get_lexical(self) -> Dict:
-        ...
-
-    def get_semantic(self) -> Dict:
-        ...
-
-    def get_syntactic(self) -> Dict:
-        ...
-
-
 class SLM21Dataset(Dataset):
     """ Class interfacing usage of the sLM21 dataset"""
 
     @classmethod
+    @functools.lru_cache
     def load(cls, load_index: bool = True) -> "SLM21Dataset":
-        """ Load """
+        """ Load dataset from dir registry """
         dataset = DatasetsDir.load().get("sLM21-dataset", cls)
 
         if dataset is None:
@@ -92,8 +85,8 @@ class SLM21Submission(Submission):
             if 'test' in sets:
                 items['syntactic_test'] = FileItem.from_file(syntactic_dir / "test.txt")
 
-        # Return submission object
-        return cls(
+        # submission object
+        submission = cls(
             sets=sets,
             tasks=tasks,
             meta=MetaFile.from_file(path / 'meta.yaml'),
@@ -102,7 +95,13 @@ class SLM21Submission(Submission):
             score_dir=score_dir
         )
 
-    def get_parameters(self) -> SLM21BenchmarkParameters:
+        # if params not set export defaults
+        if not submission.params_file.is_file():
+            SLM21BenchmarkParameters().export(submission.params_file)
+
+        return submission
+
+    def load_parameters(self) -> SLM21BenchmarkParameters:
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
             return SLM21BenchmarkParameters.parse_obj(obj)

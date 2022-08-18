@@ -1,5 +1,3 @@
-import enum
-import functools
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -10,68 +8,24 @@ import scipy.spatial
 import scipy.stats
 
 from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
+from .params import SemanticParams, SemanticMetrics, SemanticPooling
 from ...data_items import FileListItem, FileItem
 from ...data_loaders import load_dataframe, load_numpy_array
 
-# using metrics from scipy.spatial.distance.cdist
-_SciPyMetrics = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-                 'euclidean', 'hamming', 'jaccard', 'jensenshannon', 'kulczynski1', 'mahalanobis',
-                 'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-                 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
 
-# Enumeration of metrics used for semantics benchmark
-SemanticMetrics = enum.Enum('SemanticMetrics', {f"{k}": k for k in _SciPyMetrics})
-
-
-class SemanticPooling(str, enum.Enum):
-    min = 'min'
-    max = 'max'
-    mean = 'mean'
-    sum = 'sum'
-    last = 'last'
-    lastlast = 'lastlast'
-    off = 'off'
-
-    @property
-    def fn(self):
-        if self == self.max:
-            return functools.partial(np.max, axis=0)
-        elif self == self.min:
-            return functools.partial(np.min, axis=0)
-        elif self == self.mean:
-            return functools.partial(np.mean, axis=0)
-        elif self == self.sum:
-            return functools.partial(np.sum, axis=0)
-        elif self == self.last:
-            return lambda x: x[-1]
-        elif self == self.lastlast:
-            return lambda x: x[-2]
-        elif self == self.off:
-            return lambda x: x
-        else:
-            raise ValueError(
-                f'pooling method must be {",".join([f.value for f in self])}'
-            )
+default_params = SemanticParams()
 
 
 class SemanticTask(SLM21Task):
     _name = "semantic"
-    metric: SemanticMetrics = SemanticMetrics('euclidean')
-    pooling: SemanticPooling = SemanticPooling.mean
-    synthetic: bool = True
-    librispeech: bool = True
-    correlations: bool = True
-    n_jobs: int = 1
+    metric: SemanticMetrics = default_params.metric
+    pooling: SemanticPooling = default_params.pooling
+    synthetic: bool = default_params.synthetic
+    librispeech: bool = default_params.librispeech
+    correlations: bool = default_params.correlations
+    n_jobs: int = default_params.n_jobs
+    result_filenames = default_params.result_filenames
     sets = ('dev', 'test')
-    # todo make filename simpler with flat dict & property fn
-    result_filenames = dict(
-        dev=[
-            'score_semantic_dev_pairs.csv', 'score_semantic_dev_correlation.csv'
-        ],
-        test=[
-            'score_semantic_test_pairs.csv', 'score_semantic_test_correlation.csv'
-        ]
-    )
 
     def compute_correlation(self, pairs: pd.DataFrame) -> Optional[pd.DataFrame]:
         """"Returns the Spearman's correlation between human and machine scores"""
@@ -107,7 +61,7 @@ class SemanticTask(SLM21Task):
 
             # compute the mean distance across all pairs of tokens after pooling
             return scipy.spatial.distance.cdist(  # noqa: bad __init__ for scipy.spatial ??
-                x, y, metric=self.metric.value).mean()
+                x, y, metric=str(self.metric.value)).mean()
         elif pairs_row['type'] == 'synthetic':
             # get the list of tokens corresponding to the given pair of words
             tokens_1 = gold_df[['filename', 'voice']][gold_df['word'] == pairs_row['word_1']]
@@ -120,7 +74,7 @@ class SemanticTask(SLM21Task):
                 x = pool[pool['filename'] == filename_x]['pooling'].item()
                 y = pool[pool['filename'] == filename_y]['pooling'].item()
                 dist += scipy.spatial.distance.cdist(  # noqa: bad __init__ for scipy.spatial ??
-                    np.atleast_2d(x), np.atleast_2d(y), metric=str(self.metric))[0][0]
+                    np.atleast_2d(x), np.atleast_2d(y), metric=str(self.metric.value))[0][0]
 
             return dist / len(tokens)
 
@@ -189,11 +143,11 @@ class SemanticTask(SLM21Task):
             )
             res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
 
-            filename = outputs_dir / self.result_filenames['dev'][0]
+            filename = outputs_dir / self.result_filenames['dev']['pairs']
             res_pairs.to_csv(filename, index=False, float_format='%.4f')
 
-            if self.correlations and correlation:
-                filename = outputs_dir / self.result_filenames['dev'][1]
+            if self.correlations and correlation is not None:
+                filename = outputs_dir / self.result_filenames['dev']['correlations']
                 correlation.to_csv(filename, index=False, float_format='%.4f')
 
         if 'test' in self.sets:
@@ -205,9 +159,9 @@ class SemanticTask(SLM21Task):
             )
             res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
 
-            filename = outputs_dir / self.result_filenames['test'][0]
+            filename = outputs_dir / self.result_filenames['test']['pairs']
             res_pairs.to_csv(filename, index=False, float_format='%.4f')
 
             if self.correlations and correlation:
-                filename = outputs_dir / self.result_filenames['test'][1]
+                filename = outputs_dir / self.result_filenames['test']['correlations']
                 correlation.to_csv(filename, index=False, float_format='%.4f')
