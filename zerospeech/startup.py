@@ -3,7 +3,8 @@ from .cmd import (
     DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
     HelpCMD, AskHelpCMD, DocumentationCMD,
     SamplesCMD, PullSampleCMD, RemoveSampleCMD,
-    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD
+    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD,
+    BenchmarksCMD
 )
 from .networkio import update_repo_index
 from .out import console
@@ -14,7 +15,8 @@ SUBCOMMANDS = [
     DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
     HelpCMD, AskHelpCMD, DocumentationCMD,
     SamplesCMD, PullSampleCMD, RemoveSampleCMD,
-    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD
+    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD,
+    BenchmarksCMD
 ]
 
 st = get_settings()

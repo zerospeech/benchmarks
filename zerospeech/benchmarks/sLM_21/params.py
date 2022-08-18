@@ -123,10 +123,17 @@ class SLM21BenchmarkParameters(BenchmarkParameters):
         return self.syntactic.dict()
 
     def export(self, file: Path):
-        as_obj = json.loads(self.json(exclude={
-            'lexical': {'result_filenames'},
-            'syntactic': {'result_filenames'},
-            'semantic': {'result_filenames'}
-        }))
+        # filtering non-interfaced param values
+        excluded = {
+            'lexical': True,
+            'syntactic': True,
+            'semantic': {'result_filenames', 'correlations'}
+        }
+        # conversion order  self -> json -> pydict -> yaml
+        # json is added in before pydict to leverage the pydantic serializer for
+        # more complex types as Enum, datetimes, etc. as a simpler chain of
+        # self -> pydict -> yaml leaves those unserialised and the yaml serializer fails.
+        # see https://pydantic-docs.helpmanual.io/usage/types/#standard-library-types
+        as_obj = json.loads(self.json(exclude=excluded, exclude_none=True))
         with file.open('w') as fp:
             yaml.dump(as_obj, fp)

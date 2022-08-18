@@ -11,3 +11,7 @@ from .checkpoints import (
 from .samples import (
     SamplesCMD, PullSampleCMD, RemoveSampleCMD
 )
+
+from .benchmarks import (
+    BenchmarksCMD
+)
