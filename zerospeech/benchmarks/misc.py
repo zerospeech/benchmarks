@@ -1,12 +1,13 @@
 import enum
 
 from . import sLM_21
+from .generic import Benchmark, Submission, BenchmarkParameters
 
 
 class BenchmarkList(str, enum.Enum):
     """ Simplified enum """
 
-    def __new__(cls, label, benchmark, submission, parameters):
+    def __new__(cls, label, benchmark, submission: Submission, parameters: BenchmarkParameters):
         """ Allow setting parameters on enum """
         obj = str.__new__(cls, label)
         obj._value_ = label

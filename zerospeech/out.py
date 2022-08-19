@@ -71,7 +71,7 @@ class DevNull(IO[str]):
 
 
 console = Console(log_time_format="[info]")
-warning_console = Console(stderr=True, log_time_format="[warning]")
+warning_console = Console(stderr=True, style="bold yellow", log_time_format="[warning]")
 error_console = Console(stderr=True, style="bold red", log_time_format="[error]")
 void_console = Console(file=DevNull())
 

@@ -8,11 +8,24 @@ from ..generic import Benchmark
 
 
 class SLM21Benchmark(Benchmark):
+    """sLM21 is a benchmark on spoken Language Modeling.
+
+    This benchmark has 3 sub-tasks :
+
+    - Lexical Task
+    - Syntactic Task
+    - Semantic Task
+
+    Each task has two subsets:  dev, test
+
+    For more information visit: https://version2.zerospeech.com/tasks/task_4/tasks_goals/
+    """
     _name = "sLM21"
     dataset: SLM21Dataset = Field(default_factory=lambda: SLM21Dataset.load())
 
     def run(self, submission: SLM21Submission):
-        params = submission.load_parameters()
+        """ Run sLM21 tasks """
+        params = submission.params
 
         # create output dir
         submission.score_dir.mkdir(exist_ok=True, parents=True)

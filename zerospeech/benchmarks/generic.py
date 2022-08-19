@@ -1,6 +1,6 @@
 import abc
 from pathlib import Path
-from typing import Optional
+from typing import Optional, ClassVar, Type
 
 from pydantic import BaseModel, root_validator
 
@@ -22,6 +22,8 @@ class ScoresDir(BaseModel):
 
 class BenchmarkParameters(BaseModel, abc.ABC):
     """ Abstract Parameter class """
+    file_stem: ClassVar[str] = "params.yaml"
+    quiet: bool = False
 
     @abc.abstractmethod
     def export(self, file: Path):
@@ -33,10 +35,21 @@ class Submission(BaseModel, abc.ABC):
     location: Path
     items: Optional[Namespace[Item]]
     score_dir: Path = Path('scores')
+    _params_obj: BenchmarkParameters = None
 
     @property
     def params_file(self):
-        return self.location / 'params.yaml'
+        return self.location / BenchmarkParameters.file_stem
+
+    @property
+    def params(self):
+        if self._params_obj is None:
+            self._params_obj = self.load_parameters()
+        return self._params_obj
+
+    @params.setter
+    def params(self, value):
+        self._params_obj = value
 
     @classmethod
     @abc.abstractmethod

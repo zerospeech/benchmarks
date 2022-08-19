@@ -10,6 +10,9 @@ from treelib import Tree, Node
 NAMESPACE_SEP = ":"
 
 
+LIST_OF_COMMANDS = []
+
+
 class CMD(abc.ABC):
     COMMAND = "<cmd_name>"
     NAMESPACE = "<cmd-path>"
@@ -32,6 +35,13 @@ class CMD(abc.ABC):
             self.parser.description = self.long_description
         else:
             self.parser.description = self.short_description
+
+    @classmethod
+    def __init_subclass__(cls, /, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # cls.COMMAND = command
+        # cls.NAMESPACE = namespace
+        LIST_OF_COMMANDS.append(cls)
 
     def __check_presets__(self):
         """ Verify that subclass sets default parameters """

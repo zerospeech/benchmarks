@@ -1,23 +1,9 @@
 from .cmd import (
-    CommandTree, CLI,
-    DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
-    HelpCMD, AskHelpCMD, DocumentationCMD,
-    SamplesCMD, PullSampleCMD, RemoveSampleCMD,
-    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD,
-    BenchmarksCMD
+    CommandTree, CLI, LIST_OF_COMMANDS
 )
 from .networkio import update_repo_index
 from .out import console
 from .settings import get_settings
-
-# List of subcommands
-SUBCOMMANDS = [
-    DatasetCMD, PullDatasetCMD, RemoveDatasetCMD,
-    HelpCMD, AskHelpCMD, DocumentationCMD,
-    SamplesCMD, PullSampleCMD, RemoveSampleCMD,
-    CheckpointsCMD, PullCheckpointCMD, RemoveCheckpointCMD,
-    BenchmarksCMD
-]
 
 st = get_settings()
 
@@ -46,7 +32,7 @@ def init():
 def build_cli(cmd_name):
     """ Builds the CLI object to parse command line arguments """
     tree = CommandTree(cmd_name)
-    tree.add_cmds(*SUBCOMMANDS)
+    tree.add_cmds(*LIST_OF_COMMANDS)
 
     return CLI(
         tree,

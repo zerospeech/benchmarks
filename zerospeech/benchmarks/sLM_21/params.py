@@ -114,13 +114,22 @@ class SLM21BenchmarkParameters(BenchmarkParameters):
     semantic: SemanticParams = SemanticParams()
 
     def get_lexical(self) -> dict[str, Any]:
-        return self.lexical.dict()
+        return {
+            "quiet": self.quiet,
+            **self.lexical.dict()
+        }
 
     def get_semantic(self) -> dict[str, Any]:
-        return self.semantic.dict()
+        return {
+            "quiet": self.quiet,
+            **self.semantic.dict()
+        }
 
     def get_syntactic(self) -> dict[str, Any]:
-        return self.syntactic.dict()
+        return {
+            "quiet": self.quiet,
+            **self.syntactic.dict()
+        }
 
     def export(self, file: Path):
         # filtering non-interfaced param values

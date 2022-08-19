@@ -2,7 +2,7 @@ import abc
 import functools
 import json
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Type
 
 import yaml
 from rich.console import Console
