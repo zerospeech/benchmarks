@@ -143,6 +143,6 @@ class SLM21BenchmarkParameters(BenchmarkParameters):
         # more complex types as Enum, datetimes, etc. as a simpler chain of
         # self -> pydict -> yaml leaves those unserialised and the yaml serializer fails.
         # see https://pydantic-docs.helpmanual.io/usage/types/#standard-library-types
-        as_obj = json.loads(self.json(exclude=excluded, exclude_none=True))
+        as_obj = json.loads(self.json(exclude=excluded))
         with file.open('w') as fp:
             yaml.dump(as_obj, fp)

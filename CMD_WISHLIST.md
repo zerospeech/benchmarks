@@ -6,11 +6,11 @@
 
 #### benchmarks 
 
-- [ ] `zrc benchmarks`: list existing benchmarks
-- [ ] `zrc benchmarks:run <name> -o output <submission_dir>`: run a benchmark on a submission
-- [ ] `zrc benchmarks:run <name> -t <task_name> -o output <submission_dir>`: run only some tasks of a benchmark on a submission
-- [ ] `zrc benchmarks:run <name> -s <set_name> -o output <submission_dir>`: run a benchmark only on specific subsets of a submission
-- [ ] `zrc benchmarks:params <name> <submission_dir>`: generate `params.yaml` 
+- [X] `zrc benchmarks`: list existing benchmarks
+- [X] `zrc benchmarks:run <name> -o output <submission_dir>`: run a benchmark on a submission
+- [X] `zrc benchmarks:run <name> -t <task_name> -o output <submission_dir>`: run only some tasks of a benchmark on a submission
+- [X] `zrc benchmarks:run <name> -s <set_name> -o output <submission_dir>`: run a benchmark only on specific subsets of a submission
+- [X] `zrc benchmarks:params <name> <submission_dir>`: generate `params.yaml` 
 
 #### submissions
 

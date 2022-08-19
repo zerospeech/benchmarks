@@ -1,11 +1,7 @@
 import abc
 import functools
-import json
 from pathlib import Path
-from typing import Tuple, Type
-
-import yaml
-from rich.console import Console
+from typing import Tuple
 
 from .params import SLM21BenchmarkParameters
 from ..generic import Submission, Task, ScoresDir
@@ -13,7 +9,6 @@ from ...data_items import FileItem, FileListItem, FileTypes, Item
 from ...datasets import Dataset, DatasetsDir, Namespace, DatasetNotInstalledError, DatasetNotFoundError
 from ...meta_file import MetaFile
 from ...misc import load_obj
-from ...out import console
 
 
 class SLM21Dataset(Dataset):
@@ -117,7 +112,4 @@ class SLM21Submission(Submission):
 
 class SLM21Task(Task, abc.ABC):
     """ Abstract sLM21 task """
-    _console: Console = console
-
-    class Config:
-        arbitrary_types_allowed = True
+    pass

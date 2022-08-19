@@ -1,6 +1,6 @@
 import enum
 
-from . import sLM_21
+from . import sLM_21, abx_LS
 from .generic import Benchmark, Submission, BenchmarkParameters
 
 
@@ -17,3 +17,4 @@ class BenchmarkList(str, enum.Enum):
         return obj
 
     sLM21 = 'sLM21', sLM_21.SLM21Benchmark, sLM_21.SLM21Submission, sLM_21.SLM21BenchmarkParameters
+    abx_LS = 'abx-LS', abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission, abx_LS.AbxLSBenchmarkParameters
