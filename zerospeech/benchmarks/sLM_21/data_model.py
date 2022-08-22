@@ -84,6 +84,7 @@ class SLM21Submission(Submission):
         submission = cls(
             sets=sets,
             tasks=tasks,
+            # todo fix submission load failure when meta.yaml not found !!!
             meta=MetaFile.from_file(path / 'meta.yaml'),
             location=path,
             items=Namespace[Item](store=items),

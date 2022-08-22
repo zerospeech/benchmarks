@@ -3,7 +3,7 @@ import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Type, ClassVar, Literal
+from typing import List, Optional, Type, ClassVar, Literal, ForwardRef
 
 from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath
 
@@ -11,7 +11,6 @@ from .misc import SizeUnit
 from .settings import get_settings
 
 st = get_settings()
-
 
 DownloadableTypes = Literal['datasets', 'samples', 'checkpoints', 'downloadable_item']
 
@@ -86,6 +85,11 @@ class DownloadableItem(BaseModel, abc.ABC):
         pass
 
 
+class DataHusk(DownloadableItem):
+    def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        pass
+
+
 class DownloadableItemDir(BaseModel, abc.ABC):
     """ Abstract class defining a directory manager for DownloadableItem """
     root_dir: DirectoryPath
@@ -115,9 +119,11 @@ class DownloadableItemDir(BaseModel, abc.ABC):
                 return d
         return None
 
-    def get(self, name, cls):
+    def get(self, name, cls=None):
         loc = self.root_dir / name
         repo = self.find_in_repository(name)
         if repo is None:
             return None
+        if cls is None:
+            return DataHusk(location=loc, origin=repo)
         return cls(location=loc, origin=repo)

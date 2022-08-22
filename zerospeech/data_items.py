@@ -11,6 +11,7 @@ class FileTypes(str, Enum):
     npy = "npy"
     csv = "csv"
     wav = "wav"
+    flac = "flac"
     item = "item"
     tsv = "tsv"
     json = "json"
@@ -19,6 +20,24 @@ class FileTypes(str, Enum):
     @property
     def ext(self) -> str:
         return f".{self.value}"
+
+    @classmethod
+    def dataframe_types(cls):
+        return {
+            cls.csv, cls.txt, cls.tsv, cls.item
+        }
+
+    @classmethod
+    def audio_types(cls):
+        return {
+            cls.wav, cls.flac
+        }
+
+    @classmethod
+    def numpy_types(cls):
+        return {
+            cls.npy, cls.txt
+        }
 
 
 class ItemType(str, Enum):
