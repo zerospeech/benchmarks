@@ -1,6 +1,6 @@
 import abc
 from pathlib import Path
-from typing import Optional, ClassVar, Type
+from typing import Optional, ClassVar
 
 from pydantic import BaseModel, root_validator
 
@@ -61,7 +61,7 @@ class Submission(BaseModel, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def is_valid(self):
+    def is_valid(self, quiet: bool = False) -> bool:
         pass
 
     @abc.abstractmethod

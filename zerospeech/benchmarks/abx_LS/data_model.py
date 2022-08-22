@@ -9,11 +9,13 @@ import libriabx
 
 from .params import AbxLSBenchmarkParameters, ABXMode, ABXDistanceMode
 from ..generic import Submission, ScoresDir, Task
+from ..validation import remove_ok, show_errors
 from ...data_items import FileListItem, FileTypes, Item, FileItem
 from ...datasets import Dataset, DatasetsDir, DatasetNotFoundError, DatasetNotInstalledError, Namespace
 from ...meta_file import MetaFile
 from ...misc import load_obj
 from ...settings import get_settings
+from .validators import AbxLSSubmissionValidator
 
 st = get_settings()
 
@@ -95,9 +97,15 @@ class AbxLSSubmission(Submission):
             return AbxLSBenchmarkParameters.parse_obj(obj)
         return AbxLSBenchmarkParameters()
 
-    # todo implement a check method for ABX-LS submission
-    def is_valid(self):
-        pass
+    @functools.lru_cache
+    def is_valid(self, quiet: bool = False) -> bool:
+        """ Run validation on the submission data """
+        validator = AbxLSSubmissionValidator()
+        results = validator.validate(self)
+        if quiet:
+            bad_res = remove_ok(results)
+            return len(bad_res) == 0
+        return show_errors(results)
 
     def get_scores(self) -> ScoresDir:
         pass

@@ -9,6 +9,8 @@ from ...data_items import FileItem, FileListItem, FileTypes, Item
 from ...datasets import Dataset, DatasetsDir, Namespace, DatasetNotInstalledError, DatasetNotFoundError
 from ...meta_file import MetaFile
 from ...misc import load_obj
+from .validators import SLM21SubmissionValidator
+from ..validation import show_errors, remove_ok
 
 
 class SLM21Dataset(Dataset):
@@ -103,9 +105,15 @@ class SLM21Submission(Submission):
             return SLM21BenchmarkParameters.parse_obj(obj)
         return SLM21BenchmarkParameters()
 
-    # todo implement a check method for sLM21 submission
-    def is_valid(self):
-        pass
+    @functools.lru_cache
+    def is_valid(self, quiet: bool = False) -> bool:
+        """ Run validation on the submission data """
+        validator = SLM21SubmissionValidator()
+        results = validator.validate(self)
+        if quiet:
+            bad_res = remove_ok(results)
+            return len(bad_res) == 0
+        return show_errors(results)
 
     def get_scores(self) -> ScoresDir:
         pass
