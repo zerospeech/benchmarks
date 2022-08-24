@@ -3,7 +3,7 @@ import argparse
 from rich.table import Table
 
 from .cli_lib import CMD
-from ..checkpoints import CheckpointDir
+from ..model import checkpoints
 from ..out import console, error_console
 
 
@@ -16,7 +16,7 @@ class CheckpointsCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local checkpoint only")
 
     def run(self, argv: argparse.Namespace):
-        checkpoints_dir = CheckpointDir.load()
+        checkpoints_dir = checkpoints.CheckpointDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
@@ -48,7 +48,7 @@ class PullCheckpointCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        datasets = CheckpointDir.load()
+        datasets = checkpoints.CheckpointDir.load()
         dataset = datasets.get(argv.name)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
@@ -62,7 +62,7 @@ class RemoveCheckpointCMD(CMD):
         parser.add_argument('name')
 
     def run(self, argv: argparse.Namespace):
-        checkpoints_dir = CheckpointDir.load()
+        checkpoints_dir = checkpoints.CheckpointDir.load()
         cpt = checkpoints_dir.get(argv.name)
         if cpt:
             cpt.uninstall()

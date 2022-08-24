@@ -7,16 +7,16 @@ import pandas as pd
 import scipy.spatial
 import scipy.stats
 
-from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
+from .dataset import SLM21Dataset
 from .params import SemanticParams, SemanticMetrics, SemanticPooling
-from ...data_items import FileListItem, FileItem
+from .submission import SLM21Submission
 from ...data_loaders import load_dataframe, load_numpy_array
-
+from ...model import m_data_items, benchmark
 
 default_params = SemanticParams()
 
 
-class SemanticTask(SLM21Task):
+class SemanticTask(benchmark.Task):
     _name = "semantic"
     metric: SemanticMetrics = default_params.metric
     pooling: SemanticPooling = default_params.pooling
@@ -78,7 +78,9 @@ class SemanticTask(SLM21Task):
 
             return dist / len(tokens)
 
-    def build_file_index(self, synthetic: FileListItem, librispeech: FileListItem) -> Dict[str, Dict[str, Path]]:
+    def build_file_index(
+            self, synthetic: m_data_items.FileListItem, librispeech: m_data_items.FileListItem
+    ) -> Dict[str, Dict[str, Path]]:
         file_index = {}
         if self.librispeech:
             file_index['librispeech'] = {
@@ -94,7 +96,7 @@ class SemanticTask(SLM21Task):
         return file_index
 
     def semantic_eval(self, file_index: Dict[str, Dict[str, Path]],
-                      gold: FileItem, pairs: FileItem):
+                      gold: m_data_items.FileItem, pairs: m_data_items.FileItem):
         """ Semantically evaluate a subset """
         pairs_df = load_dataframe(pairs, header=0)
         gold_df = load_dataframe(gold, header=0)

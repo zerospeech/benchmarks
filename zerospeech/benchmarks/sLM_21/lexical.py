@@ -2,15 +2,16 @@ from typing import Tuple
 
 import pandas as pd
 
-from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
+from .submission import SLM21Submission
+from .dataset import SLM21Dataset
 from .params import LexicalParams
-from ...data_items import FileItem
+from ...model import m_benchmark, m_data_items
 from ...data_loaders import load_dataframe
 
 default_params = LexicalParams()
 
 
-class LexicalTask(SLM21Task):
+class LexicalTask(m_benchmark.Task):
     _name = "lexical"
     by_pair: bool = default_params.by_pair
     by_length: bool = default_params.by_length
@@ -19,7 +20,7 @@ class LexicalTask(SLM21Task):
     sets: Tuple = ('dev', 'test')
 
     @staticmethod
-    def load_and_format(lexical_item: FileItem, gold_item: FileItem):
+    def load_and_format(lexical_item: m_data_items.FileItem, gold_item: m_data_items.FileItem):
         """ Loads & formats submission data and gold data """
         gold_values = load_dataframe(gold_item, header=0, index_col='filename').astype(
             {'frequency': pd.Int64Dtype()})
@@ -136,7 +137,7 @@ class LexicalTask(SLM21Task):
         return data.score.groupby(data.length).agg(
             n='count', score='mean', std='std').reset_index()
 
-    def run_lexical_eval(self, lexical_item: FileItem, gold_item: FileItem):
+    def run_lexical_eval(self, lexical_item: m_data_items.FileItem, gold_item: m_data_items.FileItem):
         data = self.load_and_format(lexical_item, gold_item)
         by_pair, by_frequency, by_length = None, None, None
         by_pair = self.eval_by_pair(data)

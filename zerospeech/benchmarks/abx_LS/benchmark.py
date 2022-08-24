@@ -1,10 +1,10 @@
 from pydantic import Field
 
-from zerospeech.benchmarks.generic import Benchmark
+from ...model import m_benchmark
 from .data_model import AbxLSDataset, AbxLSSubmission, AbxLSTask
 
 
-class AbxLSBenchmark(Benchmark):
+class AbxLSBenchmark(m_benchmark.Benchmark):
     """abx-LS is a benchmark on acoustic Units using the ABX metric.
 
     This benchmark has 2 sub-tasks :

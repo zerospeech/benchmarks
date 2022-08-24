@@ -1,13 +1,14 @@
 from pydantic import Field
 
-from .data_model import SLM21Dataset, SLM21Submission
+from .submission import SLM21Submission
+from .dataset import SLM21Dataset
 from .lexical import LexicalTask
 from .semantic import SemanticTask
 from .syntactic import SyntacticTask
-from ..generic import Benchmark
+from ...model import m_benchmark
 
 
-class SLM21Benchmark(Benchmark):
+class SLM21Benchmark(m_benchmark.Benchmark):
     """sLM21 is a benchmark on spoken Language Modeling.
 
     This benchmark has 3 sub-tasks :

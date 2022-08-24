@@ -3,7 +3,7 @@ import argparse
 from rich.table import Table
 
 from .cli_lib import CMD
-from ..datasets import DatasetsDir
+from ..model import datasets
 from ..out import console, error_console
 
 
@@ -16,7 +16,7 @@ class DatasetCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local datasets only")
 
     def run(self, argv: argparse.Namespace):
-        datasets_dir = DatasetsDir.load()
+        datasets_dir = datasets.DatasetsDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
@@ -48,8 +48,8 @@ class PullDatasetCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        datasets = DatasetsDir.load()
-        dataset = datasets.get(argv.name)
+        datasets_dir = datasets.DatasetsDir.load()
+        dataset = datasets_dir.get(argv.name)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
 
@@ -62,7 +62,7 @@ class RemoveDatasetCMD(CMD):
         parser.add_argument('name')
 
     def run(self, argv: argparse.Namespace):
-        dataset_dir = DatasetsDir.load()
+        dataset_dir = datasets.DatasetsDir.load()
         dts = dataset_dir.get(argv.name)
         if dts:
             dts.uninstall()

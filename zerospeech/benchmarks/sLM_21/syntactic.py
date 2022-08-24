@@ -1,14 +1,15 @@
 import pandas as pd
 
-from .data_model import SLM21Task, SLM21Submission, SLM21Dataset
+from .dataset import SLM21Dataset
 from .params import SyntacticParams
-from ...data_items import FileItem
+from .submission import SLM21Submission
 from ...data_loaders import load_dataframe
+from ...model import m_benchmark, m_data_items
 
 default_params = SyntacticParams()
 
 
-class SyntacticTask(SLM21Task):
+class SyntacticTask(m_benchmark.Task):
     """Allows the computation of the score by sentences pair and by syntax type."""
     _name = "syntactic"
     sets = ('dev', 'test')
@@ -42,7 +43,7 @@ class SyntacticTask(SLM21Task):
         return data.score.groupby([data['type']]).agg(
             n='count', score='mean', std='std').reset_index()
 
-    def run_syntactic_comparison(self, gold: FileItem, sub_file: FileItem):
+    def run_syntactic_comparison(self, gold: m_data_items.FileItem, sub_file: m_data_items.FileItem):
         """ This function creates a syntactic comparison based on inputs
 
         data_formatting:

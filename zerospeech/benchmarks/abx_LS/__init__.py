@@ -1,2 +1,3 @@
-from .data_model import AbxLSDataset, AbxLSTask, AbxLSBenchmarkParameters, AbxLSSubmission
+from .data_model import AbxLSTask, AbxLSBenchmarkParameters, AbxLSSubmission
+from .dataset import AbxLSDataset
 from .benchmark import AbxLSBenchmark

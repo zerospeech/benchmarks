@@ -5,7 +5,7 @@ from typing import Optional, Dict
 
 import yaml
 
-from zerospeech.benchmarks.generic import BenchmarkParameters
+from ...model import m_benchmark
 
 
 ABXFileTypes = Enum('ABXFileTypes',
@@ -18,7 +18,7 @@ ABXDistanceMode = Enum('ABXDistanceMode',
 FileNameType = Dict[str, Dict[str, str]]
 
 
-class AbxLSBenchmarkParameters(BenchmarkParameters):
+class AbxLSBenchmarkParameters(m_benchmark.BenchmarkParameters):
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = None
     # size of a single feature

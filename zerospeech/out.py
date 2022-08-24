@@ -1,11 +1,12 @@
 import contextlib
-import os
 from types import TracebackType
 from typing import IO, Type, AnyStr, Iterator, Iterable, Union, Optional
 
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn, \
+from rich.progress import (
+    Progress, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn,
     FileSizeColumn, TotalFileSizeColumn
+)
 from rich.table import Column
 
 

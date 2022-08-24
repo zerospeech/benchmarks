@@ -3,7 +3,7 @@ import sys
 
 from .settings import get_settings
 from .out import console, error_console
-from .repository import RepositoryIndex
+from .model import repository
 
 import requests
 from pydantic import ValidationError
@@ -16,7 +16,7 @@ def update_repo_index():
     r = requests.get(st.repo_origin)
     data = r.json()
     try:
-        _ = RepositoryIndex(**data)
+        _ = repository.RepositoryIndex(**data)
     except ValidationError:
         error_console.log(f"The given repository @ {st.repository_index} is not valid")
         error_console.log(f"Please contact the administrator to resolve this issue...")
@@ -24,5 +24,4 @@ def update_repo_index():
 
     with st.repository_index.open('w') as fp:
         json.dump(data, fp)
-        console.log("RepositoryIndex has been updated successfully !!")
-
+    console.log("RepositoryIndex has been updated successfully !!")

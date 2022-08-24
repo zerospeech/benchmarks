@@ -1,49 +1,22 @@
 import argparse
-import functools
 from pathlib import Path
 from typing import Optional, Tuple
 
+import libriabx
 import pandas as pd
 from vdataset import mount, unmount
-import libriabx
 
+from .dataset import AbxLSDataset
 from .params import AbxLSBenchmarkParameters, ABXMode, ABXDistanceMode
-from ..generic import Submission, ScoresDir, Task
-from ..validation import remove_ok, show_errors
-from ...data_items import FileListItem, FileTypes, Item, FileItem
-from ...datasets import Dataset, DatasetsDir, DatasetNotFoundError, DatasetNotInstalledError, Namespace
-from ...meta_file import MetaFile
-from ...misc import load_obj
-from ...settings import get_settings
 from .validators import AbxLSSubmissionValidator
+from ...misc import load_obj
+from ...model import m_benchmark, m_datasets, m_data_items, m_meta_file
+from ...settings import get_settings
 
 st = get_settings()
 
 
-class AbxLSDataset(Dataset):
-    """ Class interfacing usage of the ABX-LS dataset"""
-
-    @classmethod
-    @functools.lru_cache
-    def load(cls, load_index: bool = True) -> Optional["AbxLSDataset"]:
-        """ Load """
-        dataset = DatasetsDir.load().get("abxLS-dataset", cls=cls)
-
-        if dataset is None:
-            raise DatasetNotFoundError(f"The abxLS-dataset does not exist")
-
-        if not dataset.installed:
-            raise DatasetNotInstalledError("The abxLS-dataset is not installed locally")
-
-        if load_index:
-            dataset.load_index()
-            # convert all paths to absolute paths
-            dataset.index.make_absolute()
-
-        return dataset
-
-
-class AbxLSSubmission(Submission):
+class AbxLSSubmission(m_benchmark.Submission):
     """ Submission for ABX-LS Benchmark """
     sets: Tuple = ('dev', 'test')
     tasks: Tuple = ('clean', 'other')
@@ -57,31 +30,31 @@ class AbxLSSubmission(Submission):
 
         if 'clean' in tasks:
             if 'dev' in sets:
-                items['dev_clean'] = FileListItem.from_dir(
-                    path / 'dev-clean', f_types=[FileTypes.npy, FileTypes.txt]
+                items['dev_clean'] = m_data_items.FileListItem.from_dir(
+                    path / 'dev-clean', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
                 )
             if 'test' in sets:
-                items['test_clean'] = FileListItem.from_dir(
-                    path / 'test-clean', f_types=[FileTypes.npy, FileTypes.txt]
+                items['test_clean'] = m_data_items.FileListItem.from_dir(
+                    path / 'test-clean', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
                 )
 
         if 'other' in sets:
             if 'dev' in sets:
-                items['dev_other'] = FileListItem.from_dir(
-                    path / 'dev-other', f_types=[FileTypes.npy, FileTypes.txt]
+                items['dev_other'] = m_data_items.FileListItem.from_dir(
+                    path / 'dev-other', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
                 )
             if 'test' in sets:
-                items['test_other'] = FileListItem.from_dir(
-                    path / 'test-other', f_types=[FileTypes.npy, FileTypes.txt]
+                items['test_other'] = m_data_items.FileListItem.from_dir(
+                    path / 'test-other', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
                 )
 
         # submission object
         submission = cls(
             sets=sets,
             tasks=tasks,
-            meta=MetaFile.from_file(path / 'meta.yaml'),
+            meta=m_meta_file.MetaFile.from_file(path / 'meta.yaml'),
             location=path,
-            items=Namespace[Item](store=items),
+            items=m_datasets.Namespace[m_data_items.Item](store=items),
             score_dir=score_dir
         )
 
@@ -97,24 +70,18 @@ class AbxLSSubmission(Submission):
             return AbxLSBenchmarkParameters.parse_obj(obj)
         return AbxLSBenchmarkParameters()
 
-    @functools.lru_cache
-    def is_valid(self, quiet: bool = False) -> bool:
+    def __validate_submission__(self):
         """ Run validation on the submission data """
-        validator = AbxLSSubmissionValidator()
-        results = validator.validate(self)
-        if quiet:
-            bad_res = remove_ok(results)
-            return len(bad_res) == 0
-        return show_errors(results)
+        self.validation_output = AbxLSSubmissionValidator().validate(self)
 
-    def get_scores(self) -> ScoresDir:
+    def get_scores(self) -> m_benchmark.ScoresDir:
         pass
 
 
 default_params = AbxLSBenchmarkParameters()
 
 
-class AbxLSTask(Task):
+class AbxLSTask(m_benchmark.Task):
     """ Abstract abx-LS task """
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = default_params.path_checkpoint
@@ -150,7 +117,7 @@ class AbxLSTask(Task):
                 path_checkpoint=self.path_checkpoint,
             ))
 
-    def get_abx(self, sub_files: FileListItem, item_file: FileItem):
+    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem):
         data_loc = mount(sub_files.files_list, tmp_prefix=st.TMP_DIR)
         arg_obj = self.abx_args(data_loc, sub_files.file_type.ext, item_file.file)
         res = libriabx.run_abx(arg_obj=arg_obj)
@@ -164,7 +131,7 @@ class AbxLSTask(Task):
         self.tasks = submission.tasks
         results = {}
 
-        if 'dev' is self.sets:
+        if 'dev' in self.sets:
             if 'clean' in self.tasks:
                 results['dev-clean'] = self.get_abx(
                     sub_files=submission.items.dev_clean,
@@ -177,7 +144,7 @@ class AbxLSTask(Task):
                     item_file=dataset.index.subsets.dev_other.items.item_file
                 )
 
-        if 'test' is self.sets:
+        if 'test' in self.sets:
             if 'clean' in self.tasks:
                 results['test-clean'] = self.get_abx(
                     sub_files=submission.items.test_clean,

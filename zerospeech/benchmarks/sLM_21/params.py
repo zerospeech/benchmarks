@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 from pydantic import BaseModel
 
-from zerospeech.benchmarks.generic import BenchmarkParameters
+from ...model import m_benchmark
 
 FileNameType = Dict[str, Dict[str, str]]
 
@@ -108,7 +108,7 @@ class SyntacticParams(BaseModel):
     )
 
 
-class SLM21BenchmarkParameters(BenchmarkParameters):
+class SLM21BenchmarkParameters(m_benchmark.BenchmarkParameters):
     lexical: LexicalParams = LexicalParams()
     syntactic: SyntacticParams = SyntacticParams()
     semantic: SemanticParams = SemanticParams()

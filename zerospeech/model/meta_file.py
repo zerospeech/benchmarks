@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, AnyUrl
 
-from zerospeech.misc import load_obj
+from ..misc import load_obj
 
 
 class PublicationInfo(BaseModel):

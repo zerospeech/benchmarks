@@ -1,2 +1,3 @@
-from .data_model import SLM21Dataset, SLM21Submission, SLM21BenchmarkParameters
+from .submission import SLM21Submission, SLM21BenchmarkParameters
+from .dataset import SLM21Dataset
 from .benchmark import SLM21Benchmark
