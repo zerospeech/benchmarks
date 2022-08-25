@@ -8,12 +8,30 @@ import yaml
 from ...model import m_benchmark
 
 
-ABXFileTypes = Enum('ABXFileTypes',
-                    '.pt .npy .txt .wav .flac .mp3')
-ABXMode = Enum('ABXMode', 'all within across')
+class ABXFileTypes(str, Enum):
+    """ Input file type for abx"""
+    pt = '.pt'
+    npy = '.npy'
+    txt = '.txt'
+    wav = '.wav'
+    flac = '.flac'
+    mp3 = '.mp3'
 
-ABXDistanceMode = Enum('ABXDistanceMode',
-                       'euclidian cosine kl kl_symmetric')
+
+class ABXMode(str, Enum):
+    """ ABX mode of computation """
+    all = 'all'
+    within = 'within'
+    across = 'across'
+
+
+class ABXDistanceMode(str, Enum):
+    """ Enumeration for distance mode for abx algorithm"""
+    euclidian = 'euclidian'
+    cosine = 'cosine'
+    kl = 'kl'
+    kl_symmetric = 'kl_symmetric'
+
 
 FileNameType = Dict[str, Dict[str, str]]
 

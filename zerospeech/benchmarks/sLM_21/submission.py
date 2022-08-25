@@ -57,8 +57,7 @@ class SLM21Submission(m_benchmark.Submission):
         submission = cls(
             sets=sets,
             tasks=tasks,
-            # todo fix submission load failure when meta.yaml not found !!!
-            meta=m_meta_file.MetaFile.from_file(path / 'meta.yaml'),
+            meta=None,
             location=path,
             items=m_datasets.Namespace[m_data_items.Item](store=items),
             score_dir=score_dir
@@ -75,6 +74,11 @@ class SLM21Submission(m_benchmark.Submission):
             obj = load_obj(self.params_file)
             return SLM21BenchmarkParameters.parse_obj(obj)
         return SLM21BenchmarkParameters()
+
+    def load_meta(self):
+        if not self.meta_file.is_file():
+            raise ValueError(f'Submission {self.location} is missing the {self.meta_file.name}')
+        self.meta = m_meta_file.MetaFile.from_file(self.meta_file.is_file())
 
     def __validate_submission__(self):
         """ Run validation on the submission data """

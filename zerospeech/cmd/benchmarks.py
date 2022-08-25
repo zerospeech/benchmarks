@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from ..benchmarks import BenchmarkList
+from ..model import m_benchmark
 from .cli_lib import CMD
 from ..out import error_console, console, warning_console
 
@@ -29,7 +30,8 @@ class BenchmarkRunCMD(CMD):
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument("name")
         parser.add_argument("submission_dir")
-        parser.add_argument("-o", "--output", default="scores", help="Output location")
+        parser.add_argument("-o", "--output", default="scores", help="Output location"),
+        parser.add_argument('--skip-validation', action="store_true", help="Skip the validation of submission")
         parser.add_argument("-s", "--sets", nargs='*', action='store', default=('all',),
                             help="Limit the sets the benchmark is run on")
         parser.add_argument("-t", "--tasks", nargs='*', action='store', default=('all',),
@@ -50,17 +52,23 @@ class BenchmarkRunCMD(CMD):
             error_console.log(f"Submission directory given does not exist !!!")
             sys.exit(1)
 
-        submission = bench.submission.load(path=sub_dir)
-        # todo check validity of submission
+        load_args = {}
+        if 'all' not in argv.sets and len(argv.sets) > 0:
+            load_args['sets'] = argv.sets
 
-        if 'all' not in argv.sets:
-            submission.sets = argv.sets
+        if 'all' not in argv.tasks and len(argv.sets) > 0:
+            load_args['tasks'] =  argv.tasks
 
-        if 'all' not in argv.tasks:
-            submission.tasks = argv.tasks
+        submission = bench.submission.load(path=sub_dir, **load_args)
+
+        if not argv.skip_validation:
+            if not submission.valid:
+                error_console.print(f"Found Errors in submission: {submission.location}")
+                m_benchmark.show_errors(submission.validation_output)
+                sys.exit(1)
 
         # load saved parameters
-        submission.params = submission.load_parameters()
+        submission.params_obj = submission.load_parameters()
 
         # update values from args
         submission.params.quiet = argv.quiet

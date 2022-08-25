@@ -30,5 +30,8 @@ class MetaFile(BaseModel):
     code_url: Optional[AnyUrl]
 
     @classmethod
-    def from_file(cls, file: Path):
+    def from_file(cls, file: Path, enforce: bool = False):
+        if not file.is_file() and not enforce:
+            return None
+
         return cls.parse_obj(load_obj(file))

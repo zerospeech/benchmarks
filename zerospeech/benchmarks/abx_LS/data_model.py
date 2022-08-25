@@ -52,7 +52,6 @@ class AbxLSSubmission(m_benchmark.Submission):
         submission = cls(
             sets=sets,
             tasks=tasks,
-            meta=m_meta_file.MetaFile.from_file(path / 'meta.yaml'),
             location=path,
             items=m_datasets.Namespace[m_data_items.Item](store=items),
             score_dir=score_dir
@@ -74,6 +73,12 @@ class AbxLSSubmission(m_benchmark.Submission):
         """ Run validation on the submission data """
         self.validation_output = AbxLSSubmissionValidator().validate(self)
 
+    def load_meta(self):
+        """ Load metadata file """
+        if not self.meta_file.is_file():
+            raise ValueError(f'Submission {self.location} is missing the {self.meta_file.name}')
+        self.meta = m_meta_file.MetaFile.from_file(self.meta_file.is_file())
+
     def get_scores(self) -> m_benchmark.ScoresDir:
         pass
 
@@ -83,6 +88,7 @@ default_params = AbxLSBenchmarkParameters()
 
 class AbxLSTask(m_benchmark.Task):
     """ Abstract abx-LS task """
+    _name = "abx-LS"
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = default_params.path_checkpoint
     # size of a single feature
@@ -115,6 +121,9 @@ class AbxLSTask(m_benchmark.Task):
                 cuda=self.cuda,
                 file_extension=file_ext,
                 path_checkpoint=self.path_checkpoint,
+                mode=self.mode,
+                max_size_group=self.max_size_group,
+                max_x_across=self.max_x_across
             ))
 
     def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem):

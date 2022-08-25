@@ -167,10 +167,10 @@ class BenchmarkParameters(BaseModel, abc.ABC):
 
 
 class Submission(BaseModel, abc.ABC):
-    meta: MetaFile
     location: Path
     items: Optional[Namespace[Item]]
     score_dir: Path = Path('scores')
+    meta: Optional[MetaFile] = None
     params_obj: BenchmarkParameters = None
     validation_output: List[ValidationResponse] = Field(default_factory=list)
 
@@ -190,18 +190,22 @@ class Submission(BaseModel, abc.ABC):
         return self.location / BenchmarkParameters.file_stem
 
     @property
+    def meta_file(self):
+        return self.location / 'meta.yaml'
+
+    @property
     def params(self):
         if self.params_obj is None:
             self.params_obj = self.load_parameters()
         return self.params_obj
 
-    @params.setter
-    def params(self, value):
-        self.params_obj = value
-
     @classmethod
     @abc.abstractmethod
     def load(cls, path: Path, score_dir: Path = Path("scores"), **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def load_meta(self):
         pass
 
     @abc.abstractmethod
