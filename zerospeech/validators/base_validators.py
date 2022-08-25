@@ -1,4 +1,4 @@
-from pathlib import Path
+import functools
 from pathlib import Path
 from typing import List, Callable, Any, Type
 
@@ -85,3 +85,18 @@ def numpy_dtype_check(array: np.ndarray, dtype: np.dtype):
         return [m_benchmark.ValidationError(
             f'Array should be of type: {dtype}')]
     return []
+
+
+def numpy_col_comparison(dim: int):
+    ncols = []
+
+    def comparison(array: np.ndarray):
+        ncols.append(array.shape[dim])
+
+        if len(set(ncols)) != 1:
+            return [
+                m_benchmark.ValidationError(f'Arrays do not match dimensions {dim}')
+            ]
+        return []
+
+    return comparison

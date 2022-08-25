@@ -17,6 +17,7 @@ from ..out import error_console, warning_console
 
 def validation_fn(target: str):
     """ Wrapper function to mark validation items """
+
     def fn_wrapper(method):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
@@ -32,6 +33,13 @@ def validation_fn(target: str):
 class ValidationResponse(abc.ABC):
     """ Abstract class defining a Message object specifying validation Errors/Warnings/Checks """
 
+    def __init__(self, msg, *, data=None, item_name=None, filename=None, location=None):
+        self.item_name = item_name
+        self.filename = filename
+        self.location = location
+        self.msg = msg
+        self.data = data
+
     def valid(self):
         return getattr(self, '__is_valid__', False)
 
@@ -45,11 +53,21 @@ class ValidationResponse(abc.ABC):
         return getattr(self, '__is_ok__', False)
 
     def __str__(self):
-        item_name = getattr(self, 'item_name', '')
-        msg = getattr(self, 'msg', '')
-        data = getattr(self, 'data', '')
+        item_name = '-'
+        if self.item_name:
+            item_name = self.item_name
+        filename = '[-'
+        if self.filename:
+            filename = f"[{self.filename}"
+        location = ':-]'
+        if self.location:
+            location = f":{self.location}]"
+        msg = ''
+        if self.msg:
+            msg = self.msg
+
         cls_name = self.__class__.__name__
-        return f'{cls_name}({item_name}): {msg}'
+        return f'{cls_name}({item_name}){filename}{location}>> {msg}'
 
 
 class ValidationWarning(ValidationResponse):
@@ -57,21 +75,11 @@ class ValidationWarning(ValidationResponse):
     __is_warning__ = True
     __is_valid__ = True
 
-    def __init__(self, msg, *, data=None, item_name=None):
-        self.item_name = item_name
-        self.msg = msg
-        self.data = data
-
 
 class ValidationError(ValidationResponse):
     """ Class designating a validation error """
     __is_error__ = True
     __is_valid__ = False
-
-    def __init__(self, msg, *, data=None, item_name=None):
-        self.item_name = item_name
-        self.msg = msg
-        self.data = data
 
 
 class ValidationOK(ValidationResponse):
@@ -79,16 +87,17 @@ class ValidationOK(ValidationResponse):
     __is_ok__ = True
     __is_valid__ = True
 
-    def __init__(self, msg, *, data=None, item_name=None):
-        self.item_name = item_name
-        self.msg = msg
-        self.data = data
-
 
 def add_item(item_name: str, resp: List[ValidationResponse]):
     """ Add item name to Validation Response list """
     for r in resp:
         r.item_name = item_name
+
+
+def add_filename(filename: str, resp: List[ValidationResponse]):
+    """ Add filename to a Validation Response List """
+    for r in resp:
+        r.filename = filename
 
 
 def show_errors(resp: List[ValidationResponse], allow_warnings: bool = True):
