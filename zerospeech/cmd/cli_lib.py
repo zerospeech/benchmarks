@@ -7,15 +7,16 @@ from typing import Optional, Type
 
 from treelib import Tree, Node
 
+from ..out import console, void_console
+
 NAMESPACE_SEP = ":"
-
-
 LIST_OF_COMMANDS = []
 
 
 class CMD(abc.ABC):
     COMMAND = "<cmd_name>"
     NAMESPACE = "<cmd-path>"
+    quiet: bool = False
 
     def __init__(self, root):
         self._unique_id = f"{uuid.uuid4()}"
@@ -53,6 +54,12 @@ class CMD(abc.ABC):
         return self.__doc__
 
     @property
+    def console(self):
+        if self.quiet:
+            return void_console
+        return console
+
+    @property
     def long_description(self):
         return self.run.__doc__
 
@@ -79,6 +86,9 @@ class CMD(abc.ABC):
         # argcomplete.autocomplete(parser)
         argv = argv if argv is not None else sys.argv[1:]
         args = self.parser.parse_args(argv)
+        # if quiet mode is set propagate it
+        self.quiet = getattr(args, 'quiet', False)
+        # run command
         self.run(args)
 
     @abc.abstractmethod

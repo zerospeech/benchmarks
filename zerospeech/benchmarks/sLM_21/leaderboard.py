@@ -1,9 +1,8 @@
-from collections import namedtuple
 from typing import List, Optional
 
 from pydantic import BaseModel
 
-from .abc import LeaderboardEntry, LeaderboardScores, Leaderboard, Benchmark, LeaderboardExtras
+from ...model import m_leaderboard
 
 
 class LexicalByLength(BaseModel):
@@ -48,7 +47,7 @@ class SemanticExtras(BaseModel):
     synthetic: float
 
 
-class SLM21Extras(LeaderboardExtras):
+class SLM21Extras(m_leaderboard.LeaderboardExtras):
     lexical: LexicalExtras
     syntactic: List[SyntacticExtras]
     semantic: List[SemanticExtras]
@@ -74,17 +73,17 @@ class SemanticScores(BaseModel):
     weighted: SemanticScoreSets
 
 
-class SLM21Scores(LeaderboardScores):
+class SLM21Scores(m_leaderboard.LeaderboardScores):
     lexical: LexicalScores
     syntactic: ScoreTuple
     semantic: SemanticScores
 
 
-class SLM21Entry(LeaderboardEntry):
+class SLM21LeaderboardEntry(m_leaderboard.LeaderboardEntry):
     scores: SLM21Scores
     extras: SLM21Extras
 
 
-class SLM21(Leaderboard):
-    data: List[SLM21Entry]
-    _type = Benchmark.sLM_21
+class SLM21Leaderboard(m_leaderboard.Leaderboard):
+    data: List[SLM21LeaderboardEntry]
+    _type = m_leaderboard.Benchmark.sLM_21

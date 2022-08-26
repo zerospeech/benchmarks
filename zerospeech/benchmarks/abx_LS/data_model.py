@@ -79,7 +79,7 @@ class AbxLSSubmission(m_benchmark.Submission):
             raise ValueError(f'Submission {self.location} is missing the {self.meta_file.name}')
         self.meta = m_meta_file.MetaFile.from_file(self.meta_file.is_file())
 
-    def get_scores(self) -> m_benchmark.ScoresDir:
+    def get_scores(self):
         pass
 
 

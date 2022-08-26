@@ -163,33 +163,47 @@ class LexicalTask(m_benchmark.Task):
         if 'dev' in self.sets:
             sub = submission.items.lexical_dev
             gold = dataset.index.subsets.lexical_dev.items.gold
-            by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
+            with self.console.status('Running lexical_dev evaluation....', spinner="aesthetic"):
+                by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
 
             if by_pair is not None:
                 filename = output_dir / f"{self.result_filenames['dev']['by_pair']}"
+                self.console.print(f":pencil: writing {self.result_filenames['dev']['by_pair']}",
+                                   style="underline yellow4")
                 by_pair.to_csv(filename, index=False, float_format='%.4f')
 
             if by_frequency is not None:
                 filename = output_dir / f"{self.result_filenames['dev']['by_frequency']}"
+                self.console.print(f":pencil: writing {self.result_filenames['dev']['by_frequency']}",
+                                   style="underline yellow4")
                 by_frequency.to_csv(filename, index=False, float_format='%.4f')
 
             if by_length is not None:
                 filename = output_dir / f"{self.result_filenames['dev']['by_length']}"
+                self.console.print(f":pencil: writing {self.result_filenames['dev']['by_length']}",
+                                   style="underline yellow4")
                 by_length.to_csv(filename, index=False, float_format='%.4f')
 
         if 'test' in self.sets:
             sub = submission.items.lexical_test
             gold = dataset.index.subsets.lexical_test.items.gold
-            by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
+            with self.console.status('Running lexical_dev evaluation....', spinner="aesthetic"):
+                by_pair, by_frequency, by_length = self.run_lexical_eval(sub, gold)
 
             if by_pair is not None:
                 filename = output_dir / f"{self.result_filenames['test']['by_pair']}"
+                self.console.print(f":pencil: writing {self.result_filenames['test']['by_pair']}",
+                                   style="underline yellow4")
                 by_pair.to_csv(filename, index=False, float_format='%.4f')
 
             if by_frequency is not None:
                 filename = output_dir / f"{self.result_filenames['test']['by_frequency']}"
+                self.console.print(f":pencil: writing {self.result_filenames['test']['by_frequency']}",
+                                   style="underline yellow4")
                 by_frequency.to_csv(filename, index=False, float_format='%.4f')
 
             if by_length is not None:
                 filename = output_dir / f"{self.result_filenames['test']['by_length']}"
+                self.console.print(f":pencil: writing {self.result_filenames['test']['by_length']}",
+                                   style="underline yellow4")
                 by_length.to_csv(filename, index=False, float_format='%.4f')

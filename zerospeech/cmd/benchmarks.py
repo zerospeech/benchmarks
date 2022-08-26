@@ -2,10 +2,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from .cli_lib import CMD
 from ..benchmarks import BenchmarkList
 from ..model import m_benchmark
-from .cli_lib import CMD
-from ..out import error_console, console, warning_console
+from ..out import error_console, warning_console
 
 
 class BenchmarksCMD(CMD):
@@ -17,7 +17,7 @@ class BenchmarksCMD(CMD):
         pass
 
     def run(self, argv: argparse.Namespace):
-        console.print(
+        self.console.print(
             f"Available Benchmarks: {','.join(f.value for f in BenchmarkList)}"
         )
 
@@ -47,6 +47,9 @@ class BenchmarkRunCMD(CMD):
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
 
+        spinner = self.console.status("Loading submission !")
+        spinner.start()
+
         sub_dir = Path(argv.submission_dir)
         if not sub_dir.is_dir():
             error_console.log(f"Submission directory given does not exist !!!")
@@ -57,24 +60,32 @@ class BenchmarkRunCMD(CMD):
             load_args['sets'] = argv.sets
 
         if 'all' not in argv.tasks and len(argv.sets) > 0:
-            load_args['tasks'] =  argv.tasks
+            load_args['tasks'] = argv.tasks
 
+        load_args['score_dir'] = Path(argv.output)
         submission = bench.submission.load(path=sub_dir, **load_args)
 
+        spinner.stop()
+        self.console.print(":heavy_check_mark: Submission loaded successfully", style="bold green")
+
         if not argv.skip_validation:
-            if not submission.valid:
-                error_console.print(f"Found Errors in submission: {submission.location}")
-                m_benchmark.show_errors(submission.validation_output)
-                sys.exit(1)
+            with self.console.status("Validating submission... ", spinner="aesthetic"):
+                if not submission.valid:
+                    error_console.print(f"Found Errors in submission: {submission.location}")
+                    m_benchmark.show_errors(submission.validation_output)
+                    sys.exit(1)
+
+            self.console.print(":heavy_check_mark: Submission Valid", style="bold green")
 
         # load saved parameters
+        self.console.print(f"Loaded parameters from :arrow_right: {submission.params_file}")
         submission.params_obj = submission.load_parameters()
 
         # update values from args
         submission.params.quiet = argv.quiet
 
         # Load & run benchmark
-        benchmark = bench.benchmark()
+        benchmark = bench.benchmark(quiet=argv.quiet)
         benchmark.run(submission)
 
 
@@ -104,7 +115,7 @@ class BenchmarkParamsCMD(CMD):
         (sub_dir / bench.parameters.file_stem).unlink(missing_ok=True)
 
         submission = bench.submission.load(path=sub_dir)
-        console.log(f"Params file created/reset at @ {submission.params_file}")
+        self.console.log(f"Params file created/reset at @ {submission.params_file}")
 
 
 class BenchmarksInfoCMD(CMD):
@@ -124,4 +135,4 @@ class BenchmarksInfoCMD(CMD):
             sys.exit(1)
 
         # print benchmark documentation
-        console.print(bench.benchmark.__doc__)
+        self.console.console.print(bench.benchmark.__doc__)

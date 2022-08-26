@@ -11,8 +11,7 @@ from .data_items import Item
 from .datasets import Dataset
 from .datasets import Namespace
 from .meta_file import MetaFile
-from ..out import console as out_console, void_console
-from ..out import error_console, warning_console
+from ..out import console as out_console, void_console, error_console, warning_console
 
 
 def validation_fn(target: str):
@@ -151,11 +150,6 @@ class InvalidSubmissionError(Exception):
     pass
 
 
-class ScoresDir(BaseModel):
-    # todo implement this
-    pass
-
-
 class BenchmarkParameters(BaseModel, abc.ABC):
     """ Abstract Parameter class """
     file_stem: ClassVar[str] = "params.yaml"
@@ -217,7 +211,7 @@ class Submission(BaseModel, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_scores(self) -> ScoresDir:
+    def get_scores(self):
         """ Load scores """
         pass
 
@@ -252,10 +246,17 @@ class Task(BaseModel, abc.ABC):
 class Benchmark(BaseModel, abc.ABC):
     """ A Generic benchmark class """
     dataset: Dataset
+    quiet: bool = False
 
     @property
     def name(self) -> str:
         return getattr(self, '_name')
+
+    @property
+    def console(self):
+        if self.quiet:
+            return void_console
+        return out_console
 
     @root_validator(pre=True)
     def base_validation(cls, values):

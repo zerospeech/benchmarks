@@ -149,21 +149,19 @@ def download_extract_zip(
         progress.update(task1, completed=total, visible=False)
         _console.print("[green]Download completed Successfully!")
 
-    with with_progress(show=show_progress) as progress:
-        task2 = progress.add_task(f"[red]Verifying md5sum from repository...", total=None, visible=False)
-        task3 = progress.add_task(f"[red]Unzipping archive...", total=None, visible=False)
+    # with with_progress(show=show_progress) as progress:
+    #     task2 = progress.add_task(f"[red]Verifying md5sum from repository...", total=None, visible=False)
+    #     task3 = progress.add_task(f"[red]Unzipping archive...", total=None, visible=False)
 
-        if md5sum_hash != "":
-            progress.update(task2, visible=True)
+    if md5sum_hash != "":
+        with _console.status("[red]Verifying md5sum from repository..."):
             h = md5sum(tmp_dir / f"download.zip")
 
-            if h == md5sum_hash:
-                _console.print("[green]MD5 sum verified!")
-            else:
-                _console.print("[green]MD5sum Failed, Check with repository administrator.\nExiting...")
-                sys.exit(1)
-            progress.update(task2, visible=False)
+        if h == md5sum_hash:
+            _console.print("[green]MD5 sum verified!")
+        else:
+            _console.print("[green]MD5sum Failed, Check with repository administrator.\nExiting...")
+            sys.exit(1)
 
-        progress.update(task3, visible=True)
+    with _console.status("[red]Unzipping archive..."):
         unzip(tmp_dir / f"download.zip", target_location)
-        progress.update(task3, visible=False)

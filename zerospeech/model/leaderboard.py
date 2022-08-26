@@ -16,6 +16,33 @@ class Benchmark(str, Enum):
     sLM_21 = "sLM-21"
 
 
+class ABXScoreTuple(BaseModel):
+    within: Optional[float]
+    across: Optional[float]
+
+
+class CatScores(BaseModel):
+    precision: Optional[float]
+    recall: Optional[float]
+    fscore: Optional[float]
+
+
+class NLPScores(BaseModel):
+    ned: Optional[float]
+    coverage: Optional[float]
+    nwords: Optional[int]
+    npairs: Optional[int]
+
+
+class TDEScoreTuple(BaseModel):
+    grouping: Optional[CatScores]
+    token: Optional[CatScores]
+    type: Optional[CatScores]
+    boundary: Optional[CatScores]
+    matching: Optional[CatScores]
+    nlp: Optional[NLPScores]
+
+
 class EntryDetails(BaseModel):
     train_set: Optional[str]
     benchmarks: List[Benchmark]

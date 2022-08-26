@@ -84,5 +84,5 @@ class SLM21Submission(m_benchmark.Submission):
         """ Run validation on the submission data """
         self.validation_output = SLM21SubmissionValidator().validate(self)
 
-    def get_scores(self) -> m_benchmark.ScoresDir:
+    def get_scores(self):
         pass

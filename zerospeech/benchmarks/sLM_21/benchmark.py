@@ -27,6 +27,7 @@ class SLM21Benchmark(m_benchmark.Benchmark):
     def run(self, submission: SLM21Submission):
         """ Run sLM21 tasks """
         params = submission.params
+        self.console.print(f'Running {self.name} benchmark on {submission.location.name}')
 
         # create output dir
         submission.score_dir.mkdir(exist_ok=True, parents=True)
@@ -43,3 +44,5 @@ class SLM21Benchmark(m_benchmark.Benchmark):
             task3.eval(submission, self.dataset)
 
         # todo leaderboard entry ...
+        self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
+        self.console.print(f"Scores can be found @ {submission.score_dir}")
