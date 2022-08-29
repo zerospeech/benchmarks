@@ -9,4 +9,4 @@ joblib
 sox
 treelib
 virtual-dataset
-https://github.com/zerospeech/libri-light-abx/archive/refs/tags/v1.0.2.tar.gz
+https://github.com/zerospeech/libri-light-abx/archive/refs/tags/v1.0.3.tar.gz

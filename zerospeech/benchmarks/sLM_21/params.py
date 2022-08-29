@@ -131,6 +131,17 @@ class SLM21BenchmarkParameters(m_benchmark.BenchmarkParameters):
             **self.syntactic.dict()
         }
 
+    def to_meta(self) -> dict[str, Any]:
+        """ Convert into leaderboard meta entry """
+        # filtering non-interfaced param values
+        excluded = {
+            'lexical': True,
+            'syntactic': True,
+            'semantic': {'result_filenames', 'correlations'}
+        }
+
+        return dict(self._iter(to_dict=True, exclude=excluded))
+
     def export(self, file: Path):
         # filtering non-interfaced param values
         excluded = {

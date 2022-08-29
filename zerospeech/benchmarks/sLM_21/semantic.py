@@ -143,13 +143,18 @@ class SemanticTask(benchmark.Task):
                 synthetic=submission.items.semantic_dev_synthetic,
                 librispeech=submission.items.semantic_dev_librispeech
             )
-            res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
+            with self.console.status('Running semantic_dev evaluation....', spinner="aesthetic"):
+                res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
 
             filename = outputs_dir / self.result_filenames['dev']['pairs']
+            self.console.print(f":pencil: writing {self.result_filenames['dev']['pairs']}",
+                               style="underline yellow4")
             res_pairs.to_csv(filename, index=False, float_format='%.4f')
 
             if self.correlations and correlation is not None:
                 filename = outputs_dir / self.result_filenames['dev']['correlations']
+                self.console.print(f":pencil: writing {self.result_filenames['dev']['correlations']}",
+                                   style="underline yellow4")
                 correlation.to_csv(filename, index=False, float_format='%.4f')
 
         if 'test' in self.sets:
@@ -159,11 +164,16 @@ class SemanticTask(benchmark.Task):
                 synthetic=submission.items.semantic_test_synthetic,
                 librispeech=submission.items.semantic_test_librispeech
             )
-            res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
+            with self.console.status('Running semantic_test evaluation....', spinner="aesthetic"):
+                res_pairs, correlation = self.semantic_eval(file_index, gold, pairs)
 
             filename = outputs_dir / self.result_filenames['test']['pairs']
+            self.console.print(f":pencil: writing {self.result_filenames['test']['pairs']}",
+                               style="underline yellow4")
             res_pairs.to_csv(filename, index=False, float_format='%.4f')
 
-            if self.correlations and correlation:
+            if self.correlations and correlation is not None:
                 filename = outputs_dir / self.result_filenames['test']['correlations']
+                self.console.print(f":pencil: writing {self.result_filenames['test']['correlations']}",
+                                   style="underline yellow4")
                 correlation.to_csv(filename, index=False, float_format='%.4f')

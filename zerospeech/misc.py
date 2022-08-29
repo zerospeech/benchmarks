@@ -1,4 +1,6 @@
+import contextlib
 import enum
+import io
 import json
 import re
 import sys
@@ -165,3 +167,12 @@ def download_extract_zip(
 
     with _console.status("[red]Unzipping archive..."):
         unzip(tmp_dir / f"download.zip", target_location)
+
+
+@contextlib.contextmanager
+def nostdout():
+    """ Redirect stdout to /dev/null """
+    save_stdout = sys.stdout
+    sys.stdout = io.BytesIO()
+    yield
+    sys.stdout = save_stdout

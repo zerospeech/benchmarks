@@ -1,28 +1,28 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...model import m_leaderboard
 
 
 class LexicalByLength(BaseModel):
     length: int
-    dev_score: float
-    dev_std: float
-    dev_n: float
-    test_score: float
-    test_std: float
-    test_n: float
+    dev_score: float = Field(alias="score_dev")
+    dev_std: float = Field(alias="std_dev")
+    dev_n: float = Field(alias="n_dev")
+    test_score: float = Field(alias="score_test")
+    test_std: float = Field(alias="std_test")
+    test_n: float = Field(alias="n_test")
 
 
 class LexicalByFrequency(BaseModel):
     frequency: str
-    dev_score: float
-    dev_std: float
-    dev_n: float
-    test_score: float
-    test_std: float
-    test_n: float
+    dev_score: float = Field(alias="score_dev")
+    dev_std: float = Field(alias="std_dev")
+    dev_n: float = Field(alias="n_dev")
+    test_score: float = Field(alias="score_test")
+    test_std: float = Field(alias="std_test")
+    test_n: float = Field(alias="n_test")
 
 
 class LexicalExtras(BaseModel):
@@ -32,12 +32,12 @@ class LexicalExtras(BaseModel):
 
 class SyntacticExtras(BaseModel):
     typeset: str
-    dev_score: float
-    dev_std: float
-    dev_n: float
-    test_score: float
-    test_std: float
-    test_n: float
+    dev_score: float = Field(alias="score_dev")
+    dev_std: float = Field(alias="std_dev")
+    dev_n: float = Field(alias="n_dev")
+    test_score: float = Field(alias="score_test")
+    test_std: float = Field(alias="std_test")
+    test_n: float = Field(alias="n_test")
 
 
 class SemanticExtras(BaseModel):

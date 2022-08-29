@@ -23,6 +23,7 @@ class AbxLSBenchmark(m_benchmark.Benchmark):
     def run(self, submission: AbxLSSubmission):
         """ Run abx-LS tasks """
         params = submission.params
+        self.console.print(f'Running {self.name} benchmark on {submission.location.name}')
 
         # create output dir
         submission.score_dir.mkdir(exist_ok=True, parents=True)
@@ -30,3 +31,6 @@ class AbxLSBenchmark(m_benchmark.Benchmark):
         task.eval(submission, self.dataset)
 
         # todo leaderboard entry ...
+        self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
+        self.console.print(f"Scores can be found @ {submission.score_dir}")
+

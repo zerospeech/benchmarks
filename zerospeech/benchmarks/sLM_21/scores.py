@@ -1,8 +1,10 @@
+import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Dict, Optional
 
 import numpy as np
 import pandas as pd
+from pydantic import Extra
 
 from ...model import m_score_dir
 from .leaderboard import (
@@ -10,72 +12,81 @@ from .leaderboard import (
     LexicalExtras, SLM21Scores, SemanticScores, SemanticScoreSets, SLM21Extras, SyntacticExtras, SemanticExtras
 )
 from ...data_loaders import load_dataframe
-from ...model import m_leaderboard
+from ...model import m_leaderboard, m_meta_file
+from .params import SLM21BenchmarkParameters
 
 
 class SLM21ScoreDir(m_score_dir.ScoreDir):
+    """ Data representation of the sLM21 scores directory """
+    semantic_size: Dict[str, pd.DataFrame]  # needed for the semantic weighted metric
+    meta_file: Optional[m_meta_file.MetaFile] = None
+    params: Optional[SLM21BenchmarkParameters] = SLM21BenchmarkParameters()
+
+    class Config:
+        arbitrary_types_allowed = Extra.ignore
 
     @property
     def lexical_dev_by_pair(self):
-        csv_file = self.location / self.output_files['lexical_dev_by_pair']
+        csv_file = self.location / self.output_files['lexical']['dev']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_pair(self):
-        csv_file = self.location / self.output_files['lexical_test_by_pair']
+        csv_file = self.location / self.output_files['lexical']['test']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def lexical_dev_by_frequency(self):
-        csv_file = self.location / self.output_files['lexical_dev_by_frequency']
+        csv_file = self.location / self.output_files['lexical']['dev']['by_frequency']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_frequency(self):
-        csv_file = self.location / self.output_files['lexical_test_by_frequency']
+        csv_file = self.location / self.output_files['lexical']['test']['by_frequency']
         return load_dataframe(csv_file)
 
     @property
     def lexical_dev_by_length(self):
-        csv_file = self.location / self.output_files['lexical_dev_by_length']
+        csv_file = self.location / self.output_files['lexical']['dev']['by_length']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_length(self):
-        csv_file = self.location / self.output_files['lexical_test_by_length']
+        csv_file = self.location / self.output_files['lexical']['test']['by_length']
         return load_dataframe(csv_file)
 
     @property
     def semantic_dev_correlation(self):
-        csv_file = self.location / self.output_files['semantic_dev_correlation']
+        csv_file = self.location / self.output_files['semantic']['dev']['correlations']
         return load_dataframe(csv_file)
 
     @property
     def semantic_test_correlation(self):
-        csv_file = self.location / self.output_files['semantic_test_correlation']
+        csv_file = self.location / self.output_files['semantic']['test']['correlations']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_dev_by_pair(self):
-        csv_file = self.location / self.output_files['syntactic_dev_by_pair']
+        csv_file = self.location / self.output_files['syntactic']['dev']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_test_by_pair(self):
-        csv_file = self.location / self.output_files['syntactic_test_by_pair']
+        csv_file = self.location / self.output_files['syntactic']['test']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_dev_by_type(self):
-        csv_file = self.location / self.output_files['syntactic_dev_by_type']
+        csv_file = self.location / self.output_files['syntactic']['dev']['by_type']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_test_by_type(self):
-        csv_file = self.location / self.output_files['syntactic_test_by_type']
+        csv_file = self.location / self.output_files['syntactic']['test']['by_type']
         return load_dataframe(csv_file)
 
     def lexical_scores(self) -> LexicalScores:
+        """ Extract lexical resume of scores """
         dev_score = self.lexical_dev_by_pair['score'].mean()
         test_score = self.lexical_test_by_pair['score'].mean()
 
@@ -96,6 +107,7 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
         )
 
     def lexical_extras(self):
+        """ Extract lexical detailed scores """
         frequency_dev = self.lexical_dev_by_frequency
         frequency_test = self.lexical_test_by_frequency
 
@@ -107,33 +119,94 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
 
         by_length = pd.merge(length_dev, length_test, how="outer", on=['length'], suffixes=('_dev', '_test'))
 
-        return LexicalExtras(
+        return LexicalExtras.parse_obj(dict(
             by_length=by_length.to_dict(orient='records'),
             by_frequency=by_frequency.to_dict(orient='records')
-        )
+        ))
 
     def syntactic_scores(self) -> ScoreTuple:
-        return ScoreTuple(dev=1.0, test=1.0)
+        """ Extract syntactic score resume """
+        dev_mean = self.syntactic_dev_by_pair['score'].mean()
+        test_mean = self.syntactic_test_by_pair['score'].mean()
+        return ScoreTuple(dev=dev_mean, test=test_mean)
 
     def syntactic_extras(self) -> List[SyntacticExtras]:
-        return []
+        """ Extract syntactic detailed scores """
+        dev_types = self.syntactic_dev_by_type
+        test_types = self.syntactic_test_by_type
+
+        # merge
+        merged = pd.merge(dev_types, test_types, how="outer", on=["type"], suffixes=("_dev", "_test"))
+        merged.rename(columns={'type': 'typeset'}, inplace=True)
+
+        return [SyntacticExtras(**se) for se in merged.to_dict(orient='records')]
 
     def semantic_scores(self) -> SemanticScores:
+        """ Extract semantic score resume """
+        dev_correlations = self.semantic_dev_correlation
+        test_correlations = self.semantic_test_correlation
+
+        # Mean
+        dev_librispeech_mean = dev_correlations[dev_correlations['type'] == 'librispeech']['correlation'].mean()
+        dev_synthetic_mean = dev_correlations[dev_correlations['type'] == 'synthetic']['correlation'].mean()
+        test_librispeech_mean = test_correlations[test_correlations['type'] == 'librispeech']['correlation'].mean()
+        test_synthetic_mean = test_correlations[test_correlations['type'] == 'synthetic']['correlation'].mean()
+
+        # Weighted Mean
+        dev_correlations['size'] = self.semantic_size['dev']['size']
+        dev_librispeech_wmean = np.average(
+            dev_correlations[dev_correlations['type'] == 'librispeech']['correlation'].to_numpy(),
+            weights=dev_correlations[dev_correlations['type'] == 'librispeech']['size'].to_numpy())
+        dev_synthetic_wmean = np.average(
+            dev_correlations[dev_correlations['type'] == 'synthetic']['correlation'].to_numpy(),
+            weights=dev_correlations[dev_correlations['type'] == 'synthetic']['size'].to_numpy())
+
+        test_correlations['size'] = self.semantic_size['test']['size']
+        test_librispeech_wmean = np.average(
+            test_correlations[test_correlations['type'] == 'librispeech']['correlation'].to_numpy(),
+            weights=test_correlations[test_correlations['type'] == 'librispeech']['size'].to_numpy())
+        test_synthetic_wmean = np.average(
+            test_correlations[test_correlations['type'] == 'synthetic']['correlation'].to_numpy(),
+            weights=test_correlations[test_correlations['type'] == 'synthetic']['size'].to_numpy())
+
         return SemanticScores(
             normal=SemanticScoreSets(
-                synthetic=ScoreTuple(dev=1.0, test=1.0),
-                librispeech=ScoreTuple(dev=1.0, test=1.0),
+                synthetic=ScoreTuple(dev=dev_synthetic_mean, test=test_synthetic_mean),
+                librispeech=ScoreTuple(dev=dev_librispeech_mean, test=test_librispeech_mean),
             ),
             weighted=SemanticScoreSets(
-                synthetic=ScoreTuple(dev=1.0, test=1.0),
-                librispeech=ScoreTuple(dev=1.0, test=1.0),
+                synthetic=ScoreTuple(dev=dev_synthetic_wmean, test=test_synthetic_wmean),
+                librispeech=ScoreTuple(dev=dev_librispeech_wmean, test=test_librispeech_wmean),
             )
         )
 
     def semantic_extras(self) -> List[SemanticExtras]:
-        return []
+        """ Extract semantic score resume """
+        dev_correlations = self.semantic_dev_correlation
+        test_correlations = self.semantic_test_correlation
+
+        ndev_correlations = dev_correlations \
+            .set_index(['dataset', dev_correlations.groupby('dataset').cumcount()])['correlation'] \
+            .unstack() \
+            .reset_index()
+        ndev_correlations.columns = ['dataset', 'librispeech', 'synthetic']
+        ndev_correlations["set"] = "dev"
+
+        ntest_correlations = test_correlations \
+            .set_index(['dataset', test_correlations.groupby('dataset').cumcount()])['correlation'] \
+            .unstack() \
+            .reset_index()
+        ntest_correlations.columns = ['dataset', 'librispeech', 'synthetic']
+        ntest_correlations["set"] = "test"
+
+        # DeprecationWarning from pandas: append is to be replaced by concat
+        correlations = pd.concat([ndev_correlations, ntest_correlations], axis=0)
+        # correlations = ndev_correlations.append(ntest_correlations)
+
+        return [SemanticExtras(**se) for se in correlations.to_dict(orient='records')]
 
     def build_scores(self) -> SLM21Scores:
+        """ Extract all score resume """
         return SLM21Scores(
             lexical=self.lexical_scores(),
             syntactic=self.syntactic_scores(),
@@ -141,6 +214,7 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
         )
 
     def build_extras(self) -> SLM21Extras:
+        """ Extract all detailed scores """
         return SLM21Extras(
             lexical=self.lexical_extras(),
             syntactic=self.syntactic_extras(),
@@ -148,23 +222,48 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
         )
 
     def get_publication_info(self) -> m_leaderboard.PublicationEntry:
-        return m_leaderboard.PublicationEntry(
-            institution=""
-        )
+        """ Build publication info """
+        if self.meta_file is None:
+            return m_leaderboard.PublicationEntry(
+                institution=""
+            )
+        return self.meta_file.get_publication_info()
 
     def get_details(self) -> m_leaderboard.EntryDetails:
+        """ Build entry details """
+        train_set = ""
+        gpu_budget = ""
+
+        if self.meta_file is not None:
+            train_set = self.meta_file.model_info.train_set
+            gpu_budget = self.meta_file.model_info.gpu_budget
+
         return m_leaderboard.EntryDetails(
-            benchmarks=[m_leaderboard.Benchmark.sLM_21]
+            train_set=train_set,
+            benchmarks=[m_leaderboard.Benchmark.sLM_21],
+            gpu_budget=gpu_budget,
+            parameters=self.params.to_meta()
         )
 
     def build_leaderboard(self) -> SLM21LeaderboardEntry:
+        """ Build leaderboard entry from calculated scores """
+        model_id = ""
+        submission_id = str(uuid.uuid4())
+        submitted_by = ""
+        description = ""
+
+        if self.meta_file is not None:
+            model_id = self.meta_file.model_info.model_id
+            submitted_by = self.meta_file.username
+            description = self.meta_file.model_info.system_description
+
         return SLM21LeaderboardEntry(
-            model_id="",
-            submission_id="",
-            index=1,
+            model_id=model_id,
+            submission_id=submission_id,
+            index=-1,
             submission_date=datetime.now(),
-            submitted_by="",
-            description="",
+            submitted_by=submitted_by,
+            description=description,
             publication=self.get_publication_info(),
             details=self.get_details(),
             scores=self.build_scores(),

@@ -1,7 +1,7 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 import yaml
 
@@ -23,6 +23,12 @@ class ABXMode(str, Enum):
     all = 'all'
     within = 'within'
     across = 'across'
+
+    def as_set(self):
+        if self == self.all:
+            return self.within, self.across
+        else:
+            return self,
 
 
 class ABXDistanceMode(str, Enum):
@@ -58,6 +64,11 @@ class AbxLSBenchmarkParameters(m_benchmark.BenchmarkParameters):
 
     def get_task(self):
         return self.dict()
+
+    def to_meta(self) -> dict[str, Any]:
+        """ Convert into leaderboard meta entry """
+        excluded = {'path_checkpoint', 'file_extension', 'out'}
+        return dict(self._iter(to_dict=True, exclude=excluded))
 
     def export(self, file: Path):
         # filtering non-interfaced param values

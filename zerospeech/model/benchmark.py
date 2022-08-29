@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from pathlib import Path
-from typing import List
+from typing import List, Any
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel
@@ -117,6 +117,7 @@ def show_errors(resp: List[ValidationResponse], allow_warnings: bool = True):
 
 
 class SubmissionValidation(BaseModel, abc.ABC):
+    # todo: add validation of Metafile as well
     dataset: Dataset
 
     def _is_validation_fn(self, fn_name):
@@ -156,7 +157,13 @@ class BenchmarkParameters(BaseModel, abc.ABC):
     quiet: bool = False
 
     @abc.abstractmethod
+    def to_meta(self) -> dict[str, Any]:
+        """ Convert into leaderboard meta entry """
+        pass
+
+    @abc.abstractmethod
     def export(self, file: Path):
+        """ Export to file """
         pass
 
 

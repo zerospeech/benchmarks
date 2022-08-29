@@ -100,22 +100,32 @@ class SyntacticTask(m_benchmark.Task):
             gold_file = dataset.index.subsets.syntactic_dev.items.gold
             sub_file = submission.items.syntactic_dev
 
-            by_pair, by_type = self.run_syntactic_comparison(gold_file, sub_file)
+            with self.console.status('Running syntactic_dev evaluation....', spinner="aesthetic"):
+                by_pair, by_type = self.run_syntactic_comparison(gold_file, sub_file)
 
             filename = output_dir / f"{self.result_filenames['dev']['by_pair']}"
+            self.console.print(f":pencil: writing {self.result_filenames['dev']['by_pair']}",
+                               style="underline yellow4")
             by_pair.to_csv(filename, index=False, float_format='%.4f')
 
             filename = output_dir / f"{self.result_filenames['dev']['by_type']}"
+            self.console.print(f":pencil: writing {self.result_filenames['dev']['by_type']}",
+                               style="underline yellow4")
             by_type.to_csv(filename, index=False, float_format='%.4f')
 
         if 'test' in self.sets:
             gold_file = dataset.index.subsets.syntactic_test.items.gold
             sub_file = submission.items.syntactic_test
 
-            by_pair, by_type = self.run_syntactic_comparison(gold_file, sub_file)
+            with self.console.status('Running syntactic_test evaluation....', spinner="aesthetic"):
+                by_pair, by_type = self.run_syntactic_comparison(gold_file, sub_file)
 
             filename = output_dir / f"{self.result_filenames['test']['by_pair']}"
+            self.console.print(f":pencil: writing {self.result_filenames['test']['by_pair']}",
+                               style="underline yellow4")
             by_pair.to_csv(filename, index=False, float_format='%.4f')
 
             filename = output_dir / f"{self.result_filenames['test']['by_type']}"
+            self.console.print(f":pencil: writing {self.result_filenames['test']['by_type']}",
+                               style="underline yellow4")
             by_type.to_csv(filename, index=False, float_format='%.4f')

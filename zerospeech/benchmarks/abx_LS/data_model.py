@@ -38,7 +38,7 @@ class AbxLSSubmission(m_benchmark.Submission):
                     path / 'test-clean', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
                 )
 
-        if 'other' in sets:
+        if 'other' in tasks:
             if 'dev' in sets:
                 items['dev_other'] = m_data_items.FileListItem.from_dir(
                     path / 'dev-other', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
@@ -127,6 +127,9 @@ class AbxLSTask(m_benchmark.Task):
             ))
 
     def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem):
+        if None in (sub_files, item_file):
+            return [dict(kind=str(t.value), score='-') for t in self.mode.as_set()]
+
         data_loc = mount(sub_files.files_list, tmp_prefix=st.TMP_DIR)
         arg_obj = self.abx_args(data_loc, sub_files.file_type.ext, item_file.file)
         res = libriabx.run_abx(arg_obj=arg_obj)
@@ -142,12 +145,14 @@ class AbxLSTask(m_benchmark.Task):
 
         if 'dev' in self.sets:
             if 'clean' in self.tasks:
+                self.console.print('==> Calculating abx distances for dev-clean')
                 results['dev-clean'] = self.get_abx(
                     sub_files=submission.items.dev_clean,
                     item_file=dataset.index.subsets.dev_clean.items.item_file
                 )
 
             if 'other' in self.tasks:
+                self.console.print('==>Calculating abx distances for dev-other')
                 results['dev-other'] = self.get_abx(
                     sub_files=submission.items.dev_other,
                     item_file=dataset.index.subsets.dev_other.items.item_file
@@ -155,23 +160,27 @@ class AbxLSTask(m_benchmark.Task):
 
         if 'test' in self.sets:
             if 'clean' in self.tasks:
+                self.console.print('==> Calculating abx distances for test-clean')
                 results['test-clean'] = self.get_abx(
                     sub_files=submission.items.test_clean,
                     item_file=dataset.index.subsets.test_clean.items.item_file
                 )
 
             if 'other' in self.tasks:
+                self.console.print('==> Calculating abx distances for test-other')
                 results['test-other'] = self.get_abx(
                     sub_files=submission.items.test_other,
                     item_file=dataset.index.subsets.test_other.items.item_file
                 )
 
         results = [
-            (dset.split('-')[0], dset.split('-')[1], kind, score)
-            for dset, v in results.items() for kind, score in v.items()
+            (dset.split('-')[0], dset.split('-')[1], mode, score)
+            for dset, v in results.items() for mode, score in v.items()
         ]
         as_df = pd.DataFrame(
             results, columns=['dataset', 'sub-dataset', 'type', 'score']
         )
         filename = output_dir / self.result_filename
+        self.console.print(f":pencil: writing {self.result_filename}",
+                           style="underline yellow4")
         as_df.to_csv(filename, index=False, float_format='%.4f')
