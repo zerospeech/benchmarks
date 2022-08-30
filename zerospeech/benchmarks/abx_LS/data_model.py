@@ -73,12 +73,6 @@ class AbxLSSubmission(m_benchmark.Submission):
         """ Run validation on the submission data """
         self.validation_output = AbxLSSubmissionValidator().validate(self)
 
-    def load_meta(self):
-        """ Load metadata file """
-        if not self.meta_file.is_file():
-            raise ValueError(f'Submission {self.location} is missing the {self.meta_file.name}')
-        self.meta = m_meta_file.MetaFile.from_file(self.meta_file.is_file())
-
     def get_scores(self):
         pass
 

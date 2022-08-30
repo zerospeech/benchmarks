@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Any
 
-from pydantic import BaseModel, AnyUrl, parse_raw_as, AnyHttpUrl
+from pydantic import BaseModel, AnyUrl, parse_obj_as, AnyHttpUrl
 
 from ..misc import load_obj
 from .leaderboard import PublicationEntry
@@ -49,7 +49,7 @@ class MetaFile(BaseModel):
             paper_title=pub.paper_title,
             paper_ref=f"{pub.authors} ({pub.publication_year} {pub.paper_title})",
             bib_ref=pub.bib_reference,
-            paper_url=parse_raw_as(AnyHttpUrl, pub.paper_url),
+            paper_url=pub.paper_url,
             pub_year=pub.publication_year,
             team_name=pub.team,
             institution=pub.institution,

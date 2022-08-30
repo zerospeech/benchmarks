@@ -74,7 +74,7 @@ class LeaderboardExtras(BaseModel):
 
 
 class LeaderboardEntry(BaseModel):
-    model_id: str
+    model_id: Optional[str]
     submission_id: str = ""
     index: Optional[int]
     submission_date: Optional[datetime]

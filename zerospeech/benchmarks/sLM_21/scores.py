@@ -19,7 +19,6 @@ from .params import SLM21BenchmarkParameters
 class SLM21ScoreDir(m_score_dir.ScoreDir):
     """ Data representation of the sLM21 scores directory """
     semantic_size: Dict[str, pd.DataFrame]  # needed for the semantic weighted metric
-    meta_file: Optional[m_meta_file.MetaFile] = None
     params: Optional[SLM21BenchmarkParameters] = SLM21BenchmarkParameters()
 
     class Config:
@@ -27,57 +26,57 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
 
     @property
     def lexical_dev_by_pair(self):
-        csv_file = self.location / self.output_files['lexical']['dev']['by_pair']
+        csv_file = self.location / self.params.lexical.result_filenames['dev']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_pair(self):
-        csv_file = self.location / self.output_files['lexical']['test']['by_pair']
+        csv_file = self.location / self.params.lexical.result_filenames['test']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def lexical_dev_by_frequency(self):
-        csv_file = self.location / self.output_files['lexical']['dev']['by_frequency']
+        csv_file = self.location / self.params.lexical.result_filenames['dev']['by_frequency']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_frequency(self):
-        csv_file = self.location / self.output_files['lexical']['test']['by_frequency']
+        csv_file = self.location / self.params.lexical.result_filenames['test']['by_frequency']
         return load_dataframe(csv_file)
 
     @property
     def lexical_dev_by_length(self):
-        csv_file = self.location / self.output_files['lexical']['dev']['by_length']
+        csv_file = self.location / self.params.lexical.result_filenames['dev']['by_length']
         return load_dataframe(csv_file)
 
     @property
     def lexical_test_by_length(self):
-        csv_file = self.location / self.output_files['lexical']['test']['by_length']
+        csv_file = self.location / self.params.lexical.result_filenames['test']['by_length']
         return load_dataframe(csv_file)
 
     @property
     def semantic_dev_correlation(self):
-        csv_file = self.location / self.output_files['semantic']['dev']['correlations']
+        csv_file = self.location / self.params.semantic.result_filenames['dev']['correlations']
         return load_dataframe(csv_file)
 
     @property
     def semantic_test_correlation(self):
-        csv_file = self.location / self.output_files['semantic']['test']['correlations']
+        csv_file = self.location / seself.params.semantic.result_filenames['test']['correlations']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_dev_by_pair(self):
-        csv_file = self.location / self.output_files['syntactic']['dev']['by_pair']
+        csv_file = self.location / self.params.syntactic.result_filenames['dev']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_test_by_pair(self):
-        csv_file = self.location / self.output_files['syntactic']['test']['by_pair']
+        csv_file = self.location / self.params.syntactic.result_filenames['test']['by_pair']
         return load_dataframe(csv_file)
 
     @property
     def syntactic_dev_by_type(self):
-        csv_file = self.location / self.output_files['syntactic']['dev']['by_type']
+        csv_file = self.location / self.params.syntactic.result_filenames['dev']['by_type']
         return load_dataframe(csv_file)
 
     @property
@@ -220,14 +219,6 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
             syntactic=self.syntactic_extras(),
             semantic=self.semantic_extras()
         )
-
-    def get_publication_info(self) -> m_leaderboard.PublicationEntry:
-        """ Build publication info """
-        if self.meta_file is None:
-            return m_leaderboard.PublicationEntry(
-                institution=""
-            )
-        return self.meta_file.get_publication_info()
 
     def get_details(self) -> m_leaderboard.EntryDetails:
         """ Build entry details """

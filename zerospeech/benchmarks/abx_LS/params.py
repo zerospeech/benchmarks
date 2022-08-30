@@ -67,7 +67,7 @@ class AbxLSBenchmarkParameters(m_benchmark.BenchmarkParameters):
 
     def to_meta(self) -> dict[str, Any]:
         """ Convert into leaderboard meta entry """
-        excluded = {'path_checkpoint', 'file_extension', 'out'}
+        excluded = {'path_checkpoint', 'file_extension', 'out', 'result_filename'}
         return dict(self._iter(to_dict=True, exclude=excluded))
 
     def export(self, file: Path):

@@ -1,19 +1,24 @@
 import abc
-from typing import Dict, Any
+from typing import Optional
 
 from pydantic import BaseModel, DirectoryPath
 
-from .leaderboard import LeaderboardEntry
+from .leaderboard import LeaderboardEntry, PublicationEntry
+from .meta_file import MetaFile
 
 
 class ScoreDir(BaseModel, abc.ABC):
     location: DirectoryPath
-    output_files: Dict[str, Any]
-
-    @property
-    def leaderboard_file(self):
-        return self.location / 'leaderboard.json'
+    meta_file: Optional[MetaFile] = None
 
     @abc.abstractmethod
     def build_leaderboard(self) -> LeaderboardEntry:
         pass
+
+    def get_publication_info(self) -> PublicationEntry:
+        """ Build publication info """
+        if self.meta_file is None:
+            return PublicationEntry(
+                institution=""
+            )
+        return self.meta_file.get_publication_info()
