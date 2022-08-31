@@ -5,7 +5,7 @@ For a more detailed explanation go to our website [zerospeech.com](https://zeros
 
 ## meta.yaml
 
-A yaml file specifying various information about the submission
+A yaml file specifying various information about the submission.
 
 ## params.yaml
 

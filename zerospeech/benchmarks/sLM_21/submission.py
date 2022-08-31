@@ -95,12 +95,13 @@ class SLM21Submission(m_benchmark.Submission):
         (location / 'semantic/dev/synthetic').mkdir(exist_ok=True, parents=True)
         (location / 'semantic/dev/librispeech').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        SLM21BenchmarkParameters().export(location / "params.yaml")
+        SLM21BenchmarkParameters().export(location / SLM21BenchmarkParameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template()
         template.to_yaml(
-            file=location / 'meta.yaml',
+            file=location / m_meta_file.MetaFile.file_stem,
             excluded={
+                "file_stem": True,
                 "model_info": {"model_id"},
                 "publication": {"bib_reference", "DOI"}
             }

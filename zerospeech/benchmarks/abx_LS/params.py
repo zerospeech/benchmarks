@@ -72,7 +72,7 @@ class AbxLSBenchmarkParameters(m_benchmark.BenchmarkParameters):
 
     def export(self, file: Path):
         # filtering non-interfaced param values
-        excluded = {'path_checkpoint', 'file_extension', 'out'}
+        excluded = {'path_checkpoint', 'file_extension', 'out', 'result_filename'}
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
         # more complex types as Enum, datetimes, etc. as a simpler chain of

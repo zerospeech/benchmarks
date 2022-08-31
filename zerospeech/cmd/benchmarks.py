@@ -112,7 +112,7 @@ class BenchmarkParamsCMD(CMD):
             sys.exit(1)
 
         # remove old params file if exists
-        (sub_dir / bench.parameters.file_stem).unlink(missing_ok=True)
+        (sub_dir / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
 
         submission = bench.submission.load(path=sub_dir)
         self.console.log(f"Params file created/reset at @ {submission.params_file}")

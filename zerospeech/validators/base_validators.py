@@ -22,16 +22,23 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
         has_more_files = given - expected
 
         if len(has_more_files) > 0:
-            return [m_benchmark.ValidationError(
-                "more files found",
-                data=has_more_files
-            )]
+            res = []
+            for e_file in has_more_files:
+                res.append(
+                    m_benchmark.ValidationError(
+                        "extra file found",
+                        filename=e_file
+                    )
+                )
+            return res
 
         if len(has_less_files) > 0:
-            return [m_benchmark.ValidationError(
-                "missing files",
-                data=has_less_files
-            )]
+            res = []
+            for e_file in has_less_files:
+                res.append(m_benchmark.ValidationError(
+                    "expected file not found",
+                    filename=e_file
+                ))
     else:
         return [m_benchmark.ValidationOK('expected files found')]
 

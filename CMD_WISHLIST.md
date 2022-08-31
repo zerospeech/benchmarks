@@ -14,9 +14,9 @@
 
 #### submissions
 
-- [ ] `zrc submission:init <benchmark_name> <submission_dir>`: create a submission directory
-- [ ] `zrc submission:validate <benchmark_name> <submission_dir>`: validate a submission directory
-- [ ] `zrc submission:zip <benchmark_name> <submission_dir>`: create an archive from a submission
+- [X] `zrc submission:init <benchmark_name> <submission_dir>`: create a submission directory
+- [X] `zrc submission:verify <benchmark_name> <submission_dir>`: validate a submission directory
+- [X] `zrc submission:zip <benchmark_name> <submission_dir>`: create an archive from a submission
 - [ ] `zrc submission:zip <benchmark_name> <submission_dir>  --scores <scores_dir>`: create an archive from a submission with scores
 - [ ] `zrc submission:upload <benchmark_name> <submission.zip>`: upload a submission from an archive
 - [ ] `zrc submission:upload <benchmark_name> <submission> `: upload a submission from a directory
@@ -24,7 +24,7 @@
 
 #### leaderboards
 
-- [ ] `zrc leaderboard:generate <benchmark> <submission_dir> <scores_dir>`: generate leaderboard entry 
+- [X] `zrc leaderboard:generate <benchmark> <submission_dir> <scores_dir>`: generate leaderboard entry 
 - [ ] `zrc leaderboard:upload <benchmark> <leaderboard.json>`: upload leaderboard entry
 
 #### user 

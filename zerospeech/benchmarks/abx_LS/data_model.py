@@ -1,4 +1,5 @@
 import argparse
+import shutil
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -82,7 +83,20 @@ class AbxLSSubmission(m_benchmark.Submission):
         (location / 'test-clean').mkdir(exist_ok=True, parents=True)
         (location / 'test-other').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        AbxLSBenchmarkParameters().export(location / 'params.yaml')
+        AbxLSBenchmarkParameters().export(location / AbxLSBenchmarkParameters.file_stem)
+        # create meta-template
+        template = m_meta_file.MetaFile.to_template()
+        template.to_yaml(
+            file=location / m_meta_file.MetaFile.file_stem,
+            excluded={
+                "file_stem": True,
+                "model_info": {"model_id"},
+                "publication": {"bib_reference", "DOI"}
+            }
+        )
+        instruction_file = Path(__file__).parent / "instructions.md"
+        if instruction_file.is_file():
+            shutil.copy(instruction_file, location / 'help.md')
 
     def __zippable__(self):
         return [

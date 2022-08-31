@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any, Union, Dict
+from typing import Optional, Any, Union, Dict, ClassVar
 
 import yaml
 from pydantic import BaseModel, AnyUrl, parse_obj_as, AnyHttpUrl
@@ -34,6 +34,7 @@ class MetaFile(BaseModel):
     publication: PublicationInfo
     open_source: bool
     code_url: Optional[Union[AnyUrl, str]]
+    file_stem: ClassVar[str] = "meta.yaml"
 
     @classmethod
     def from_file(cls, file: Path, enforce: bool = False):

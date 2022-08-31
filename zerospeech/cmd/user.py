@@ -1,6 +1,7 @@
 import argparse
 
 from .cli_lib import CMD
+from ..out import console as std_console
 
 
 class User(CMD):
@@ -24,7 +25,7 @@ class UserLogin(CMD):
         pass
 
     def run(self, argv: argparse.Namespace):
-        pass
+        std_console.print("Functionality not yet implemented !", style="bold orange_red1")
 
 
 class UserClear(CMD):
@@ -36,4 +37,4 @@ class UserClear(CMD):
         pass
 
     def run(self, argv: argparse.Namespace):
-        pass
+        std_console.print("Functionality not yet implemented !", style="bold orange_red1")
