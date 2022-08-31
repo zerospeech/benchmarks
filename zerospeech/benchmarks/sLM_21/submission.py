@@ -1,10 +1,11 @@
+import shutil
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 from .params import SLM21BenchmarkParameters
 from .validators import SLM21SubmissionValidator
 from ...misc import load_obj
-from ...model import m_benchmark, m_data_items, m_datasets
+from ...model import m_benchmark, m_data_items, m_datasets, m_meta_file
 
 
 class SLM21Submission(m_benchmark.Submission):
@@ -67,6 +68,46 @@ class SLM21Submission(m_benchmark.Submission):
             SLM21BenchmarkParameters().export(submission.params_file)
 
         return submission
+
+    def __zippable__(self) -> List[Tuple[str, Path]]:
+        return [
+            ("", self.meta_file),
+            ("", self.params_file),
+            ("lexical/", self.items.lexical_dev.file),
+            ("lexical/", self.items.lexical_test.file),
+            ("lexical/", self.items.lexical_test.file),
+            ("syntactic/", self.items.syntactic_dev.file),
+            ("syntactic/", self.items.syntactic_test.file),
+            *[("semantic/dev/synthetic/", f) for f in self.items.semantic_dev_synthetic.files_list],
+            *[("semantic/dev/librispeech/", f) for f in self.items.semantic_dev_librispeech.files_list],
+            *[("semantic/test/synthetic/", f) for f in self.items.semantic_test_synthetic.files_list],
+            *[("semantic/test/librispeech/", f) for f in self.items.semantic_test_librispeech.files_list],
+        ]
+
+    @classmethod
+    def init_dir(cls, location: Path):
+        # create sub-directories
+        location.mkdir(exist_ok=True, parents=True)
+        (location / 'lexical').mkdir(exist_ok=True, parents=True)
+        (location / 'syntactic').mkdir(exist_ok=True, parents=True)
+        (location / 'semantic/dev/synthetic').mkdir(exist_ok=True, parents=True)
+        (location / 'semantic/dev/librispeech').mkdir(exist_ok=True, parents=True)
+        (location / 'semantic/dev/synthetic').mkdir(exist_ok=True, parents=True)
+        (location / 'semantic/dev/librispeech').mkdir(exist_ok=True, parents=True)
+        # create parameters file
+        SLM21BenchmarkParameters().export(location / "params.yaml")
+        # create meta-template
+        template = m_meta_file.MetaFile.to_template()
+        template.to_yaml(
+            file=location / 'meta.yaml',
+            excluded={
+                "model_info": {"model_id"},
+                "publication": {"bib_reference", "DOI"}
+            }
+        )
+        instruction_file = Path(__file__).parent / "instructions.md"
+        if instruction_file.is_file():
+            shutil.copy(instruction_file, location / 'help.md')
 
     def load_parameters(self) -> SLM21BenchmarkParameters:
         if self.params_file.is_file():

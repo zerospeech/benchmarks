@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Callable, Any, Union
+from typing import Callable, Any, Union, Protocol, Tuple, List
+from zipfile import ZipFile
 
 import numpy
 import numpy as np
@@ -40,3 +41,16 @@ def load_numpy_array(file_item: Union[data_items.FileItem, Path]) -> numpy.ndarr
         return np.loadtxt(file_item.file)
     elif file_item.file_type == data_items.FileTypes.npy:
         return np.load(str(file_item.file))
+
+
+class Zippable(Protocol):
+    def __zippable__(self) -> List[Tuple[str, Path]]:
+        pass
+
+
+def zip_zippable(item: Zippable, archive_file: Path):
+    """ Create a zip archive from an item that uses the Zippable protocol"""
+    items_list = item.__zippable__()
+    with ZipFile(archive_file, 'w') as zip_obj:
+        for dir_name, filename in items_list:
+            zip_obj.write(filename, f"{dir_name}{filename.name}")

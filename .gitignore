@@ -2,3 +2,4 @@ test_data/
 *.env
 __pycache__/
 dataset_tests.ipynb
+.ipynb_checkpoints/

@@ -73,8 +73,26 @@ class AbxLSSubmission(m_benchmark.Submission):
         """ Run validation on the submission data """
         self.validation_output = AbxLSSubmissionValidator().validate(self)
 
-    def get_scores(self):
-        pass
+    @classmethod
+    def init_dir(cls, location: Path):
+        # create sub-directories
+        location.mkdir(exist_ok=True, parents=True)
+        (location / 'dev-clean').mkdir(exist_ok=True, parents=True)
+        (location / 'dev-other').mkdir(exist_ok=True, parents=True)
+        (location / 'test-clean').mkdir(exist_ok=True, parents=True)
+        (location / 'test-other').mkdir(exist_ok=True, parents=True)
+        # create parameters file
+        AbxLSBenchmarkParameters().export(location / 'params.yaml')
+
+    def __zippable__(self):
+        return [
+            ("", self.meta_file),
+            ("", self.params_file),
+            *[("dev-clean/", f) for f in self.items.dev_clean.files_list],
+            *[("dev-other/", f) for f in self.items.dev_other.files_list],
+            *[("test-clean/", f) for f in self.items.test_clean.files_list],
+            *[("test-other/", f) for f in self.items.test_other.files_list],
+        ]
 
 
 default_params = AbxLSBenchmarkParameters()

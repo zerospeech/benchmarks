@@ -211,6 +211,12 @@ class Submission(BaseModel, abc.ABC):
     def load(cls, path: Path, score_dir: Path = Path("scores"), **kwargs):
         pass
 
+    @classmethod
+    @abc.abstractmethod
+    def init_dir(cls, location: Path):
+        """ Initialise a directory for submission """
+        pass
+
     @abc.abstractmethod
     def load_parameters(self) -> BenchmarkParameters:
         pass
@@ -220,8 +226,7 @@ class Submission(BaseModel, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_scores(self):
-        """ Load scores """
+    def __zippable__(self):
         pass
 
 

@@ -12,17 +12,28 @@ from .leaderboard import (
     LexicalExtras, SLM21Scores, SemanticScores, SemanticScoreSets, SLM21Extras, SyntacticExtras, SemanticExtras
 )
 from ...data_loaders import load_dataframe
-from ...model import m_leaderboard, m_meta_file
+from ...model import m_leaderboard
 from .params import SLM21BenchmarkParameters
+from .dataset import SLM21Dataset
 
 
 class SLM21ScoreDir(m_score_dir.ScoreDir):
     """ Data representation of the sLM21 scores directory """
-    semantic_size: Dict[str, pd.DataFrame]  # needed for the semantic weighted metric
     params: Optional[SLM21BenchmarkParameters] = SLM21BenchmarkParameters()
 
     class Config:
         arbitrary_types_allowed = Extra.ignore
+
+    @property
+    def semantic_size(self) -> Dict[str, pd.DataFrame]:
+        """ Get semantic size from original dataset """
+        dataset = SLM21Dataset.load()
+        dev_size = pd.read_csv(dataset.index.subsets.semantic_dev.items.pairs.file, header=0) \
+            .groupby(['type', 'dataset'], as_index=False).size()
+        test_size = pd.read_csv(dataset.index.subsets.semantic_test.items.pairs.file, header=0) \
+            .groupby(['type', 'dataset'], as_index=False).size()
+
+        return dict(dev=dev_size, test=test_size)
 
     @property
     def lexical_dev_by_pair(self):
@@ -61,7 +72,7 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
 
     @property
     def semantic_test_correlation(self):
-        csv_file = self.location / seself.params.semantic.result_filenames['test']['correlations']
+        csv_file = self.location / self.params.semantic.result_filenames['test']['correlations']
         return load_dataframe(csv_file)
 
     @property
@@ -81,7 +92,7 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
 
     @property
     def syntactic_test_by_type(self):
-        csv_file = self.location / self.output_files['syntactic']['test']['by_type']
+        csv_file = self.location / self.params.syntactic.result_filenames['test']['by_type']
         return load_dataframe(csv_file)
 
     def lexical_scores(self) -> LexicalScores:
@@ -152,7 +163,9 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
         test_synthetic_mean = test_correlations[test_correlations['type'] == 'synthetic']['correlation'].mean()
 
         # Weighted Mean
-        dev_correlations['size'] = self.semantic_size['dev']['size']
+        semantic_size = self.semantic_size
+
+        dev_correlations['size'] = semantic_size['dev']['size']
         dev_librispeech_wmean = np.average(
             dev_correlations[dev_correlations['type'] == 'librispeech']['correlation'].to_numpy(),
             weights=dev_correlations[dev_correlations['type'] == 'librispeech']['size'].to_numpy())
@@ -160,7 +173,7 @@ class SLM21ScoreDir(m_score_dir.ScoreDir):
             dev_correlations[dev_correlations['type'] == 'synthetic']['correlation'].to_numpy(),
             weights=dev_correlations[dev_correlations['type'] == 'synthetic']['size'].to_numpy())
 
-        test_correlations['size'] = self.semantic_size['test']['size']
+        test_correlations['size'] = semantic_size['test']['size']
         test_librispeech_wmean = np.average(
             test_correlations[test_correlations['type'] == 'librispeech']['correlation'].to_numpy(),
             weights=test_correlations[test_correlations['type'] == 'librispeech']['size'].to_numpy())
