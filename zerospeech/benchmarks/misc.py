@@ -21,5 +21,5 @@ class BenchmarkList(str, enum.Enum):
         return obj
 
     sLM21 = 'sLM21', sLM_21.SLM21Benchmark, sLM_21.SLM21Submission, sLM_21.SLM21ScoreDir
-    abx_LS = 'abx-LS', abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission, abx_LS.ABXLSScoreDir
-    tde_17 = 'tde-17', tde_17.TDE17Benchmark, tde_17.TDE17Submission, None
+    abx_LS = 'abxLS', abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission, abx_LS.ABXLSScoreDir
+    tde_17 = 'tde17', tde_17.TDE17Benchmark, tde_17.TDE17Submission, None
