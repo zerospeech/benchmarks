@@ -1,7 +1,8 @@
 from pydantic import Field
 
+from ..datasets import SLM21Dataset
+
 from .submission import SLM21Submission
-from .dataset import SLM21Dataset
 from .lexical import LexicalTask
 from .semantic import SemanticTask
 from .syntactic import SyntacticTask

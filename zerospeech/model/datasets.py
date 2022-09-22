@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type
+from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type, Any
 
 from pydantic import BaseModel, validator, Field
 from pydantic.generics import GenericModel
@@ -32,13 +32,20 @@ class Namespace(GenericModel, Generic[T]):
 
     @property
     def as_dict(self) -> Dict[str, T]:
+        """ Get Store as dict """
         return self.store
 
+    def get(self, name: str, default: Any = None):
+        """ Access items by name """
+        return self.store.get(name, default)
+
     def __getattr__(self, name) -> Optional[T]:
+        """ Reimplementation of getattr """
         a: T = self.store.get(name, None)
         return a
 
     def __iter__(self):
+        """ Allow to iterate over store """
         return iter(self.store.items())
 
 

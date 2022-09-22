@@ -1,7 +1,8 @@
 from pydantic import Field
 
 from ...model import m_benchmark
-from .data_model import AbxLSDataset, AbxLSSubmission, AbxLSTask
+from ..datasets import AbxLSDataset
+from .data_model import AbxLSSubmission, AbxLSTask
 
 
 class AbxLSBenchmark(m_benchmark.Benchmark):

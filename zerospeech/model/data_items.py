@@ -11,10 +11,12 @@ class FileTypes(str, Enum):
     csv = "csv"
     wav = "wav"
     flac = "flac"
-    item = "item"
+    item = "item"  # abx task file
     tsv = "tsv"
     json = "json"
     yaml = "yaml"
+    phn = "phn"  # phone alignment file
+    wrd = "wrd"  # words alignment file
 
     @property
     def ext(self) -> str:

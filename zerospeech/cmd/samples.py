@@ -49,8 +49,8 @@ class PullSampleCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        datasets = samples.SamplesDir.load()
-        dataset = datasets.get(argv.name)
+        sample_dir = samples.SamplesDir.load()
+        dataset = sample_dir.get(argv.name, cls=samples.SampleItem)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
 

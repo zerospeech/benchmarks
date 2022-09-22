@@ -6,15 +6,15 @@ import numpy as np
 import pandas as pd
 from pydantic import Extra
 
-from ...model import m_score_dir
 from .leaderboard import (
     SLM21LeaderboardEntry, LexicalScores, ScoreTuple,
     LexicalExtras, SLM21Scores, SemanticScores, SemanticScoreSets, SLM21Extras, SyntacticExtras, SemanticExtras
 )
+from .params import SLM21BenchmarkParameters
+from ..datasets import SLM21Dataset
 from ...data_loaders import load_dataframe
 from ...model import m_leaderboard
-from .params import SLM21BenchmarkParameters
-from .dataset import SLM21Dataset
+from ...model import m_score_dir
 
 
 class SLM21ScoreDir(m_score_dir.ScoreDir):

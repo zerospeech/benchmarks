@@ -1,7 +1,7 @@
 import enum
 
 from ..model import m_benchmark, m_score_dir
-from . import sLM_21, abx_LS
+from . import sLM_21, abx_LS, tde_17
 
 
 class BenchmarkList(str, enum.Enum):
@@ -20,7 +20,6 @@ class BenchmarkList(str, enum.Enum):
         obj.score_dir = score_dir
         return obj
 
-    sLM21 = 'sLM21', sLM_21.SLM21Benchmark, \
-            sLM_21.SLM21Submission, sLM_21.SLM21ScoreDir
-    abx_LS = 'abx-LS', abx_LS.AbxLSBenchmark, \
-             abx_LS.AbxLSSubmission, abx_LS.ABXLSScoreDir
+    sLM21 = 'sLM21', sLM_21.SLM21Benchmark, sLM_21.SLM21Submission, sLM_21.SLM21ScoreDir
+    abx_LS = 'abx-LS', abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission, abx_LS.ABXLSScoreDir
+    tde_17 = 'tde-17', tde_17.TDE17Benchmark, tde_17.TDE17Submission, None

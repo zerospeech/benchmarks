@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .dataset import SLM21Dataset
+from ..datasets import SLM21Dataset
 from .params import SyntacticParams
 from .submission import SLM21Submission
 from ...data_loaders import load_dataframe

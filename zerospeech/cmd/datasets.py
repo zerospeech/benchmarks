@@ -49,7 +49,7 @@ class PullDatasetCMD(CMD):
 
     def run(self, argv: argparse.Namespace):
         datasets_dir = datasets.DatasetsDir.load()
-        dataset = datasets_dir.get(argv.name)
+        dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
 

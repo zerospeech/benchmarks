@@ -10,3 +10,4 @@ sox
 treelib
 virtual-dataset
 git+https://github.com/zerospeech/libri-light-abx.git
+git+https://github.com/zerospeech/tdev2.git@master

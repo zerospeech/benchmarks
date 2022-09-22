@@ -3,7 +3,7 @@ from typing import Tuple
 import pandas as pd
 
 from .submission import SLM21Submission
-from .dataset import SLM21Dataset
+from ..datasets import SLM21Dataset
 from .params import LexicalParams
 from ...model import m_benchmark, m_data_items
 from ...data_loaders import load_dataframe

@@ -3,7 +3,7 @@ import functools
 import numpy as np
 from pydantic import Field
 
-from .dataset import SLM21Dataset
+from ..datasets import SLM21Dataset
 from ... import validators
 from ...model import m_data_items, m_benchmark
 

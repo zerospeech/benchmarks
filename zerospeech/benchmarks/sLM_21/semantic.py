@@ -7,9 +7,9 @@ import pandas as pd
 import scipy.spatial
 import scipy.stats
 
-from .dataset import SLM21Dataset
 from .params import SemanticParams, SemanticMetrics, SemanticPooling
 from .submission import SLM21Submission
+from ..datasets import SLM21Dataset
 from ...data_loaders import load_dataframe, load_numpy_array
 from ...model import m_data_items, benchmark
 

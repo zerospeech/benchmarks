@@ -34,6 +34,17 @@
 - [ ] `zrc user:clear`
 
 
+#### Available Benchmark list
+
+- [X] sLM21
+- [X] abxLS
+- [ ] abx17
+- [ ] abx15
+- [X] tde17
+- [ ] tde15
+- [ ] tts019
+
+
 #### potential extensions & plugins
 
 - plugin 1 : extractors --> implement some basic extractor for the most used models

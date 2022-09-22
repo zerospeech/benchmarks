@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Type, ClassVar, Literal
 
+import humanize
 from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath
 
 from ..misc import SizeUnit
@@ -29,7 +30,7 @@ class RepositoryItem(BaseModel):
 
     @property
     def size_label(self) -> str:
-        return SizeUnit.fmt(self.total_size)
+        return humanize.naturalsize(self.total_size)
 
     @validator('zip_url', pre=True)
     def cast_url(cls, v):
@@ -86,6 +87,7 @@ class DownloadableItem(BaseModel, abc.ABC):
 
 
 class DataHusk(DownloadableItem):
+    """ Check the necessity of this item ? (i think it was to avoid import cycle hell loop) """
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         pass
 

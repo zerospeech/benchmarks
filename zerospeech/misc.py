@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Union
 from zipfile import ZipFile
 
+import humanize
+from datasize import DataSize
 import requests
 from Crypto.Hash import MD5
 
@@ -46,39 +48,12 @@ class SizeUnit(enum.Enum):
             return SizeUnit.BYTES
 
     @staticmethod
-    def convert_unit(size_in_bytes: float, unit: "SizeUnit") -> float:
-        """ Convert the size from bytes to other units like KB, MB or GB"""
-        if unit == SizeUnit.KB:
-            return size_in_bytes / 1024
-        elif unit == SizeUnit.MB:
-            return size_in_bytes / (1024 * 1024)
-        elif unit == SizeUnit.GB:
-            return size_in_bytes / (1024 * 1024 * 1024)
-        else:
-            return size_in_bytes
-
-    @staticmethod
     def convert_to_bytes(size_with_unit: str) -> float:
-        unit = SizeUnit.get_unit(size_with_unit)
-        size = re.sub(r"[^0-9]", "", size_with_unit)
-        size = float(size)
-
-        if unit == SizeUnit.KB:
-            return size * 1024
-        elif unit == SizeUnit.MB:
-            return size * (1024 * 1024)
-        elif unit == SizeUnit.GB:
-            return size * (1024 * 1024 * 1024)
-        else:
-            return size
+        return float(DataSize(size_with_unit.replace(' ', '')))
 
     @staticmethod
-    def fmt(num, suffix="B"):
-        for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
-            if abs(num) < 1024.0:
-                return f"{num:3.1f} {unit}{suffix}"
-            num /= 1024.0
-        return f"{num:.1f}Y{suffix}"
+    def fmt(num: Union[int, float]) -> str:
+        return humanize.naturalsize(num).replace(' ', '')
 
 
 def load_obj(location: Path) -> Union[Dict, List]:

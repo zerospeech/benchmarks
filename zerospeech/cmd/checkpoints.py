@@ -49,7 +49,7 @@ class PullCheckpointCMD(CMD):
 
     def run(self, argv: argparse.Namespace):
         datasets = checkpoints.CheckpointDir.load()
-        dataset = datasets.get(argv.name)
+        dataset = datasets.get(argv.name, cls=checkpoints.CheckPointItem)
         dataset.pull(quiet=argv.quiet, show_progress=True)
 
 
