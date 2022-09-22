@@ -4,7 +4,7 @@ from typing import Optional, Any
 
 import yaml
 
-from ...model import m_benchmark
+from ....model import m_benchmark
 
 
 class TDE17BenchmarkParams(m_benchmark.BenchmarkParameters):

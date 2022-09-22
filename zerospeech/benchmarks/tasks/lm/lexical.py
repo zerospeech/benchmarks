@@ -1,12 +1,15 @@
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 import pandas as pd
 
-from .submission import SLM21Submission
-from ..datasets import SLM21Dataset
 from .params import LexicalParams
-from ...model import m_benchmark, m_data_items
-from ...data_loaders import load_dataframe
+from ....data_loaders import load_dataframe
+from ....model import m_benchmark, m_data_items
+
+if TYPE_CHECKING:
+    from ..._benchmarks.sLM_21 import SLM21Submission
+    from ...datasets import SLM21Dataset
+
 
 default_params = LexicalParams()
 
@@ -155,7 +158,7 @@ class LexicalTask(m_benchmark.Task):
 
         return by_pair, by_frequency, by_length
 
-    def eval(self, submission: SLM21Submission, dataset: SLM21Dataset):
+    def eval(self, submission: "SLM21Submission", dataset: "SLM21Dataset"):
         """ Run the selected lexical evaluations & write results """
         output_dir = submission.score_dir
         self.sets = submission.sets

@@ -7,12 +7,12 @@ import libriabx
 import pandas as pd
 from vdataset import mount, unmount
 
-from .dataset import AbxLSDataset
 from .params import AbxLSBenchmarkParameters, ABXMode, ABXDistanceMode
 from .validators import AbxLSSubmissionValidator
-from ...misc import load_obj
-from ...model import m_benchmark, m_datasets, m_data_items, m_meta_file
-from ...settings import get_settings
+from ...datasets import AbxLSDataset
+from ....misc import load_obj
+from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
+from ....settings import get_settings
 
 st = get_settings()
 

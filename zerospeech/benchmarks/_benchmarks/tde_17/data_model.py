@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Tuple
 
 from .params import TDE17BenchmarkParams
-from ...misc import load_obj
-from ...model import m_benchmark, m_datasets, m_data_items, m_meta_file
+from ....misc import load_obj
+from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 
 
 class TDE17Submission(m_benchmark.Submission):

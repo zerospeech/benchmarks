@@ -1,7 +1,7 @@
 import enum
 
 from ..model import m_benchmark, m_score_dir
-from . import sLM_21, abx_LS, tde_17
+from ._benchmarks import sLM_21, abx_LS, tde_17
 
 
 class BenchmarkList(str, enum.Enum):

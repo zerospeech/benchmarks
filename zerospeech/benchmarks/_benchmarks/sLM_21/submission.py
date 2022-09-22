@@ -2,10 +2,10 @@ import shutil
 from pathlib import Path
 from typing import Tuple, List
 
-from .params import SLM21BenchmarkParameters
+from ...tasks.lm import SLM21BenchmarkParameters
 from .validators import SLM21SubmissionValidator
-from ...misc import load_obj
-from ...model import m_benchmark, m_data_items, m_datasets, m_meta_file
+from ....misc import load_obj
+from ....model import m_benchmark, m_data_items, m_datasets, m_meta_file
 
 
 class SLM21Submission(m_benchmark.Submission):

@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
-from ..datasets import SLM21Dataset
 from .params import SyntacticParams
-from .submission import SLM21Submission
-from ...data_loaders import load_dataframe
-from ...model import m_benchmark, m_data_items
+from ....data_loaders import load_dataframe
+from ....model import m_benchmark, m_data_items
+
+if TYPE_CHECKING:
+    from ..._benchmarks.sLM_21 import SLM21Submission
+    from ...datasets import SLM21Dataset
 
 default_params = SyntacticParams()
 
@@ -91,7 +95,7 @@ class SyntacticTask(m_benchmark.Task):
 
         return by_pair, by_type
 
-    def eval(self, submission: SLM21Submission, dataset: SLM21Dataset):
+    def eval(self, submission: "SLM21Submission", dataset: "SLM21Dataset"):
         """ Executes syntactic comparison on required sets and writes results to score_dir """
         output_dir = submission.score_dir
         self.sets = submission.sets

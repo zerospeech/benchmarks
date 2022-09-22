@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from ...model import m_leaderboard
+from ....model import m_leaderboard
 
 
 class ABXLSScoresSet(BaseModel):

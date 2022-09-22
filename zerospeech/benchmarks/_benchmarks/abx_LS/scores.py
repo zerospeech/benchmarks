@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from ...data_loaders import load_dataframe
-from ...model import m_score_dir, m_meta_file, m_leaderboard
+from ....data_loaders import load_dataframe
+from ....model import m_score_dir, m_meta_file, m_leaderboard
 from .leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
 from .params import AbxLSBenchmarkParameters
 

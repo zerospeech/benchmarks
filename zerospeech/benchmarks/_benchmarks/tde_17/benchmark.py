@@ -2,10 +2,10 @@ from typing import Tuple
 
 from pydantic import Field
 
-from ...model import m_benchmark, m_data_items
-from ..datasets import ZRC2017Dataset
-from ..tasks import tde
 from .data_model import TDE17Submission
+from ...datasets import ZRC2017Dataset
+from ...tasks import tde
+from ....model import m_benchmark, m_data_items
 
 
 class TDE17Task(tde.TDETask):

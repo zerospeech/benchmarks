@@ -3,9 +3,9 @@ import functools
 import numpy as np
 from pydantic import Field
 
-from .dataset import AbxLSDataset
-from ... import validators
-from ...model import m_benchmark, m_data_items
+from ...datasets import AbxLSDataset
+from .... import validators
+from ....model import m_benchmark, m_data_items
 
 
 class AbxLSSubmissionValidator(m_benchmark.SubmissionValidation):

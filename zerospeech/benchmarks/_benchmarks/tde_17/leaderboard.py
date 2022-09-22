@@ -1,6 +1,6 @@
 from typing import List
 
-from ...model import m_leaderboard
+from ....model import m_leaderboard
 
 
 class TDE17Scores(m_leaderboard.LeaderboardScores):

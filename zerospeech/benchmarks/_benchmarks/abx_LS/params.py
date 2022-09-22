@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 
 import yaml
 
-from ...model import m_benchmark
+from ....model import m_benchmark
 
 
 class ABXFileTypes(str, Enum):

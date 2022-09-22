@@ -3,9 +3,9 @@ import functools
 import numpy as np
 from pydantic import Field
 
-from ..datasets import SLM21Dataset
-from ... import validators
-from ...model import m_data_items, m_benchmark
+from ...datasets import SLM21Dataset
+from .... import validators
+from ....model import m_data_items, m_benchmark
 
 
 class SLM21SubmissionValidator(m_benchmark.SubmissionValidation):

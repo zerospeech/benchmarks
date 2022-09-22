@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 from pydantic import BaseModel
 
-from ...model import m_benchmark
+from ....model import m_benchmark
 
 FileNameType = Dict[str, Dict[str, str]]
 

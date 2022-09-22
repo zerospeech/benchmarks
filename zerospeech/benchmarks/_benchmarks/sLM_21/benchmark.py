@@ -1,12 +1,10 @@
 from pydantic import Field
 
-from ..datasets import SLM21Dataset
 
 from .submission import SLM21Submission
-from .lexical import LexicalTask
-from .semantic import SemanticTask
-from .syntactic import SyntacticTask
-from ...model import m_benchmark
+from ...tasks.lm import LexicalTask, SyntacticTask, SemanticTask
+from ...datasets import SLM21Dataset
+from ....model import m_benchmark
 
 
 class SLM21Benchmark(m_benchmark.Benchmark):

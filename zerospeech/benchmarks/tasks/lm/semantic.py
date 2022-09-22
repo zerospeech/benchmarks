@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 
 import joblib
 import numpy as np
@@ -8,10 +8,12 @@ import scipy.spatial
 import scipy.stats
 
 from .params import SemanticParams, SemanticMetrics, SemanticPooling
-from .submission import SLM21Submission
-from ..datasets import SLM21Dataset
-from ...data_loaders import load_dataframe, load_numpy_array
-from ...model import m_data_items, benchmark
+from ....data_loaders import load_dataframe, load_numpy_array
+from ....model import m_data_items, benchmark
+
+if TYPE_CHECKING:
+    from ..._benchmarks.sLM_21 import SLM21Submission
+    from ...datasets import SLM21Dataset
 
 default_params = SemanticParams()
 
@@ -131,7 +133,7 @@ class SemanticTask(benchmark.Task):
 
         return pairs_df, correlation
 
-    def eval(self, submission: SLM21Submission, dataset: SLM21Dataset):
+    def eval(self, submission: "SLM21Submission", dataset: "SLM21Dataset"):
         """ Run the selected semantic evaluations & write results """
         outputs_dir = submission.score_dir
         self.sets = submission.sets

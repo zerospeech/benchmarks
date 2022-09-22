@@ -10,11 +10,11 @@ from .leaderboard import (
     SLM21LeaderboardEntry, LexicalScores, ScoreTuple,
     LexicalExtras, SLM21Scores, SemanticScores, SemanticScoreSets, SLM21Extras, SyntacticExtras, SemanticExtras
 )
-from .params import SLM21BenchmarkParameters
-from ..datasets import SLM21Dataset
-from ...data_loaders import load_dataframe
-from ...model import m_leaderboard
-from ...model import m_score_dir
+from ...datasets import SLM21Dataset
+from ...tasks.lm import SLM21BenchmarkParameters
+from ....data_loaders import load_dataframe
+from ....model import m_leaderboard
+from ....model import m_score_dir
 
 
 class SLM21ScoreDir(m_score_dir.ScoreDir):
