@@ -2,15 +2,15 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from .leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
+from ...tasks.abx_librispech import ABXParameters
 from ....data_loaders import load_dataframe
 from ....model import m_score_dir, m_meta_file, m_leaderboard
-from .leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
-from .params import AbxLSBenchmarkParameters
 
 
 class ABXLSScoreDir(m_score_dir.ScoreDir):
     meta_file: Optional[m_meta_file.MetaFile] = None
-    params: Optional[AbxLSBenchmarkParameters] = AbxLSBenchmarkParameters()
+    params: Optional[ABXParameters] = ABXParameters()
 
     @property
     def scores_phonetic(self):

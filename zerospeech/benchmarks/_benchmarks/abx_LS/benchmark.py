@@ -1,8 +1,62 @@
+from typing import Tuple, List, Dict
+
+import pandas as pd
 from pydantic import Field
 
-from ....model import m_benchmark
+from .data_model import AbxLSSubmission
 from ...datasets import AbxLSDataset
-from .data_model import AbxLSSubmission, AbxLSTask
+from ...tasks.abx_librispech import SimpleABXTask
+from ....model import m_benchmark, m_data_items
+
+return_type = List[Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]]
+
+
+class AbxLSTask(SimpleABXTask):
+    """ Abx task for abx-LS """
+
+    def format_results(self, results: Dict) -> pd.DataFrame:
+        """ Format the results as a dataframe """
+        results = [
+            (dset.split('-')[0], dset.split('-')[1], mode, score)
+            for dset, v in results.items() for mode, score in v.items()
+        ]
+        return pd.DataFrame(
+            results, columns=['dataset', 'sub-dataset', 'type', 'score']
+        )
+
+    def extract_sets(self, submission: AbxLSSubmission, dataset: AbxLSDataset) -> return_type:
+        """ Extract relevant data for abx from submission & dataset """
+        self.sets = submission.sets
+        self.tasks = submission.tasks
+        abx_sets = []
+        if 'dev' in self.sets:
+            if 'clean' in self.tasks:
+                abx_sets.append((
+                    'dev-clean',
+                    dataset.index.subsets.dev_clean.items.item_file,
+                    submission.items.dev_clean
+                ))
+            if 'other' in self.tasks:
+                abx_sets.append((
+                    'dev-other',
+                    dataset.index.subsets.dev_other.items.item_file,
+                    submission.items.dev_other,
+                ))
+
+        if 'test' in self.sets:
+            if 'clean' in self.tasks:
+                abx_sets.append((
+                    'test-clean',
+                    dataset.index.subsets.test_clean.items.item_file,
+                    submission.items.test_clean,
+                ))
+            if 'other' in self.tasks:
+                abx_sets.append((
+                    'test-other',
+                    dataset.index.subsets.test_other.items.item_file,
+                    submission.items.test_other,
+                ))
+        return abx_sets
 
 
 class AbxLSBenchmark(m_benchmark.Benchmark):

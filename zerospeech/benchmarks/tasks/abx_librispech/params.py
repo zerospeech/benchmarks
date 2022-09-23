@@ -42,7 +42,7 @@ class ABXDistanceMode(str, Enum):
 FileNameType = Dict[str, Dict[str, str]]
 
 
-class AbxLSBenchmarkParameters(m_benchmark.BenchmarkParameters):
+class ABXParameters(m_benchmark.BenchmarkParameters):
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = None
     # size of a single feature
