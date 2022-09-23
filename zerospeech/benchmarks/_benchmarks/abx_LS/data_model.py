@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 from .validators import AbxLSSubmissionValidator
+from ...tasks.abx_librispech import ABXParameters
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 from ....settings import get_settings
@@ -53,15 +54,15 @@ class AbxLSSubmission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            AbxLSBenchmarkParameters().export(submission.params_file)
+            ABXParameters().export(submission.params_file)
 
         return submission
 
-    def load_parameters(self) -> "AbxLSBenchmarkParameters":
+    def load_parameters(self) -> "ABXParameters":
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            return AbxLSBenchmarkParameters.parse_obj(obj)
-        return AbxLSBenchmarkParameters()
+            return ABXParameters.parse_obj(obj)
+        return ABXParameters()
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
@@ -76,7 +77,7 @@ class AbxLSSubmission(m_benchmark.Submission):
         (location / 'test-clean').mkdir(exist_ok=True, parents=True)
         (location / 'test-other').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        AbxLSBenchmarkParameters().export(location / AbxLSBenchmarkParameters.file_stem)
+        ABXParameters().export(location / ABXParameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template()
         template.to_yaml(

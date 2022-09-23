@@ -88,4 +88,3 @@ class AbxLSBenchmark(m_benchmark.Benchmark):
         # todo leaderboard entry ...
         self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")
-

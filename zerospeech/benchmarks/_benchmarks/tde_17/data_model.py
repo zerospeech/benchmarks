@@ -66,7 +66,7 @@ class TDE17Submission(m_benchmark.Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        # self.validation_output = TDE17SubmissionValidator().validate(self)
+        # TODO: make a validator
         pass
 
     @classmethod
