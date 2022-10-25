@@ -1,9 +1,9 @@
 # Zero Resource Challenge Benchmark Toolkit  ![BETA](https://img.shields.io/badge/-BETA-blue)
 
+![VERSION](https://img.shields.io/badge/ZRCBenchmark-V0.5--beta-orange) ![LICENCE](https://img.shields.io/badge/LICENCE-GPL%20%3E=%20V3-green) ![BUILD](https://img.shields.io/badge/BUILD-OK-green) ![TESTS](https://img.shields.io/badge/TESTS-Not%20Setup-red)
+
 This repository contains a toolbox assisting in running and handling all things related to the zerospeech benchmarks.
 For more information on the [Zero Resource Challenge you can visit our website](https://zerospeech.com).
-
-![VERSION](https://img.shields.io/badge/VocoLab-V0.5--beta-orange) ![LICENCE](https://img.shields.io/badge/LICENCE-GPL%20%3E=%20V3-green) ![BUILD](https://img.shields.io/badge/BUILD-OK-green) ![TESTS](https://img.shields.io/badge/TESTS-Not%20Setup-red)
 
 This toolbox allows to download all resources linked with the benchmarks (datasets, model checkpoints, samples, etc..),
 to run the various benchmarks on your own submissions, and to upload the results to our website for them to be included in our leaderboards.
