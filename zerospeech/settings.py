@@ -11,8 +11,11 @@ from pydantic import BaseSettings, AnyHttpUrl, parse_obj_as, validator, Director
 class ZerospeechBenchmarkSettings(BaseSettings):
     APP_DIR: Path = Path.home() / "zr-data"
     TMP_DIR: DirectoryPath = Path('/tmp')
+    api_root: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://api.zerospeech.com")
     repo_origin: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://download.zerospeech.com/repo.json")
     admin_email: EmailStr = parse_obj_as(EmailStr, "nicolas.hamilakis@ens.psl.eu")
+    client_id: str = "zrc-commandline-benchmark-tool"
+    client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
 
     @validator('repo_origin', pre=True)
     def cast_url(cls, v):
@@ -36,6 +39,10 @@ class ZerospeechBenchmarkSettings(BaseSettings):
     @property
     def repository_index(self) -> Path:
         return self.APP_DIR / 'repo.json'
+
+    @property
+    def user_credentials(self):
+        return self.APP_DIR / 'creds.json'
 
     def mkdtemp(self) -> Path:
         tmp_loc = Path(tempfile.mkdtemp(prefix="zr", dir=self.TMP_DIR))

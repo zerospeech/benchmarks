@@ -5,24 +5,25 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Type, ClassVar, Literal
 
-import humanize
-from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath
+from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath, ByteSize
 
-from ..misc import SizeUnit
 from ..settings import get_settings
 
 st = get_settings()
 
 DownloadableTypes = Literal['datasets', 'samples', 'checkpoints', 'downloadable_item']
+ItemType = Literal['internal', 'external']
 
 
 class RepositoryItem(BaseModel):
     """ An item represents a dataset inside the repository that can be pulled locally """
     name: str
-    # todo see if different forms of download can be used : single zip, multi-part zip, other?
-    zip_url: AnyHttpUrl
+    type: ItemType
+    zip_url: Optional[AnyHttpUrl]
+    zip_parts: Optional[List[AnyHttpUrl]]
+    index_url: Optional[AnyHttpUrl]
     md5sum: str
-    total_size: float
+    total_size: ByteSize
 
     @property
     def origin_host(self) -> str:
@@ -30,7 +31,7 @@ class RepositoryItem(BaseModel):
 
     @property
     def size_label(self) -> str:
-        return humanize.naturalsize(self.total_size)
+        return self.total_size.human_readable(decimal=True)
 
     @validator('zip_url', pre=True)
     def cast_url(cls, v):
@@ -39,12 +40,20 @@ class RepositoryItem(BaseModel):
             return parse_obj_as(AnyHttpUrl, v)
         return v
 
-    @validator('total_size', pre=True)
-    def correct_size_format(cls, v):
-        """ Converts total_size from a SIZE + UNIT string to a float representing Bytes"""
+    @validator('zip_parts', pre=True)
+    def cast_url(cls, v):
+        """ Cast strings to AnyHttpUrl """
         if isinstance(v, str):
-            return SizeUnit.convert_to_bytes(v)
+            return parse_obj_as(AnyHttpUrl, v)
         return v
+
+    # todo: need to delete this (probably)
+    # @validator('total_size', pre=True)
+    # def correct_size_format(cls, v):
+    #     """ Converts total_size from a SIZE + UNIT string to a float representing Bytes"""
+    #     if isinstance(v, str):
+    #         return SizeUnit.parse_obj(v)
+    #     return v
 
 
 class RepositoryIndex(BaseModel):
@@ -85,10 +94,18 @@ class DownloadableItem(BaseModel, abc.ABC):
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         pass
 
+    @abc.abstractmethod
+    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        pass
+
 
 class DataHusk(DownloadableItem):
-    """ Check the necessity of this item ? (i think it was to avoid import cycle hell loop) """
+    """ Check the necessity of this item ? (I think it was to avoid import cycle hell loop) """
+
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        pass
+
+    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         pass
 
 

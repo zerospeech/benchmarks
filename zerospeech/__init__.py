@@ -1,6 +1,12 @@
+from importlib.metadata import version, PackageNotFoundError
 from .startup import init
 
 # initialise environment
 init()
 
-__version__ = '0.1'
+
+try:
+    __version__ = version("zerospeech-benchmark")
+except PackageNotFoundError:
+    # package is not installed
+    __version__ = None

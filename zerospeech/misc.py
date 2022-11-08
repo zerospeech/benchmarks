@@ -2,23 +2,23 @@ import contextlib
 import enum
 import io
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Union
 from zipfile import ZipFile
 
 import humanize
-from datasize import DataSize
+# from datasize import DataSize todo: find out why this was deleted ? maybe on unpushed thing on laptop?
+from pydantic import ByteSize, BaseModel
 import requests
-from Crypto.Hash import MD5
+from Crypto.Hash import MD5  # noqa: the package name is not the same
 
 try:
     import yaml
 except ImportError:
     yaml = None
 try:
-    import tomli
+    import tomli # noqa: is not a strict requirement
 except ImportError:
     tomli = None
 
@@ -28,32 +28,47 @@ from .settings import get_settings
 st = get_settings()
 
 
-class SizeUnit(enum.Enum):
-    BYTES = 1
-    KB = 2
-    MB = 3
-    GB = 4
+class SizeUnit(BaseModel):
+    __root__: ByteSize
 
-    @staticmethod
-    def get_unit(text):
-        """ Check contents of text to find units of measurement"""
+    @property
+    def human_readable(self):
+        return self.__root__.human_readable(decimal=True)
 
-        if any(x in text for x in ("KB", "Ko", "K")):
-            return SizeUnit.KB
-        elif any(x in text for x in ("MB", "Mo", "M")):
-            return SizeUnit.MB
-        elif any(x in text for x in ("GB", "Go", "G")):
-            return SizeUnit.GB
-        else:
-            return SizeUnit.BYTES
+    @property
+    def as_bytes(self):
+        return self.__root__
 
-    @staticmethod
-    def convert_to_bytes(size_with_unit: str) -> float:
-        return float(DataSize(size_with_unit.replace(' ', '')))
-
-    @staticmethod
-    def fmt(num: Union[int, float]) -> str:
-        return humanize.naturalsize(num).replace(' ', '')
+# todo: see if i can remove this from the codebase ?
+# todo can we remove humanize from requirements ? or is it still used ?
+# class SizeUnit(enum.Enum):
+#     BYTES = 1
+#     KB = 2
+#     MB = 3
+#     GB = 4
+#
+#     @staticmethod
+#     def get_unit(text):
+#         """ Check contents of text to find units of measurement"""
+#
+#         if any(x in text for x in ("KB", "Ko", "K")):
+#             return SizeUnit.KB
+#         elif any(x in text for x in ("MB", "Mo", "M")):
+#             return SizeUnit.MB
+#         elif any(x in text for x in ("GB", "Go", "G")):
+#             return SizeUnit.GB
+#         else:
+#             return SizeUnit.BYTES
+#
+#     @staticmethod
+#     def convert_to_bytes(size_with_unit: str) -> float:
+#         # todo: replace this ??
+#         #: DataSize(size_with_unit.replace(' ', ''))
+#         return float("123.532")
+#
+#     @staticmethod
+#     def fmt(num: Union[int, float]) -> str:
+#         return humanize.naturalsize(num).replace(' ', '')
 
 
 def load_obj(location: Path) -> Union[Dict, List]:
@@ -142,6 +157,20 @@ def download_extract_zip(
 
     with _console.status("[red]Unzipping archive..."):
         unzip(tmp_dir / f"download.zip", target_location)
+
+
+def symlink_dir_contents(source: Path, dest: Path):
+    """ create symlinks of all content in a directory into another """
+    dest.mkdir(exist_ok=True, parents=True)
+    for item in source.iterdir():
+        (dest / item.name).symlink_to(item, target_is_directory=item.is_dir())
+
+
+def download_file(url: str, dest: Path):
+    """ Download a file from a given URL """
+    response = requests.get(url, allow_redirects=True)
+    with dest.open('wb') as fb:
+        fb.write(response.content)
 
 
 @contextlib.contextmanager

@@ -2,25 +2,21 @@ import codecs
 
 import setuptools
 
-import zerospeech
-
 
 setuptools.setup(
     # general description
-    name='zerospeech2021',
+    name='zerospeech-benchmark',
     description="Toolset for usage of the Zero Resource Challenge Benchmarks",
-    version=zerospeech.__version__,
     # python package dependencies
-    # setup_requires=['cython', 'numpy'],
-
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True,
     # include Python code
     packages=setuptools.find_packages(),
     zip_safe=False,
-
     # the command-line scripts to export
     entry_points={
         'console_scripts': [
-            'zr        = zerospeech.startup:main'
+            'zrc        = zerospeech.startup:main'
         ]
     },
 

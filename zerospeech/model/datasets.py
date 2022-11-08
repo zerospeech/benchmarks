@@ -7,7 +7,7 @@ from pydantic.generics import GenericModel
 
 from .data_items import Item, ItemType, FileListItem, FileItem
 from .repository import DownloadableItemDir, DownloadableItem
-from ..misc import download_extract_zip
+from ..misc import download_extract_zip, symlink_dir_contents, download_file
 from ..out import console
 from ..settings import get_settings
 
@@ -120,6 +120,10 @@ class Dataset(DownloadableItem):
 
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         """ Pull a dataset from remote to the local repository."""
+        if self.origin.type == "external":
+            # todo should we throw an error ?
+            return
+
         md5_hash = ""
         if verify:
             md5_hash = self.origin.md5sum
@@ -129,6 +133,17 @@ class Dataset(DownloadableItem):
                              filename=self.name, md5sum_hash=md5_hash, quiet=quiet, show_progress=show_progress)
         if not quiet:
             console.print(f"[green]Dataset {self.name} installed successfully !!")
+
+    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        """ Import dataset from a directory """
+        if self.origin.type == "internal":
+            # todo should we throw an error ?
+            return
+
+        # symlink content to the local dataset folder
+        symlink_dir_contents(location, self.location)
+        # todo: download index.json
+        download_file(url=self.origin.index_url, dest=self.location)
 
 
 class DatasetsDir(DownloadableItemDir):

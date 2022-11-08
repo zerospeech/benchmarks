@@ -3,6 +3,8 @@ rich
 pycryptodome
 pandas
 numpy
+scipy
+humanize
 PyYAML
 requests
 joblib
