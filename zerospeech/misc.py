@@ -141,10 +141,6 @@ def download_extract_zip(
         progress.update(task1, completed=total, visible=False)
         _console.print("[green]Download completed Successfully!")
 
-    # with with_progress(show=show_progress) as progress:
-    #     task2 = progress.add_task(f"[red]Verifying md5sum from repository...", total=None, visible=False)
-    #     task3 = progress.add_task(f"[red]Unzipping archive...", total=None, visible=False)
-
     if md5sum_hash != "":
         with _console.status("[red]Verifying md5sum from repository..."):
             h = md5sum(tmp_dir / f"download.zip")

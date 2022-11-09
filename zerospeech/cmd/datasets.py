@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 from rich.table import Table
 
@@ -51,6 +52,24 @@ class PullDatasetCMD(CMD):
         datasets_dir = datasets.DatasetsDir.load()
         dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
         dataset.pull(quiet=argv.quiet, show_progress=True)
+
+
+class ImportDatasetCMD(CMD):
+    """ Import a dataset """
+    COMMAND = "import"
+    NAMESPACE = "datasets"
+
+    def init_parser(self, parser: argparse.ArgumentParser):
+        parser.add_argument('name')
+        parser.add_argument('source')
+        parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
+
+    def run(self, argv: argparse.Namespace):
+        datasets_dir = datasets.DatasetsDir.load()
+        dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
+
+        # import the dataset from source
+        dataset.import_(location=Path(argv.source), quiet=argv.quiet, show_progress=True)
 
 
 class RemoveDatasetCMD(CMD):

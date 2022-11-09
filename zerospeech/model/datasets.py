@@ -5,8 +5,9 @@ from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type, Any
 from pydantic import BaseModel, validator, Field
 from pydantic.generics import GenericModel
 
+import misc
 from .data_items import Item, ItemType, FileListItem, FileItem
-from .repository import DownloadableItemDir, DownloadableItem
+from .repository import RepoItemDir, ImportableItem, DownloadableItem, InstallConfig
 from ..misc import download_extract_zip, symlink_dir_contents, download_file
 from ..out import console
 from ..settings import get_settings
@@ -100,10 +101,19 @@ class DatasetIndex(BaseModel):
             item.make_absolute(self.root_dir)
 
 
-class Dataset(DownloadableItem):
+class Dataset(DownloadableItem, ImportableItem):
     """ Generic definition of a dataset """
     key_name: ClassVar[str] = "datasets"
     index: Optional[DatasetIndex] = None
+
+    @property
+    def name(self) -> str:
+        """ Returns the dataset name """
+        return getattr(self, "__dataset_name__", '')
+
+    def is_external(self) -> bool:
+        """ Returns true if the dataset is external """
+        return self.origin.type == "external"
 
     @property
     def index_path(self):
@@ -121,8 +131,7 @@ class Dataset(DownloadableItem):
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         """ Pull a dataset from remote to the local repository."""
         if self.origin.type == "external":
-            # todo should we throw an error ?
-            return
+            raise ValueError("External datasets cannot be pulled from the repository !!")
 
         md5_hash = ""
         if verify:
@@ -134,19 +143,47 @@ class Dataset(DownloadableItem):
         if not quiet:
             console.print(f"[green]Dataset {self.name} installed successfully !!")
 
-    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+    def import_(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         """ Import dataset from a directory """
-        if self.origin.type == "internal":
-            # todo should we throw an error ?
-            return
+        # todo: add informational prints
+        if self.origin.type == "Internal":
+            raise ValueError("internal datasets cannot be imported")
 
-        # symlink content to the local dataset folder
-        symlink_dir_contents(location, self.location)
-        # todo: download index.json
-        download_file(url=self.origin.index_url, dest=self.location)
+        # 1) verify location is valid
+        if not location.is_dir():
+            raise ValueError(f'Cannot import from {location} as its not a valid location')
+
+        # 2) create target dir
+        self.location.mkdir(exist_ok=True, parents=True)
+
+        # 3) download & load configuration file
+        download_file(url=self.origin.install_config, dest=(self.location / "install_config.json"))
+        install_config = InstallConfig.parse_obj(misc.load_obj(self.location / "install_config.json"))
+        # 4) Perform installation actions
+        for _, rule in sorted(install_config.rules.items()):
+            if rule.action == 'download':
+                target = self.location / rule.target
+                target.parent.mkdir(exist_ok=True, parents=True)
+                download_file(url=rule.source, dest=target)
+            elif rule.action == 'symlink':
+                for src, tgt in rule.source_target:
+                    file = self.location / src
+                    file.parent.mkdir(exist_ok=True)
+                    file.symlink_to(location / tgt)
+            elif rule.action == 'download_extract':
+                download_extract_zip(
+                    zip_url=rule.source, target_location=(self.location / rule.target),
+                    size_in_bytes=int(rule.source_size), quiet=quiet, show_progress=show_progress
+                )
+            else:
+                raise ValueError(f'Unknown action {rule.action}')
+
+        # 5) export index from config file
+        with self.index_path.open('w') as fp:
+            json.dump(install_config.index_obj, fp)
 
 
-class DatasetsDir(DownloadableItemDir):
+class DatasetsDir(RepoItemDir):
     """ Dataset directory manager """
     item_type: Type[DownloadableItem] = Dataset
 

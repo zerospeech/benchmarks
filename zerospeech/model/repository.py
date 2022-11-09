@@ -1,18 +1,21 @@
 import abc
+import functools
 import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Type, ClassVar, Literal
+from typing import List, Optional, Type, ClassVar, Literal, Union, Tuple, Dict, Any
 
-from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath, ByteSize
+from pydantic import BaseModel, AnyHttpUrl, validator, parse_obj_as, DirectoryPath, ByteSize, root_validator
 
 from ..settings import get_settings
 
 st = get_settings()
 
-DownloadableTypes = Literal['datasets', 'samples', 'checkpoints', 'downloadable_item']
+RepositoryItemType = Literal[
+    'datasets', 'samples', 'checkpoints', 'origin_item', 'downloadable_item', 'importable_item']
 ItemType = Literal['internal', 'external']
+InstallAction = Literal['download', 'symlink', 'download_extract']
 
 
 class RepositoryItem(BaseModel):
@@ -21,7 +24,7 @@ class RepositoryItem(BaseModel):
     type: ItemType
     zip_url: Optional[AnyHttpUrl]
     zip_parts: Optional[List[AnyHttpUrl]]
-    index_url: Optional[AnyHttpUrl]
+    install_config: Optional[AnyHttpUrl]
     md5sum: str
     total_size: ByteSize
 
@@ -47,13 +50,17 @@ class RepositoryItem(BaseModel):
             return parse_obj_as(AnyHttpUrl, v)
         return v
 
-    # todo: need to delete this (probably)
-    # @validator('total_size', pre=True)
-    # def correct_size_format(cls, v):
-    #     """ Converts total_size from a SIZE + UNIT string to a float representing Bytes"""
-    #     if isinstance(v, str):
-    #         return SizeUnit.parse_obj(v)
-    #     return v
+    @root_validator(pre=True)
+    def validate_type(cls, values):
+        valid_types = ('internal', 'external')
+        assert values.get('type') in valid_types, f'Type should be one of the following {valid_types}'
+
+        if values.get('type') == 'internal':
+            assert values.get('zip_url') is not None \
+                   or values.get('zip_parts') is not None, \
+                   "Internal Items must have either a zip_url or a zip_parts value."
+        elif values.get('type') == 'external':
+            assert values.get('install_config') is not None, "External items must have an install_config field"
 
 
 class RepositoryIndex(BaseModel):
@@ -64,6 +71,7 @@ class RepositoryIndex(BaseModel):
     samples: List[RepositoryItem]
 
     @classmethod
+    @functools.lru_cache
     def load(cls):
         """ Load index from disk """
         with st.repository_index.open() as fp:
@@ -71,9 +79,38 @@ class RepositoryIndex(BaseModel):
         return cls(**data)
 
 
-class DownloadableItem(BaseModel, abc.ABC):
-    """ Abstract class to define an item that can be downloaded from the repository """
-    key_name: ClassVar[DownloadableTypes] = "downloadable_item"
+class InstallRule(BaseModel):
+    action: InstallAction
+    source: Optional[AnyHttpUrl]
+    target: Optional[str]
+    source_target: Optional[List[Tuple[str, str]]]
+    source_size: Optional[ByteSize]
+
+    @root_validator(pre=True)
+    def validate_actions(cls, values):
+        actions = ('download', 'symlink', 'download_extract')
+        if values['action'] == 'download':
+            assert values.get('source') is not None, "Download action requires a source"
+            assert values.get('target') is not None, "Download action requires a target"
+        elif values['action'] == 'symlink':
+            assert values.get('source_target') is not None, "Symlink action requires a source_target"
+        elif values['action'] == 'download_extract':
+            assert values.get('source') is not None, "Download_Extract action requires a source"
+            assert values.get('target') is not None, "Download_Extract action requires a target"
+            assert values.get('source_size') is not None, "Download_Extract action requires a source_size"
+        else:
+            assert values['action'] in actions, \
+                f"Action needs to be one of the following {actions}"
+
+
+class InstallConfig(BaseModel):
+    rules: Dict[str, InstallRule]
+    index_obj: Dict[str, Any]
+
+
+class OriginItem(BaseModel, abc.ABC):
+    """ An item that has an external origin derived from the repository """
+    key_name: ClassVar[RepositoryItemType] = "origin_item"
     location: Path
     origin: RepositoryItem
 
@@ -90,27 +127,27 @@ class DownloadableItem(BaseModel, abc.ABC):
     def name(self) -> str:
         return self.origin.name
 
-    @abc.abstractmethod
-    def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
-        pass
+
+class DownloadableItem(OriginItem, abc.ABC):
+    """ Abstract class to define an item that can be downloaded from the repository """
 
     @abc.abstractmethod
-    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
-        pass
-
-
-class DataHusk(DownloadableItem):
-    """ Check the necessity of this item ? (I think it was to avoid import cycle hell loop) """
-
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        """ Pull item from origin """
         pass
 
-    def import_from_dir(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+
+class ImportableItem(OriginItem, abc.ABC):
+    """Abstract class to define item that can be imported from a local resource """
+
+    @abc.abstractmethod
+    def import_(self, location: Path, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
+        """Import items from source material located locally """
         pass
 
 
-class DownloadableItemDir(BaseModel, abc.ABC):
-    """ Abstract class defining a directory manager for DownloadableItem """
+class RepoItemDir(BaseModel, abc.ABC):
+    """ Abstract class defining a directory manager for repository items of a specific type """
     root_dir: DirectoryPath
     item_type: Type[DownloadableItem]
 
@@ -121,7 +158,7 @@ class DownloadableItemDir(BaseModel, abc.ABC):
 
     @property
     def items(self) -> List[str]:
-        """ Returns a list of installed datasets """
+        """ Returns a list of installed items """
         return [d.name for d in self.root_dir.iterdir() if d.is_dir()]
 
     @property
@@ -131,6 +168,7 @@ class DownloadableItemDir(BaseModel, abc.ABC):
         return [d.name for d in item_list]
 
     def find_in_repository(self, name: str) -> Optional[RepositoryItem]:
+        """Find all relevant items with the same type in repository """
         index = RepositoryIndex.load()
         item_list: List[RepositoryItem] = getattr(index, self.item_type.key_name, [])
         for d in item_list:
@@ -138,11 +176,9 @@ class DownloadableItemDir(BaseModel, abc.ABC):
                 return d
         return None
 
-    def get(self, name, cls=None):
+    def get(self, name, cls: Union[Type[DownloadableItem], Type[ImportableItem]]):
         loc = self.root_dir / name
         repo = self.find_in_repository(name)
         if repo is None:
             return None
-        if cls is None:
-            return DataHusk(location=loc, origin=repo)
         return cls(location=loc, origin=repo)
