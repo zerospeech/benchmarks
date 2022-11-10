@@ -5,10 +5,9 @@ from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type, Any
 from pydantic import BaseModel, validator, Field
 from pydantic.generics import GenericModel
 
-import misc
 from .data_items import Item, ItemType, FileListItem, FileItem
 from .repository import RepoItemDir, ImportableItem, DownloadableItem, InstallConfig
-from ..misc import download_extract_zip, symlink_dir_contents, download_file
+from ..misc import download_extract_zip, load_obj, download_file
 from ..out import console
 from ..settings import get_settings
 
@@ -158,7 +157,7 @@ class Dataset(DownloadableItem, ImportableItem):
 
         # 3) download & load configuration file
         download_file(url=self.origin.install_config, dest=(self.location / "install_config.json"))
-        install_config = InstallConfig.parse_obj(misc.load_obj(self.location / "install_config.json"))
+        install_config = InstallConfig.parse_obj(load_obj(self.location / "install_config.json"))
         # 4) Perform installation actions
         for _, rule in sorted(install_config.rules.items()):
             if rule.action == 'download':

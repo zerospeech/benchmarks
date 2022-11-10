@@ -2,14 +2,14 @@ from typing import ClassVar, Type
 
 from ..misc import download_extract_zip
 from ..out import console
-from .repository import DownloadableItem, DownloadableItemDir, DownloadableTypes
+from .repository import DownloadableItem, RepoItemDir, RepositoryItemType
 from ..settings import get_settings
 
 st = get_settings()
 
 
 class CheckPointItem(DownloadableItem):
-    key_name: ClassVar[DownloadableTypes] = "checkpoints"
+    key_name: ClassVar[RepositoryItemType] = "checkpoints"
 
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         md5_hash = ""
@@ -23,7 +23,7 @@ class CheckPointItem(DownloadableItem):
             console.print(f"[green]Checkpoint set {self.name} installed successfully !!")
 
 
-class CheckpointDir(DownloadableItemDir):
+class CheckpointDir(RepoItemDir):
     """ Checkpoint Directory Management """
     item_type: Type[DownloadableItem] = CheckPointItem
 

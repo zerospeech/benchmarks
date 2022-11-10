@@ -37,14 +37,14 @@ class RepositoryItem(BaseModel):
         return self.total_size.human_readable(decimal=True)
 
     @validator('zip_url', pre=True)
-    def cast_url(cls, v):
+    def cast_url1(cls, v):
         """ Cast strings to AnyHttpUrl """
         if isinstance(v, str):
             return parse_obj_as(AnyHttpUrl, v)
         return v
 
     @validator('zip_parts', pre=True)
-    def cast_url(cls, v):
+    def cast_url2(cls, v):
         """ Cast strings to AnyHttpUrl """
         if isinstance(v, str):
             return parse_obj_as(AnyHttpUrl, v)

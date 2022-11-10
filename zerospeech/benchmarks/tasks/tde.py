@@ -4,15 +4,22 @@ import os
 import signal
 import sys
 from typing import Tuple, Set
+import warnings
 
 import joblib
-from tde.measures.boundary import Boundary
-from tde.measures.coverage import Coverage
-from tde.measures.grouping import Grouping
-from tde.measures.ned import Ned
-from tde.measures.token_type import TokenType
-from tde.readers.disc_reader import Disc
-from tde.readers.gold_reader import Gold
+
+try:
+    from tde.measures.boundary import Boundary
+    from tde.measures.coverage import Coverage
+    from tde.measures.grouping import Grouping
+    from tde.measures.ned import Ned
+    from tde.measures.token_type import TokenType
+    from tde.readers.disc_reader import Disc
+    from tde.readers.gold_reader import Gold
+except ImportError:
+    Boundary, Coverage, Grouping, Ned = ..., ..., ..., ...
+    TokenType, Disc, Gold = ..., ..., ...
+    warnings.warn('tde module was not installed')
 
 from ...model import m_benchmark, m_data_items
 

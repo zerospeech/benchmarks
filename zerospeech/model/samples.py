@@ -1,6 +1,6 @@
 from typing import ClassVar, Type
 
-from .repository import DownloadableItem, DownloadableItemDir, DownloadableTypes
+from .repository import DownloadableItem, RepositoryItemType, RepoItemDir
 from ..misc import download_extract_zip
 from ..out import console
 from ..settings import get_settings
@@ -9,7 +9,7 @@ st = get_settings()
 
 
 class SampleItem(DownloadableItem):
-    key_name: ClassVar[DownloadableTypes] = "samples"
+    key_name: ClassVar[RepositoryItemType] = "samples"
 
     def pull(self, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
         md5_hash = ""
@@ -23,7 +23,7 @@ class SampleItem(DownloadableItem):
             console.print(f"[green]Sample {self.name} installed successfully !!")
 
 
-class SamplesDir(DownloadableItemDir):
+class SamplesDir(RepoItemDir):
     """ Samples Directory Management """
     item_type: Type[DownloadableItem] = SampleItem
 

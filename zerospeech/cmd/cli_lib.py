@@ -28,7 +28,7 @@ class CMD(abc.ABC):
 
         self.parser = argparse.ArgumentParser(
             prog=prog,
-            usage=f"{prog}[:subcommand] [<args>]",
+            usage=f"{prog}[{NAMESPACE_SEP}subcommand] [<args>]",
             formatter_class=argparse.RawTextHelpFormatter
         )
         # load description
@@ -40,8 +40,7 @@ class CMD(abc.ABC):
     @classmethod
     def __init_subclass__(cls, /, **kwargs):
         super().__init_subclass__(**kwargs)
-        # cls.COMMAND = command
-        # cls.NAMESPACE = namespace
+        # append to global list for autodiscover
         LIST_OF_COMMANDS.append(cls)
 
     def __check_presets__(self):
@@ -119,10 +118,12 @@ class CommandTree:
         """Check if command is autocomplete """
         return cmd == self.autocomplete
 
-    def __init__(self, root_cmd: str):
+    def __init__(self, root_cmd: str, auto_discover: bool = True):
         self.root_cmd = root_cmd
         self.__cmd_tree = Tree()
         self.__cmd_tree.create_node('.', 0, data=self.__RootNodeLabel(label='.'))
+        if auto_discover:
+            self.add_cmds(*LIST_OF_COMMANDS)
 
     def find_cmd(self, path: str) -> Optional[Node]:
         """ Find a cmd in the tree """

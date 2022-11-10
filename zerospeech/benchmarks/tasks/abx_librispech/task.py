@@ -1,10 +1,19 @@
 import abc
 import argparse
 from typing import Optional, Tuple, Dict
+import warnings
 
-import libriabx
 import pandas as pd
-from vdataset import mount, unmount
+try:
+    import libriabx
+except ImportError:
+    libriabx = ...
+    warnings.warn("abx module not installed")
+try:
+    from vdataset import mount, unmount
+except ImportError:
+    warnings.warn("abx dependencies not installed")
+    mount, unmount = ..., ...
 
 from .params import ABXParameters, ABXMode, ABXDistanceMode
 from ....model import m_benchmark, m_data_items
