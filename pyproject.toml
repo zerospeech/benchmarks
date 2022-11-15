@@ -49,13 +49,15 @@ dev = [
     "tde @ git+https://github.com/zerospeech/tdev2.git@master",
     "ipython",
     "jupyter",
-    "pytest"
+    "pytest",
+    "twine",
+    "build"
 ]
 
 
 
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]

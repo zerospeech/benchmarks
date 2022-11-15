@@ -4,3 +4,4 @@ __pycache__/
 dataset_tests.ipynb
 .ipynb_checkpoints/
 *.egg-info/
+dist/
