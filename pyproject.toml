@@ -38,15 +38,11 @@ tde = [
 ]
 
 all = [
-    "libriabx @ git+https://github.com/zerospeech/libri-light-abx.git",
-    "virtual-dataset",
-    "tde @ git+https://github.com/zerospeech/tdev2.git@master"
+    "zerospeech-benchmark[abx,tde]"
 ]
 
 dev = [
-    "libriabx @ git+https://github.com/zerospeech/libri-light-abx.git",
-    "virtual-dataset",
-    "tde @ git+https://github.com/zerospeech/tdev2.git@master",
+   "zerospeech-benchmark[abx,tde]",
     "ipython",
     "jupyter",
     "pytest",
