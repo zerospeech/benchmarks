@@ -1,3 +1,4 @@
+""" File containing rich printing utilities """
 import contextlib
 from types import TracebackType
 from typing import IO, Type, AnyStr, Iterator, Iterable, Union, Optional
