@@ -1,5 +1,5 @@
 [project]
-name = "zerospeech-benchmark"
+name = "zerospeech-benchmarks"
 
 description = "Toolset for usage of the Zero Resource Challenge Benchmarks."
 authors = [
@@ -30,19 +30,18 @@ zrc = "zerospeech.startup:main"
 
 [project.optional-dependencies]
 abx = [
-    "libriabx @ git+https://github.com/zerospeech/libri-light-abx.git",
-    "virtual-dataset"
+    "zerospeech-libriabx>=1.0.5"
 ]
 tde = [
-    "tde @ git+https://github.com/zerospeech/tdev2.git@master"
+    "zerospeech-tde>=2.0.2"
 ]
 
 all = [
-    "zerospeech-benchmark[abx,tde]"
+    "zerospeech-benchmarks[abx,tde]"
 ]
 
 dev = [
-   "zerospeech-benchmark[abx,tde]",
+   "zerospeech-benchmarks[abx,tde]",
     "ipython",
     "jupyter",
     "pytest",

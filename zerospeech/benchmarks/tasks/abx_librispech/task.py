@@ -1,19 +1,15 @@
 import abc
-import argparse
-from typing import Optional, Tuple, Dict
 import warnings
+from pathlib import Path
+from typing import Optional, Tuple, Dict, List
 
 import pandas as pd
+
 try:
     import libriabx
 except ImportError:
     libriabx = ...
     warnings.warn("abx module not installed")
-try:
-    from vdataset import mount, unmount
-except ImportError:
-    warnings.warn("abx dependencies not installed")
-    mount, unmount = ..., ...
 
 from .params import ABXParameters, ABXMode, ABXDistanceMode
 from ....model import m_benchmark, m_data_items
@@ -22,8 +18,6 @@ from ....settings import get_settings
 st = get_settings()
 
 default_params = ABXParameters()
-
-
 extract_return_type = Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]
 
 
@@ -52,10 +46,11 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
     tasks: Tuple = ('clean', 'other')
     result_filename = default_params.result_filename
 
-    def abx_args(self, data_location, file_ext, item_file):
-        return argparse.Namespace(
-            **dict(
-                path_data=str(data_location),
+    def abx_args(self, file_list: List[Path], file_ext, item_file):
+        """ Build ABX arguments from class attributes """
+        if libriabx:
+            abx_args = libriabx.AbxArguments.load_from_file_list(
+                file_list=file_list,
                 path_item_file=str(item_file),
                 distance_mode=self.distance_mode,
                 feature_size=self.feature_size,
@@ -65,16 +60,28 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
                 mode=self.mode,
                 max_size_group=self.max_size_group,
                 max_x_across=self.max_x_across
-            ))
+            )
+            # bugfix: _is_mounted is not set by constructor should be fixed in v1.0.6
+            abx_args._is_mounted = True
+            return abx_args
+        else:
+            raise ValueError('No abx backend detected')
 
-    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem):
+    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem) -> Dict[str, float]:
+        """  Run abx evaluations on a fileList using a specific .item file
+
+        Returns:
+            scores<Dict[str, float]>: where keys represent abx mode (across, within) and float represents the score.
+        """
         if None in (sub_files, item_file):
-            return [dict(kind=str(t.value), score='-') for t in self.mode.as_set()]
+            return {f'{t.value}': '-' for t in self.mode.as_set()}
 
-        data_loc = mount(sub_files.files_list, tmp_prefix=st.TMP_DIR)
-        arg_obj = self.abx_args(data_loc, sub_files.file_type.ext, item_file.file)
-        res = libriabx.run_abx(arg_obj=arg_obj)
-        unmount(data_loc)
+        arg_obj = self.abx_args(sub_files.files_list, sub_files.file_type.ext, item_file.file)
+        if libriabx:
+            res = libriabx.abx_eval(arg_obj)
+        else:
+            raise ValueError('No abx backend detected')
+
         return res
 
     @abc.abstractmethod
