@@ -5,6 +5,7 @@ from rich.table import Table
 
 from .cli_lib import CMD
 from ..model import samples
+from ..networkio import check_update_repo_index, update_repo_index
 from ..out import console, error_console
 
 
@@ -17,6 +18,10 @@ class SamplesCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local checkpoint only")
 
     def run(self, argv: argparse.Namespace):
+        # update repo index if necessary
+        if check_update_repo_index():
+            update_repo_index()
+
         samples_dir = samples.SamplesDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
@@ -49,9 +54,13 @@ class PullSampleCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
+        # update repo index if necessary
+        if check_update_repo_index():
+            update_repo_index()
+
         sample_dir = samples.SamplesDir.load()
-        dataset = sample_dir.get(argv.name, cls=samples.SampleItem)
-        dataset.pull(quiet=argv.quiet, show_progress=True)
+        sample_itm = sample_dir.get(argv.name, cls=samples.SampleItem)
+        sample_itm.pull(quiet=argv.quiet, show_progress=True)
 
 
 class RemoveSampleCMD(CMD):

@@ -27,6 +27,8 @@ class RepositoryItem(BaseModel):
     install_config: Optional[AnyHttpUrl]
     md5sum: str
     total_size: ByteSize
+    details_url: Optional[AnyHttpUrl]
+    description: Optional[str]
 
     @property
     def origin_host(self) -> str:
@@ -53,14 +55,17 @@ class RepositoryItem(BaseModel):
     @root_validator(pre=True)
     def validate_type(cls, values):
         valid_types = ('internal', 'external')
-        assert values.get('type') in valid_types, f'Type should be one of the following {valid_types}'
+        current_type = values.get('type', 'internal')
+        values['type'] = current_type
+        assert current_type in valid_types, f'Type should be one of the following {valid_types}'
 
-        if values.get('type') == 'internal':
+        if current_type == 'internal':
             assert values.get('zip_url') is not None \
                    or values.get('zip_parts') is not None, \
                    "Internal Items must have either a zip_url or a zip_parts value."
         elif values.get('type') == 'external':
             assert values.get('install_config') is not None, "External items must have an install_config field"
+        return values
 
 
 class RepositoryIndex(BaseModel):

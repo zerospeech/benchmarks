@@ -4,6 +4,7 @@ from rich.table import Table
 
 from .cli_lib import CMD
 from ..model import checkpoints
+from ..networkio import check_update_repo_index, update_repo_index
 from ..out import console, error_console
 
 
@@ -16,8 +17,11 @@ class CheckpointsCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local checkpoint only")
 
     def run(self, argv: argparse.Namespace):
-        checkpoints_dir = checkpoints.CheckpointDir.load()
+        # update repo index if necessary
+        if check_update_repo_index():
+            update_repo_index()
 
+        checkpoints_dir = checkpoints.CheckpointDir.load()
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
         table.add_column("Origin")
@@ -34,7 +38,6 @@ class CheckpointsCMD(CMD):
             table.add_row(
                 dts.name, dts.origin.origin_host, dts.origin.size_label, f"{dts.installed}"
             )
-
         console.print(table)
 
 
@@ -48,6 +51,10 @@ class PullCheckpointCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
+        # update repo index if necessary
+        if check_update_repo_index():
+            update_repo_index()
+
         datasets = checkpoints.CheckpointDir.load()
         dataset = datasets.get(argv.name, cls=checkpoints.CheckPointItem)
         dataset.pull(quiet=argv.quiet, show_progress=True)
