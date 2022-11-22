@@ -154,7 +154,7 @@ class ImportableItem(OriginItem, abc.ABC):
 class RepoItemDir(BaseModel, abc.ABC):
     """ Abstract class defining a directory manager for repository items of a specific type """
     root_dir: DirectoryPath
-    item_type: Type[DownloadableItem]
+    item_type: ClassVar[Union[Type[DownloadableItem], Type[ImportableItem]]]
 
     @classmethod
     @abc.abstractmethod
@@ -181,9 +181,12 @@ class RepoItemDir(BaseModel, abc.ABC):
                 return d
         return None
 
-    def get(self, name, cls: Union[Type[DownloadableItem], Type[ImportableItem]]):
+    def get(self, name, cls: Union[Type[DownloadableItem], Type[ImportableItem]] = None):
         loc = self.root_dir / name
         repo = self.find_in_repository(name)
         if repo is None:
             return None
+
+        if cls is None:
+            return self.item_type(location=loc, origin=repo)
         return cls(location=loc, origin=repo)

@@ -30,7 +30,7 @@ class BenchmarkRunCMD(CMD):
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument("name")
         parser.add_argument("submission_dir")
-        parser.add_argument("-o", "--output", default="scores", help="Output location"),
+        parser.add_argument("-o", "--output", help="Output location (default: <submission_dir>/scores)",),
         parser.add_argument('--skip-validation', action="store_true", help="Skip the validation of submission")
         parser.add_argument("-s", "--sets", nargs='*', action='store', default=('all',),
                             help="Limit the sets the benchmark is run on")
@@ -62,9 +62,12 @@ class BenchmarkRunCMD(CMD):
         if 'all' not in argv.tasks and len(argv.sets) > 0:
             load_args['tasks'] = argv.tasks
 
-        load_args['score_dir'] = Path(argv.output)
-        submission = bench.submission.load(path=sub_dir, **load_args)
+        if argv.output:
+            load_args['score_dir'] = Path(argv.output)
+        else:
+            load_args['score_dir'] = sub_dir / 'scores'
 
+        submission = bench.submission.load(path=sub_dir, **load_args)
         spinner.stop()
         self.console.print(":heavy_check_mark: Submission loaded successfully", style="bold green")
 

@@ -2,11 +2,16 @@ import argparse
 from pathlib import Path
 
 from rich.table import Table
+from rich.padding import Padding
+
 
 from .cli_lib import CMD
 from ..model import datasets
 from ..networkio import check_update_repo_index, update_repo_index
 from ..out import console, error_console
+from ..settings import get_settings
+
+st = get_settings()
 
 
 class DatasetCMD(CMD):
@@ -18,10 +23,6 @@ class DatasetCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local datasets only")
 
     def run(self, argv: argparse.Namespace):
-        # update repo index if necessary
-        if check_update_repo_index():
-            update_repo_index()
-
         datasets_dir = datasets.DatasetsDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
@@ -37,10 +38,16 @@ class DatasetCMD(CMD):
 
         for d in dt_list:
             dts = datasets_dir.get(d)
+            if dts.origin.type == 'internal':
+                host = st.repo_origin.host
+            else:
+                host = "external"
+
             table.add_row(
-                dts.name, dts.origin.origin_host, dts.origin.size_label, f"{dts.installed}"
+                dts.origin.name, host, dts.origin.size_label, f"{dts.installed}"
             )
 
+        console.print(Padding(f"==> RootDir: {datasets_dir.root_dir}", (1, 0, 1, 0), style="bold grey70", expand=False))
         console.print(table)
 
 

@@ -1,12 +1,15 @@
 import argparse
 
+from rich.padding import Padding
 from rich.table import Table
 
 from .cli_lib import CMD
 from ..model import checkpoints
 from ..networkio import check_update_repo_index, update_repo_index
 from ..out import console, error_console
+from ..settings import get_settings
 
+st = get_settings()
 
 class CheckpointsCMD(CMD):
     """Manipulate Checkpoints """
@@ -17,10 +20,6 @@ class CheckpointsCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local checkpoint only")
 
     def run(self, argv: argparse.Namespace):
-        # update repo index if necessary
-        if check_update_repo_index():
-            update_repo_index()
-
         checkpoints_dir = checkpoints.CheckpointDir.load()
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
@@ -35,9 +34,16 @@ class CheckpointsCMD(CMD):
 
         for d in dt_list:
             dts = checkpoints_dir.get(d)
+            if dts.origin.type == 'internal':
+                host = st.repo_origin.host
+            else:
+                host = "external"
+
             table.add_row(
-                dts.name, dts.origin.origin_host, dts.origin.size_label, f"{dts.installed}"
+                dts.name, host, dts.origin.size_label, f"{dts.installed}"
             )
+
+        console.print(Padding(f"==> RootDir: {checkpoints_dir.root_dir}", (1, 0, 1, 0), style="bold grey70", expand=False))
         console.print(table)
 
 

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type, Any
+from typing import Optional, Dict, Generic, TypeVar, ClassVar, Type, Any, Union
 
 from pydantic import BaseModel, validator, Field
 from pydantic.generics import GenericModel
@@ -184,7 +184,7 @@ class Dataset(DownloadableItem, ImportableItem):
 
 class DatasetsDir(RepoItemDir):
     """ Dataset directory manager """
-    item_type: Type[DownloadableItem] = Dataset
+    item_type: ClassVar[Union[Type[DownloadableItem], Type[ImportableItem]]] = Dataset
 
     @classmethod
     def load(cls):
