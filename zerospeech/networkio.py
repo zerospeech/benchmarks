@@ -31,7 +31,17 @@ def update_repo_index():
 
 def check_update_repo_index() -> bool:
     """ Checks if local repo is out of date """
+    # no need to check for updates more than once a day
+    if st.repository_index.is_file():
+        created_dt = datetime.fromtimestamp(st.repository_index.stat().st_mtime).date()
+        if created_dt == datetime.now().date():
+            return False
+    else:
+        # if file not preset always update
+        return True
+
     try:
+        print("fetching...")
         r = requests.get(st.repo_origin)
         if r.status_code != 200:
             raise ValueError("Failed to find online repo")

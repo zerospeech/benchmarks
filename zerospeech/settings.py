@@ -26,18 +26,22 @@ class ZerospeechBenchmarkSettings(BaseSettings):
 
     @property
     def dataset_path(self) -> Path:
+        """ Path to dataset storage folder """
         return self.APP_DIR / "datasets"
 
     @property
     def samples_path(self) -> Path:
+        """ Path to samples storage folder """
         return self.APP_DIR / "samples"
 
     @property
     def checkpoint_path(self) -> Path:
+        """ Path to checkpoint folder """
         return self.APP_DIR / "checkpoints"
 
     @property
     def repository_index(self) -> Path:
+        """ Path to local repository index """
         return self.APP_DIR / 'repo.json'
 
     @property

@@ -1,7 +1,7 @@
 from .cmd import (
     CommandTree, CLI, LIST_OF_COMMANDS
 )
-from .networkio import update_repo_index
+from .networkio import update_repo_index, check_update_repo_index
 from .out import console
 from .settings import get_settings
 
@@ -25,7 +25,7 @@ def init():
     if not st.samples_path.is_dir():
         st.samples_path.mkdir(exist_ok=True, parents=True)
 
-    if not st.repository_index.is_file():
+    if check_update_repo_index():
         update_repo_index()
 
 
