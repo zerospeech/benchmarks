@@ -25,7 +25,7 @@ class SampleItem(DownloadableItem):
 
 class SamplesDir(RepoItemDir):
     """ Samples Directory Management """
-    item_type: Type[DownloadableItem] = SampleItem
+    item_type: ClassVar[Type[DownloadableItem]] = SampleItem
 
     @classmethod
     def load(cls):

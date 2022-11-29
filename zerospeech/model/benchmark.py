@@ -170,10 +170,10 @@ class BenchmarkParameters(BaseModel, abc.ABC):
 class Submission(BaseModel, abc.ABC):
     location: Path
     items: Optional[Namespace[Item]]
-    score_dir: Path = Path('scores')
     params_obj: BenchmarkParameters = None
     meta_obj: Optional[MetaFile] = None
     validation_output: List[ValidationResponse] = Field(default_factory=list)
+    __score_dir__: Optional[Path] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -205,6 +205,18 @@ class Submission(BaseModel, abc.ABC):
         if self.meta_obj is None:
             self.meta_obj = MetaFile.from_file(self.meta_file)
         return self.meta_obj
+
+    @property
+    def score_dir(self) -> Path:
+        """ Get scores location """
+        if self.__score_dir__ is None:
+            return self.location / 'scores'
+        return self.__score_dir__
+
+    @score_dir.setter
+    def score_dir(self, score_location: Path):
+        """ Set alternative scores location """
+        self.__score_dir__ = score_location
 
     @classmethod
     @abc.abstractmethod
