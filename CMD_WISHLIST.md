@@ -7,31 +7,29 @@
 #### benchmarks 
 
 - [X] `zrc benchmarks`: list existing benchmarks
-- [X] `zrc benchmarks:run <name> -o output <submission_dir>`: run a benchmark on a submission
-- [X] `zrc benchmarks:run <name> -t <task_name> -o output <submission_dir>`: run only some tasks of a benchmark on a submission
-- [X] `zrc benchmarks:run <name> -s <set_name> -o output <submission_dir>`: run a benchmark only on specific subsets of a submission
-- [X] `zrc benchmarks:params <name> <submission_dir>`: generate `params.yaml` 
+> TODO: remove score_dir option from CMD
+- [ ] `zrc benchmarks:run <name>`: run a benchmark on a submission
+- [X] `zrc benchmarks:run <name> -t <task_name>`: run only some tasks of a benchmark on a submission
+- [X] `zrc benchmarks:run <name> -s <set_name>`: run a benchmark only on specific subsets of a submission
 
 #### submissions
-
+> TODO: deduce benchmark from meta.yaml (remove it as argument to the command)
+> TODO: integrate leaderboard generation into submission
+> TODO: add verification for upload
 - [X] `zrc submission:init <benchmark_name> <submission_dir>`: create a submission directory
-- [X] `zrc submission:verify <benchmark_name> <submission_dir>`: validate a submission directory
-- [X] `zrc submission:zip <benchmark_name> <submission_dir>`: create an archive from a submission
-- [ ] `zrc submission:zip <benchmark_name> <submission_dir>  --scores <scores_dir>`: create an archive from a submission with scores
-- [ ] `zrc submission:upload <benchmark_name> <submission.zip>`: upload a submission from an archive
-- [ ] `zrc submission:upload <benchmark_name> <submission> `: upload a submission from a directory
-- [ ] `zrc submission:upload <benchmark_name> <submission> --scores <scores_dir>`: upload a submission from a directory with scores
+- [ ] `zrc submission:params <submission_dir>`:  show current parameters
+- [ ] `zrc submission:params:generate <submission_dir>`:  generate default parameters (`params.yaml`) for submission 
+- [ ] `zrc submission:verify <submission_dir>`: validate a submission directory
+- [ ] `zrc submission:leaderboard <submission_dir>`: show leaderboard for submission
+- [ ] `zrc submission:leaderboard:generate <submission_dir>` generate leaderboard entry
+- [ ] `zrc submission:upload <submission_dir> `: upload a submission from a directory
 
-#### leaderboards
-
-- [X] `zrc leaderboard:generate <benchmark> <submission_dir> <scores_dir>`: generate leaderboard entry 
-- [ ] `zrc leaderboard:upload <benchmark> <leaderboard.json>`: upload leaderboard entry
 
 #### user 
 
-- [ ] `zrc user`
-- [ ] `zrc user:login`
-- [ ] `zrc user:clear`
+- [X] `zrc user`
+- [X] `zrc user:login`
+- [X] `zrc user:clear`
 
 
 #### Available Benchmark list
@@ -39,10 +37,18 @@
 - [X] sLM21
 - [X] abxLS
 - [ ] abx17
+> TODO: add score dir and leaderboard generation
 - [ ] abx15
+> TODO: test dataset import
+> TODO: add benchmark with overloaded the librispeech-abx task
 - [X] tde17
+> TODO: add score dir and leaderboard generation
 - [ ] tde15
+> TODO: test dataset import
+> TODO: add benchmark with overloaded the tdev2 task
 - [ ] tts019
+> TODO: find the correct dataset
+> TODO: find the eval code, and figure out an implementation.
 
 
 #### potential extensions & plugins
