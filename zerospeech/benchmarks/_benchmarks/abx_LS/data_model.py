@@ -17,7 +17,7 @@ class AbxLSSubmission(m_benchmark.Submission):
     tasks: Tuple = ('clean', 'other')
 
     @classmethod
-    def load(cls, path: Path, score_dir: Path = Path("scores"), *,
+    def load(cls, path: Path, *,
              tasks=('clean', 'other'),
              sets=('dev', 'test')):
         """ Load submission for ABX-LS benchmark (filter by available tasks & sets)"""
@@ -48,8 +48,7 @@ class AbxLSSubmission(m_benchmark.Submission):
             sets=sets,
             tasks=tasks,
             location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items),
-            score_dir=score_dir
+            items=m_datasets.Namespace[m_data_items.Item](store=items)
         )
 
         # if params not set export defaults

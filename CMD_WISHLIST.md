@@ -8,7 +8,7 @@
 
 - [X] `zrc benchmarks`: list existing benchmarks
 > TODO: remove score_dir option from CMD
-- [ ] `zrc benchmarks:run <name>`: run a benchmark on a submission
+- [ ] `zrc benchmarks:run <name> <submission_dir>`: run a benchmark on a submission
 - [X] `zrc benchmarks:run <name> -t <task_name>`: run only some tasks of a benchmark on a submission
 - [X] `zrc benchmarks:run <name> -s <set_name>`: run a benchmark only on specific subsets of a submission
 

@@ -14,7 +14,7 @@ class SLM21Submission(m_benchmark.Submission):
     tasks: Tuple = ('lexical', 'syntactic', 'semantic')
 
     @classmethod
-    def load(cls, path: Path, score_dir: Path = Path("scores"), *,
+    def load(cls, path: Path, *,
              tasks=('lexical', 'syntactic', 'semantic'),
              sets=('dev', 'test')):
         """ Load submission for sLM21 benchmark (filter by available tasks & sets) """
@@ -59,8 +59,7 @@ class SLM21Submission(m_benchmark.Submission):
             sets=sets,
             tasks=tasks,
             location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items),
-            score_dir=score_dir
+            items=m_datasets.Namespace[m_data_items.Item](store=items)
         )
 
         # if params not set export defaults

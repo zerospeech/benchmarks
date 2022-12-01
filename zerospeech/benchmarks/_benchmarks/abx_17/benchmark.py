@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, ClassVar
 
 import pandas as pd
 from pydantic import Field
@@ -139,7 +139,8 @@ class ABX17Benchmark(m_benchmark.Benchmark):
     For more information visit: https://version2.zerospeech.com/tasks/task_1/benchmarks_datasets/#abx-ls
     For ABX measuring we use this module : https://github.com/zerospeech/libri-light-abx
     """
-    _name = "abx-17"
+    _name: ClassVar[str] = "abx-17"
+    _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_1/tasks_goals/"
     dataset: ZRC2017Dataset = Field(default_factory=lambda: ZRC2017Dataset.load())
 
     def run(self, submission: ABX17Submission):

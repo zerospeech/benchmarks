@@ -2,6 +2,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from rich.markdown import Markdown
+
 from .cli_lib import CMD
 from ..benchmarks import BenchmarkList
 from ..model import m_benchmark
@@ -17,9 +19,10 @@ class BenchmarksCMD(CMD):
         pass
 
     def run(self, argv: argparse.Namespace):
-        self.console.print(
-            f"Available Benchmarks: {','.join(f.value for f in BenchmarkList)}"
-        )
+        markdown_text = """#### List of Benchmarks\n\n"""
+        for nb, bench in enumerate(BenchmarkList):
+            markdown_text += f"{nb+1}) **{bench.value}**\n\n\t===== documentation ===> [{bench.doc_url}]({bench.doc_url})\n"
+        self.console.print(Markdown(markdown_text))
 
 
 class BenchmarkRunCMD(CMD):
@@ -30,7 +33,6 @@ class BenchmarkRunCMD(CMD):
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument("name")
         parser.add_argument("submission_dir")
-        parser.add_argument("-o", "--output", help="Output location (default: <submission_dir>/scores)",),
         parser.add_argument('--skip-validation', action="store_true", help="Skip the validation of submission")
         parser.add_argument("-s", "--sets", nargs='*', action='store', default=('all',),
                             help="Limit the sets the benchmark is run on")
@@ -62,11 +64,6 @@ class BenchmarkRunCMD(CMD):
         if 'all' not in argv.tasks and len(argv.sets) > 0:
             load_args['tasks'] = argv.tasks
 
-        if argv.output:
-            load_args['score_dir'] = Path(argv.output)
-        else:
-            load_args['score_dir'] = sub_dir / 'scores'
-
         submission = bench.submission.load(path=sub_dir, **load_args)
         spinner.stop()
         self.console.print(":heavy_check_mark: Submission loaded successfully", style="bold green")
@@ -90,35 +87,6 @@ class BenchmarkRunCMD(CMD):
         # Load & run benchmark
         benchmark = bench.benchmark(quiet=argv.quiet)
         benchmark.run(submission)
-
-
-class BenchmarkParamsCMD(CMD):
-    """ Create template params.yaml """
-    COMMAND = "params"
-    NAMESPACE = "benchmarks"
-
-    def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("name")
-        parser.add_argument("submission_dir")
-
-    def run(self, argv: argparse.Namespace):
-        try:
-            bench = BenchmarkList(argv.name)
-        except ValueError:
-            error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
-            warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
-            sys.exit(1)
-
-        sub_dir = Path(argv.submission_dir)
-        if not sub_dir.is_dir():
-            error_console.log(f"Submission directory given does not exist !!!")
-            sys.exit(1)
-
-        # remove old params file if exists
-        (sub_dir / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
-
-        submission = bench.submission.load(path=sub_dir)
-        self.console.log(f"Params file created/reset at @ {submission.params_file}")
 
 
 class BenchmarksInfoCMD(CMD):

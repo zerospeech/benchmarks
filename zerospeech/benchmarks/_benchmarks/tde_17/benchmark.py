@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, ClassVar
 
 from pydantic import Field
 
@@ -51,7 +51,8 @@ class TDE17Benchmark(m_benchmark.Benchmark):
     For more information visit: https://version2.zerospeech.com/tasks/task_2/tasks_goals/
     For the TDE eval we use this module : https://github.com/zerospeech/tdev2
     """
-    _name = "tde-17"
+    _name: ClassVar[str] = "tde-17"
+    _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_2/tasks_goals/"
     dataset: "ZRC2017Dataset" = Field(default_factory=lambda: ZRC2017Dataset.load())
 
     def run(self, submission: TDE17Submission):

@@ -14,7 +14,7 @@ class ABX17Submission(m_benchmark.Submission):
 
     @classmethod
     def load(
-            cls, path: Path, score_dir: Path = Path("scores"), *,
+            cls, path: Path, *,
             tasks=('english', 'french', 'mandarin', 'german', 'wolof'),
             sets=('1s', '10s', '120s')
     ):
@@ -101,8 +101,7 @@ class ABX17Submission(m_benchmark.Submission):
             sets=sets,
             tasks=tasks,
             location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items),
-            score_dir=score_dir
+            items=m_datasets.Namespace[m_data_items.Item](store=items)
         )
 
         # if params not set export defaults

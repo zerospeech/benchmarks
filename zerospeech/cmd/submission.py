@@ -49,6 +49,35 @@ class SubmissionInit(CMD):
         std_console.print(f"Submission directory created @ {location}", style="green bold")
 
 
+class BenchmarkParamsCMD(CMD):
+    """ Create template params.yaml """
+    COMMAND = "params"
+    NAMESPACE = "benchmarks"
+
+    def init_parser(self, parser: argparse.ArgumentParser):
+        parser.add_argument("name")
+        parser.add_argument("submission_dir")
+
+    def run(self, argv: argparse.Namespace):
+        try:
+            bench = BenchmarkList(argv.name)
+        except ValueError:
+            error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
+            warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
+            sys.exit(1)
+
+        sub_dir = Path(argv.submission_dir)
+        if not sub_dir.is_dir():
+            error_console.log(f"Submission directory given does not exist !!!")
+            sys.exit(1)
+
+        # remove old params file if exists
+        (sub_dir / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
+
+        submission = bench.submission.load(path=sub_dir)
+        self.console.log(f"Params file created/reset at @ {submission.params_file}")
+
+
 class SubmissionVerify(CMD):
     """ Verify the validity of a submission """
     COMMAND = "verify"

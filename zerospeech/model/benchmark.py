@@ -220,7 +220,7 @@ class Submission(BaseModel, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def load(cls, path: Path, score_dir: Path = Path("scores"), **kwargs):
+    def load(cls, path: Path, **kwargs):
         pass
 
     @classmethod
@@ -279,6 +279,10 @@ class Benchmark(BaseModel, abc.ABC):
         return getattr(self, '_name')
 
     @property
+    def doc_url(self) -> str:
+        return getattr(self, '_doc_url')
+
+    @property
     def console(self):
         if self.quiet:
             return void_console
@@ -287,6 +291,7 @@ class Benchmark(BaseModel, abc.ABC):
     @root_validator(pre=True)
     def base_validation(cls, values):
         assert hasattr(cls, "_name"), f"A benchmark requires a name (add a _name attribute to the subclass {cls})"
+        assert hasattr(cls, "_doc_url"), f"A benchmark requires a name (add a _doc_url attribute to the subclass {cls})"
         return values
 
     @abc.abstractmethod

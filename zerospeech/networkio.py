@@ -41,7 +41,6 @@ def check_update_repo_index() -> bool:
         return True
 
     try:
-        print("fetching...")
         r = requests.get(st.repo_origin)
         if r.status_code != 200:
             raise ValueError("Failed to find online repo")

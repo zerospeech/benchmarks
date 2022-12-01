@@ -1,5 +1,6 @@
-from pydantic import Field
+from typing import ClassVar
 
+from pydantic import Field
 
 from .submission import SLM21Submission
 from ...tasks.lm import LexicalTask, SyntacticTask, SemanticTask
@@ -20,7 +21,8 @@ class SLM21Benchmark(m_benchmark.Benchmark):
 
     For more information visit: https://version2.zerospeech.com/tasks/task_4/tasks_goals/
     """
-    _name = "sLM21"
+    _name: ClassVar[str] = "sLM21"
+    _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_4/tasks_goals/"
     dataset: SLM21Dataset = Field(default_factory=lambda: SLM21Dataset.load())
 
     def run(self, submission: SLM21Submission):
