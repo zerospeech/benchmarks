@@ -6,5 +6,4 @@ import zerospeech.cmd.checkpoints
 import zerospeech.cmd.generic
 import zerospeech.cmd.samples
 import zerospeech.cmd.submission
-import zerospeech.cmd.leaderboard
 import zerospeech.cmd.user

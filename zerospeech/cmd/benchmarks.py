@@ -106,4 +106,4 @@ class BenchmarksInfoCMD(CMD):
             sys.exit(1)
 
         # print benchmark documentation
-        self.console.console.print(bench.benchmark.__doc__)
+        self.console.print(bench.benchmark.docs())

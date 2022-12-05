@@ -106,7 +106,9 @@ class ABX17Submission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            ABXParameters().export(submission.params_file)
+            params = ABXParameters()
+            params.result_filename = "scores.csv"
+            params.export(submission.params_file)
 
         return submission
 
@@ -140,6 +142,7 @@ class ABX17Submission(m_benchmark.Submission):
             *[("wolof/1s/", f) for f in self.items.wolof_1s],
             *[("wolof/10s/", f) for f in self.items.wolof_10s],
             *[("wolof/120s/", f) for f in self.items.wolof_120s],
+            *[("scores/", f) for f in self.score_dir.iterdir()]
         ]
 
     @classmethod
@@ -166,10 +169,13 @@ class ABX17Submission(m_benchmark.Submission):
         (location / 'wolof' / "10s").mkdir(exist_ok=True, parents=True)
         (location / 'wolof' / "120s").mkdir(exist_ok=True, parents=True)
 
+        # scores dir
+        (location / 'scores').mkdir(exist_ok=True, parents=True)
+
         # create parameters file
         ABXParameters().export(location / ABXParameters.file_stem)
         # create meta-template
-        template = m_meta_file.MetaFile.to_template()
+        template = m_meta_file.MetaFile.to_template(benchmark_name="abx17")
         template.to_yaml(
             file=location / m_meta_file.MetaFile.file_stem,
             excluded={

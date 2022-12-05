@@ -135,11 +135,9 @@ class ABX17Benchmark(m_benchmark.Benchmark):
     - other
 
     Each task has two subsets:  dev, test
-
-    For more information visit: https://version2.zerospeech.com/tasks/task_1/benchmarks_datasets/#abx-ls
     For ABX measuring we use this module : https://github.com/zerospeech/libri-light-abx
     """
-    _name: ClassVar[str] = "abx-17"
+    _name: ClassVar[str] = "abx17"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_1/tasks_goals/"
     dataset: ZRC2017Dataset = Field(default_factory=lambda: ZRC2017Dataset.load())
 
@@ -153,6 +151,5 @@ class ABX17Benchmark(m_benchmark.Benchmark):
         task = ABX17Task(**params.get_task())
         task.eval(submission, self.dataset)
 
-        # todo leaderboard entry ...
         self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")

@@ -17,12 +17,12 @@
 > TODO: integrate leaderboard generation into submission
 > TODO: add verification for upload
 - [X] `zrc submission:init <benchmark_name> <submission_dir>`: create a submission directory
-- [ ] `zrc submission:params <submission_dir>`:  show current parameters
-- [ ] `zrc submission:params:generate <submission_dir>`:  generate default parameters (`params.yaml`) for submission 
-- [ ] `zrc submission:verify <submission_dir>`: validate a submission directory
+- [X] `zrc submission:params <submission_dir>`:  show current parameters 
+- [X] `zrc submission:verify <submission_dir>`: validate a submission directory
 - [ ] `zrc submission:leaderboard <submission_dir>`: show leaderboard for submission
-- [ ] `zrc submission:leaderboard:generate <submission_dir>` generate leaderboard entry
+- [ ] `zrc submission:leaderboard -g <submission_dir>` generate leaderboard entry
 - [ ] `zrc submission:upload <submission_dir> `: upload a submission from a directory
+- [ ] `zrc submission:upload --check <submission_dir> `: check if submission can be uploaded (does not upload)
 
 
 #### user 
@@ -38,14 +38,20 @@
 - [X] abxLS
 - [ ] abx17
 > TODO: add score dir and leaderboard generation
+> TODO: add validation
 - [ ] abx15
 > TODO: test dataset import
 > TODO: add benchmark with overloaded the librispeech-abx task
+> TODO: add validation
+> TODO: score dir & leaderboard 
 - [X] tde17
 > TODO: add score dir and leaderboard generation
+> TODO: add validation
 - [ ] tde15
 > TODO: test dataset import
 > TODO: add benchmark with overloaded the tdev2 task
+> TODO: score dir & leaderboard
+> TODO: validation
 - [ ] tts019
 > TODO: find the correct dataset
 > TODO: find the eval code, and figure out an implementation.

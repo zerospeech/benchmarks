@@ -78,10 +78,12 @@ class TDE17Submission(m_benchmark.Submission):
         (location / 'mandarin.txt').touch(exist_ok=True)
         (location / 'german.txt').touch(exist_ok=True)
         (location / 'wolof.txt').touch(exist_ok=True)
+        # scores dir
+        (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create params template
         TDE17BenchmarkParams().export(location / TDE17BenchmarkParams.file_stem)
         # create meta template
-        template = m_meta_file.MetaFile.to_template()
+        template = m_meta_file.MetaFile.to_template(benchmark_name="tde17")
         template.to_yaml(
             file=location / m_meta_file.MetaFile.file_stem,
             excluded={
@@ -98,5 +100,6 @@ class TDE17Submission(m_benchmark.Submission):
         return [
             ("", self.meta_file),
             ("", self.params_file),
-            [("", self.location / f"{f}.txt") for f in self.tasks]
+            *[("", self.location / f"{f}.txt") for f in self.tasks],
+            *[("scores/", f) for f in self.score_dir.iterdir()]
         ]

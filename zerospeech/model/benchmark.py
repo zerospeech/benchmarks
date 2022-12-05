@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from pathlib import Path
-from typing import List, Any
+from typing import List, Any, Type
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ from .data_items import Item
 from .datasets import Dataset
 from .datasets import Namespace
 from .meta_file import MetaFile
+from .score_dir import ScoreDir
 from ..out import console as out_console, void_console, error_console, warning_console
 
 
@@ -174,6 +175,7 @@ class Submission(BaseModel, abc.ABC):
     meta_obj: Optional[MetaFile] = None
     validation_output: List[ValidationResponse] = Field(default_factory=list)
     __score_dir__: Optional[Path] = None
+    __score_cls__: ClassVar[Type[ScoreDir]]
 
     class Config:
         arbitrary_types_allowed = True
@@ -217,6 +219,17 @@ class Submission(BaseModel, abc.ABC):
     def score_dir(self, score_location: Path):
         """ Set alternative scores location """
         self.__score_dir__ = score_location
+
+    @property
+    def get_scores(self):
+        if self.score_dir.is_dir():
+            return self.__score_cls__(
+                location=self.score_dir,
+                submission_dir=self.location,
+                meta_file=self.meta,
+                params=self.params
+            )
+        return None
 
     @classmethod
     @abc.abstractmethod
@@ -273,6 +286,14 @@ class Benchmark(BaseModel, abc.ABC):
     """ A Generic benchmark class """
     dataset: Dataset
     quiet: bool = False
+
+    @classmethod
+    def docs(cls):
+        text = getattr(cls, "__doc__", 'No information provided')
+        url = getattr(cls, '_doc_url', None)
+        if url:
+            text += f"For more information visit: {url}"
+        return text
 
     @property
     def name(self) -> str:

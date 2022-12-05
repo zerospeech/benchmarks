@@ -81,6 +81,7 @@ class SLM21Submission(m_benchmark.Submission):
             *[("semantic/dev/librispeech/", f) for f in self.items.semantic_dev_librispeech.files_list],
             *[("semantic/test/synthetic/", f) for f in self.items.semantic_test_synthetic.files_list],
             *[("semantic/test/librispeech/", f) for f in self.items.semantic_test_librispeech.files_list],
+            *[("scores/", f) for f in self.score_dir.iterdir()]
         ]
 
     @classmethod
@@ -93,10 +94,12 @@ class SLM21Submission(m_benchmark.Submission):
         (location / 'semantic/dev/librispeech').mkdir(exist_ok=True, parents=True)
         (location / 'semantic/dev/synthetic').mkdir(exist_ok=True, parents=True)
         (location / 'semantic/dev/librispeech').mkdir(exist_ok=True, parents=True)
+        # scores dir
+        (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
         SLM21BenchmarkParameters().export(location / SLM21BenchmarkParameters.file_stem)
         # create meta-template
-        template = m_meta_file.MetaFile.to_template()
+        template = m_meta_file.MetaFile.to_template(benchmark_name="sLM21")
         template.to_yaml(
             file=location / m_meta_file.MetaFile.file_stem,
             excluded={

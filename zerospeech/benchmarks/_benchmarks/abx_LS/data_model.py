@@ -75,10 +75,12 @@ class AbxLSSubmission(m_benchmark.Submission):
         (location / 'dev-other').mkdir(exist_ok=True, parents=True)
         (location / 'test-clean').mkdir(exist_ok=True, parents=True)
         (location / 'test-other').mkdir(exist_ok=True, parents=True)
+        # scores dir
+        (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
         ABXParameters().export(location / ABXParameters.file_stem)
         # create meta-template
-        template = m_meta_file.MetaFile.to_template()
+        template = m_meta_file.MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(
             file=location / m_meta_file.MetaFile.file_stem,
             excluded={
@@ -99,4 +101,5 @@ class AbxLSSubmission(m_benchmark.Submission):
             *[("dev-other/", f) for f in self.items.dev_other.files_list],
             *[("test-clean/", f) for f in self.items.test_clean.files_list],
             *[("test-other/", f) for f in self.items.test_other.files_list],
+            *[("scores/", f) for f in self.score_dir.iterdir()]
         ]

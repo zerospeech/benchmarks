@@ -1,5 +1,5 @@
 import abc
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, DirectoryPath
 
@@ -8,7 +8,9 @@ from .meta_file import MetaFile
 
 
 class ScoreDir(BaseModel, abc.ABC):
+    submission_dir: DirectoryPath
     location: DirectoryPath
+    params: Optional[Any] = None
     meta_file: Optional[MetaFile] = None
 
     @abc.abstractmethod

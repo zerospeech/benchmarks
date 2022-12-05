@@ -5,11 +5,10 @@ from typing import Optional
 from .leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
 from ...tasks.abx_librispech import ABXParameters
 from ....data_loaders import load_dataframe
-from ....model import m_score_dir, m_meta_file, m_leaderboard
+from ....model import m_score_dir, m_leaderboard
 
 
 class ABXLSScoreDir(m_score_dir.ScoreDir):
-    meta_file: Optional[m_meta_file.MetaFile] = None
     params: Optional[ABXParameters] = ABXParameters()
 
     @property

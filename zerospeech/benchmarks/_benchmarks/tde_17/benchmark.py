@@ -48,10 +48,9 @@ class TDE17Benchmark(m_benchmark.Benchmark):
     - 10s has 10-second segments
     - 120s has 120-second segments
 
-    For more information visit: https://version2.zerospeech.com/tasks/task_2/tasks_goals/
     For the TDE eval we use this module : https://github.com/zerospeech/tdev2
     """
-    _name: ClassVar[str] = "tde-17"
+    _name: ClassVar[str] = "tde17"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_2/tasks_goals/"
     dataset: "ZRC2017Dataset" = Field(default_factory=lambda: ZRC2017Dataset.load())
 
@@ -65,7 +64,6 @@ class TDE17Benchmark(m_benchmark.Benchmark):
         task = TDE17Task(**params.dict())
         task.eval(submission, self.dataset)
 
-        # todo leaderboard entry ...
         self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")
 

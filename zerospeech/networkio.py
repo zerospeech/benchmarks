@@ -31,15 +31,17 @@ def update_repo_index():
 
 def check_update_repo_index() -> bool:
     """ Checks if local repo is out of date """
-    # no need to check for updates more than once a day
+    # no need to check for updates more than once a week
     if st.repository_index.is_file():
         created_dt = datetime.fromtimestamp(st.repository_index.stat().st_mtime).date()
-        if created_dt == datetime.now().date():
+        now = datetime.now().date()
+        if (now - created_dt).days > 7:
             return False
     else:
         # if file not preset always update
         return True
 
+    # if
     try:
         r = requests.get(st.repo_origin)
         if r.status_code != 200:

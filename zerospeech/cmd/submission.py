@@ -5,7 +5,7 @@ from pathlib import Path
 from .cli_lib import CMD
 from ..benchmarks import BenchmarkList
 from ..data_loaders import zip_zippable
-from ..model import m_benchmark
+from ..model import m_benchmark, m_meta_file
 from ..out import error_console, warning_console, console as std_console
 
 
@@ -40,7 +40,7 @@ class SubmissionInit(CMD):
 
         location = Path(argv.location)
         if location.is_dir():
-            error_console(f"Location specified already exists !!!")
+            error_console.log(f"Location specified already exists !!!")
             sys.exit(2)
 
         with std_console.status("Initialising submission dir"):
@@ -52,30 +52,43 @@ class SubmissionInit(CMD):
 class BenchmarkParamsCMD(CMD):
     """ Create template params.yaml """
     COMMAND = "params"
-    NAMESPACE = "benchmarks"
+    NAMESPACE = "submission"
 
     def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("name")
         parser.add_argument("submission_dir")
+        parser.add_argument('-r', '--reset', action="store_true", help="Reset params.yaml to default values")
 
     def run(self, argv: argparse.Namespace):
+        location = Path(argv.submission_dir)
+        if not location.is_dir():
+            error_console(f"Location specified does not exist !!!")
+            sys.exit(2)
+
+        benchmark_name = None
         try:
-            bench = BenchmarkList(argv.name)
+            benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+            if benchmark_name is None:
+                raise TypeError("benchmark not found")
+
+            bench = BenchmarkList(benchmark_name)
+        except TypeError:
+            error_console.log(f"Specified submission does not have a valid {m_meta_file.MetaFile.file_stem}"
+                              f"\nCannot find benchmark type")
+            sys.exit(1)
         except ValueError:
-            error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
+            error_console.log(f"Specified benchmark ({benchmark_name}) does not exist !!!!")
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
 
-        sub_dir = Path(argv.submission_dir)
-        if not sub_dir.is_dir():
-            error_console.log(f"Submission directory given does not exist !!!")
-            sys.exit(1)
+        if argv.reset:
+            # remove old params file if exists
+            (location / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
 
-        # remove old params file if exists
-        (sub_dir / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
+        submission = bench.submission.load(path=location)
+        if argv.reset:
+            self.console.log(f"Params file created/reset at @ {submission.params_file}")
 
-        submission = bench.submission.load(path=sub_dir)
-        self.console.log(f"Params file created/reset at @ {submission.params_file}")
+        self.console.print(submission.params)
 
 
 class SubmissionVerify(CMD):
@@ -84,21 +97,29 @@ class SubmissionVerify(CMD):
     NAMESPACE = "submission"
 
     def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("name")
         parser.add_argument("location")
 
     def run(self, argv: argparse.Namespace):
-        try:
-            bench = BenchmarkList(argv.name)
-        except ValueError:
-            error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
-            warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
-            sys.exit(1)
-
         location = Path(argv.location)
         if not location.is_dir():
             error_console(f"Location specified does not exist !!!")
             sys.exit(2)
+
+        benchmark_name = None
+        try:
+            benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+            if benchmark_name is None:
+                raise TypeError("benchmark not found")
+
+            bench = BenchmarkList(benchmark_name)
+        except TypeError:
+            error_console.log(f"Specified submission does not have a valid {m_meta_file.MetaFile.file_stem}"
+                              f"\nCannot find benchmark type")
+            sys.exit(1)
+        except ValueError:
+            error_console.log(f"Specified benchmark ({benchmark_name}) does not exist !!!!")
+            warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
+            sys.exit(1)
 
         submission = bench.submission.load(location)
         with std_console.status(f"Validating submission @ {location}"):

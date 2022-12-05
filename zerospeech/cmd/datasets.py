@@ -81,9 +81,7 @@ class ImportDatasetCMD(CMD):
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        # update repo index if necessary
-        if check_update_repo_index():
-            update_repo_index()
+        error_console.print("This functionality has not been tested !!!!!")
 
         datasets_dir = datasets.DatasetsDir.load()
         dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)

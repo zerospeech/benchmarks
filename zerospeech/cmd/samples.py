@@ -43,7 +43,7 @@ class SamplesCMD(CMD):
                 host = "external"
 
             table.add_row(
-                dts.name, dts.origin.origin_host, dts.origin.size_label, f"{dts.installed}"
+                dts.name, host, dts.origin.size_label, f"{dts.installed}"
             )
 
         console.print(Padding(f"==> RootDir: {samples_dir.root_dir}", (1, 0, 1, 0), style="bold grey70", expand=False))

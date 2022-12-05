@@ -18,8 +18,6 @@ class SLM21Benchmark(m_benchmark.Benchmark):
     - Semantic Task
 
     Each task has two subsets:  dev, test
-
-    For more information visit: https://version2.zerospeech.com/tasks/task_4/tasks_goals/
     """
     _name: ClassVar[str] = "sLM21"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_4/tasks_goals/"
@@ -44,6 +42,5 @@ class SLM21Benchmark(m_benchmark.Benchmark):
             task3 = SyntacticTask(**params.get_syntactic())
             task3.eval(submission, self.dataset)
 
-        # todo leaderboard entry ...
         self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")
