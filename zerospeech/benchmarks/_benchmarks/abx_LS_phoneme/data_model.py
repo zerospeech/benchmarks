@@ -2,8 +2,8 @@ import shutil
 from pathlib import Path
 from typing import Tuple
 
-from .validators import AbxLSSubmissionValidator
-from ...tasks.abx_librispech import ABXParameters
+# from .validators import AbxLSSubmissionValidator
+# from ...tasks.abx_librispeech import ABXParameters
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 from ....settings import get_settings
@@ -11,8 +11,8 @@ from ....settings import get_settings
 st = get_settings()
 
 
-class AbxLSSubmission(m_benchmark.Submission):
-    """ Submission for ABX-LS Benchmark """
+class AbxLSRobSubmission(m_benchmark.Submission):
+    """ Submission for ABX-LS-ROB Benchmark """
     sets: Tuple = ('dev', 'test')
     tasks: Tuple = ('clean', 'other')
 
@@ -20,7 +20,7 @@ class AbxLSSubmission(m_benchmark.Submission):
     def load(cls, path: Path, *,
              tasks=('clean', 'other'),
              sets=('dev', 'test')):
-        """ Load submission for ABX-LS benchmark (filter by available tasks & sets)"""
+        """ Load submission for ABX-Ls-ROB benchmark (filter by available tasks & sets) """
         items = dict()
 
         if 'clean' in tasks:
@@ -53,19 +53,26 @@ class AbxLSSubmission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            ABXParameters().export(submission.params_file)
+            # ABXParameters().export(submission.params_file)
+            # TODO: define params for libri-abx2
+            pass
 
         return submission
 
-    def load_parameters(self) -> "ABXParameters":
+    def load_parameters(self) -> "...":
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            return ABXParameters.parse_obj(obj)
-        return ABXParameters()
+            # todo: define libriabx2 params object
+            # return ABXParameters.parse_obj(obj)
+        # todo: define libriabx2 params object
+        # return ABXParameters()
+        return ...
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        self.validation_output = AbxLSSubmissionValidator().validate(self)
+        # todo: define validation for abx-ls-rob
+        # self.validation_output = AbxLSSubmissionValidator().validate(self)
+        pass
 
     @classmethod
     def init_dir(cls, location: Path):
@@ -79,7 +86,8 @@ class AbxLSSubmission(m_benchmark.Submission):
         # scores dir
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        ABXParameters().export(location / ABXParameters.file_stem)
+        # todo: define params for libriabx2
+        # ABXParameters().export(location / ABXParameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(

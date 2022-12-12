@@ -6,12 +6,13 @@ from typing import Optional, Tuple, Dict, List
 import pandas as pd
 
 try:
-    import libriabx
+    import zrc_abx2
+    from vdataset import mount, unmount
 except ImportError:
-    libriabx = ...
-    warnings.warn("abx module not installed")
+    zrc_abx2 = ...
+    warnings.warn("abx2 module not installed")
 
-from .params import ABXParameters, ABXMode, ABXDistanceMode
+from .params import ABXParameters, ABXMode, ABXDistanceMode, ContextMode
 from ....model import m_benchmark, m_data_items
 from ....settings import get_settings
 
@@ -21,7 +22,7 @@ default_params = ABXParameters()
 extract_return_type = Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]
 
 
-class SimpleABXTask(m_benchmark.Task, abc.ABC):
+class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
     """ Abstract abx-LS task """
     _name = "abx-LS"
     # Path to a CPC checkpoint
@@ -32,6 +33,8 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
     cuda: bool = default_params.cuda
     # Choose the mode of the ABX score to compute
     mode: ABXMode = default_params.mode
+    # Choose the context type of the ABX score to compute
+    context: ContextMode = default_params.context
     # Choose the kind of distance to use to compute
     distance_mode: ABXDistanceMode = default_params.distance_mode
     # Max size of a group while computing the ABX score
@@ -48,9 +51,10 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
 
     def abx_args(self, file_list: List[Path], file_ext, item_file):
         """ Build ABX arguments from class attributes """
-        if libriabx:
-            abx_args = libriabx.AbxArguments.load_from_file_list(
-                file_list=file_list,
+        if zrc_abx2:
+            path_data = mount(file_list)
+            abx_args = zrc_abx2.EvalArgs(
+                path_data=path_data,
                 path_item_file=str(item_file),
                 distance_mode=self.distance_mode,
                 feature_size=self.feature_size,
@@ -61,8 +65,6 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
                 max_size_group=self.max_size_group,
                 max_x_across=self.max_x_across
             )
-            # bugfix: _is_mounted is not set by constructor should be fixed in v1.0.6
-            abx_args._is_mounted = True
             return abx_args
         else:
             raise ValueError('No abx backend detected')
@@ -77,8 +79,8 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
             return {f'{t.value}': '-' for t in self.mode.as_set()}
 
         arg_obj = self.abx_args(sub_files.files_list, sub_files.file_type.ext, item_file.file)
-        if libriabx:
-            res = libriabx.abx_eval(arg_obj)
+        if zrc_abx2:
+            res = zrc_abx2.EvalABX().eval_abx(arg_obj)
         else:
             raise ValueError('No abx backend detected')
 
@@ -95,14 +97,14 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
         pass
 
     def eval(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset):
-        """ Simple ABX evaluation """
+        """ Simple Phoneme ABX evaluation """
         output_dir = submission.score_dir
         results = {}
         abx_sets = self.extract_sets(submission, dataset)
 
         if self.cuda:
             warnings.warn("GPU calculation mode is enabled !!!")
-            
+
         for label, file_list, item_file in abx_sets:
             self.console.print(f'==> Calculating abx distances for {label}')
             results[label] = self.get_abx(
@@ -113,6 +115,8 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
         as_df = self.format_results(results)
 
         filename = output_dir / self.result_filename
+        # todo: checkout outputs
         self.console.print(f":pencil: writing {self.result_filename}",
                            style="underline yellow4")
         as_df.to_csv(filename, index=False, float_format='%.4f')
+

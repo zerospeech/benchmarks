@@ -1,4 +1,4 @@
-# ABX-LS submission
+# ABX-LSRob submission
 
 The format of a submission is briefly explained here.
 For a more detailed explanation go to our website [zerospeech.com](https://zerospeech.com)
