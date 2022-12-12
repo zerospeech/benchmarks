@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .cli_lib import CMD
 from ..benchmarks import BenchmarkList
-from ..data_loaders import zip_zippable
 from ..model import m_benchmark, m_meta_file
 from ..out import error_console, warning_console, console as std_console
 
@@ -131,49 +130,3 @@ class SubmissionVerify(CMD):
         else:
             m_benchmark.show_errors(submission.validation_output)
 
-
-class SubmissionZip(CMD):
-    """ Create a zip archive of a submission """
-    COMMAND = "zip"
-    NAMESPACE = "submission"
-
-    def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("name")
-        parser.add_argument("submission_location")
-        parser.add_argument("archive_path")
-
-    def run(self, argv: argparse.Namespace):
-        try:
-            bench = BenchmarkList(argv.name)
-        except ValueError:
-            error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
-            warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
-            sys.exit(1)
-
-        submission_location = Path(argv.submission_location)
-        if not submission_location.is_dir():
-            error_console(f"Submission location specified does not exist !!!")
-            sys.exit(2)
-
-        archive_file = Path(argv.archive_path)
-        if archive_file.is_file():
-            error_console(f"Given archive file already exists !!!")
-            sys.exit(3)
-
-        submission = bench.submission.load(submission_location)
-        with std_console.status("Compressing files..."):
-            zip_zippable(submission, archive_file)
-
-        std_console.print(f":pencil: Successfully written submission to archive {archive_file.name}")
-
-
-class SubmissionUpload(CMD):
-    """ Upload a submission to zerospeech.com """
-    COMMAND = "upload"
-    NAMESPACE = "submission"
-
-    def init_parser(self, parser: argparse.ArgumentParser):
-        pass
-
-    def run(self, argv: argparse.Namespace):
-        std_console.print("Functionality not yet implemented !", style="bold orange_red1")
