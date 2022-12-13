@@ -129,4 +129,3 @@ class SubmissionVerify(CMD):
                               style='bold green')
         else:
             m_benchmark.show_errors(submission.validation_output)
-

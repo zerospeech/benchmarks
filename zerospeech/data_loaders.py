@@ -48,7 +48,7 @@ class Zippable(Protocol):
         pass
 
 
-def zip_zippable(item: Zippable, archive_file: Path):
+def zip_zippable(item: Zippable, archive_file: Path = Path("archive.zip")):
     """ Create a zip archive from an item that uses the Zippable protocol"""
     items_list = item.__zippable__()
     with ZipFile(archive_file, 'w') as zip_obj:

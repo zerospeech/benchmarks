@@ -197,6 +197,10 @@ class Submission(BaseModel, abc.ABC):
         return self.location / 'meta.yaml'
 
     @property
+    def leaderboard_file(self):
+        return self.location / 'leaderboard.json'
+
+    @property
     def params(self):
         if self.params_obj is None:
             self.params_obj = self.load_parameters()

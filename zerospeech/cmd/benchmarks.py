@@ -21,7 +21,8 @@ class BenchmarksCMD(CMD):
     def run(self, argv: argparse.Namespace):
         markdown_text = """#### List of Benchmarks\n\n"""
         for nb, bench in enumerate(BenchmarkList):
-            markdown_text += f"{nb+1}) **{bench.value}**\n\n\t===== documentation ===> [{bench.doc_url}]({bench.doc_url})\n"
+            markdown_text += f"{nb+1}) **{bench.value}**\n\n"
+            markdown_text += f"\t===== documentation ===> [{bench.doc_url}]({bench.doc_url})\n"
         self.console.print(Markdown(markdown_text))
 
 
