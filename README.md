@@ -17,15 +17,16 @@ before you can start.
 You can use [miniconda](https://docs.conda.io/en/latest/miniconda.html) a 
 lightweight version of anaconda or any other way of installing python you prefer. 
 
-**Note that the package has been tested on python 3.7+, other versions are not recommended.** 
+**Note that the package has been tested on python 3.8+, other versions are not recommended.** 
 
-Once python is installed you can install the package using either `conda` or `pip` directly
-depending on your preference:
+Once python is installed you can install the package using :
 
-- `pip install <.....>` 
-- `conda install <...> -c coml`
+    `pip install zerospeech-benchmark[all]`
 
-**WIP: conda/pip package to be completed once they are published.**
+If you are a conda user you can use our conda environment :
+
+    `conda env create coml/zerospeech-benchmark`
+
 
 To verify that the toolbox is installed correctly you can try `zrc version` which should print 
 the version information. If this is not the case you can open an issue with your errors on directly on our 

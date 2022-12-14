@@ -1,13 +1,73 @@
 import argparse
-import sys
-import webbrowser
 import platform
+import sys
 import urllib.parse
+import webbrowser
+from importlib.metadata import version, PackageNotFoundError
+from typing import Optional
+
+from rich.table import Table
 
 from .cli_lib import CMD
 from ..settings import get_settings
+from ..out import error_console, console as std_console
 
 st = get_settings()
+
+
+class Version(CMD):
+    """ Print the current version used """
+    COMMAND = "version"
+    NAMESPACE = ""
+
+    def init_parser(self, parser: argparse.ArgumentParser):
+        pass
+
+    @staticmethod
+    def get_package_version(pkg_name: str) -> Optional[str]:
+        try:
+            return version(pkg_name)
+        except PackageNotFoundError:
+            # package is not installed
+            return None
+
+    def run(self, argv: argparse.Namespace):
+        zr_bench = self.get_package_version("zerospeech-benchmarks")
+        # benchmark versions
+        abx = self.get_package_version("zerospeech-libriabx")
+        abx2 = self.get_package_version("zerospeech-libriabx2")
+        tde = self.get_package_version("zerospeech-tde")
+        torch = version('torch')
+        numpy = version('numpy')
+        torchaudio = version('torchaudio')
+
+        table = Table(show_header=False, header_style="bold magenta")
+        table.add_column("Package")
+        table.add_column("Version")
+
+        if zr_bench is None:
+            error_console.print("ERROR: module zerospeech-benchmark not installed locally")
+            sys.exit(1)
+
+        table.add_row("zerospeech-benchmarks", zr_bench, end_section=True)
+        if abx:
+            table.add_row("zerospeech-libriabx", abx)
+        if abx2:
+            table.add_row("zerospeech-libriabx2", abx2)
+        if tde:
+            table.add_row("zerospeech-tde", tde)
+        if numpy:
+            table.add_row("numpy", numpy)
+        if torch:
+            table.add_row("torch", torch)
+        if torchaudio:
+            table.add_row("torchaudio", torchaudio)
+        table.add_row(end_section=True)
+
+        table.add_row("python", sys.version, end_section=True)
+        table.add_row("Operating System", platform.platform(aliased=True))
+
+        std_console.print(table)
 
 
 class HelpCMD(CMD):

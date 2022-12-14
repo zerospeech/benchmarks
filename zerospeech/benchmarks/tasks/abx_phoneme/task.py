@@ -1,4 +1,5 @@
 import abc
+import json
 import warnings
 from pathlib import Path
 from typing import Optional, Tuple, Dict, List
@@ -10,6 +11,7 @@ try:
     from vdataset import mount, unmount
 except ImportError:
     zrc_abx2 = ...
+    mount, unmount = ..., ...
     warnings.warn("abx2 module not installed")
 
 from .params import ABXParameters, ABXMode, ABXDistanceMode, ContextMode
@@ -84,6 +86,8 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         else:
             raise ValueError('No abx backend detected')
 
+        # release folder location
+        unmount(arg_obj.path_data)
         return res
 
     @abc.abstractmethod
@@ -112,11 +116,14 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
                 item_file=item_file
             )
 
-        as_df = self.format_results(results)
+        # todo: result formatting not yet available
+        # as_df = self.format_results(results)
 
         filename = output_dir / self.result_filename
-        # todo: checkout outputs
+        # todo: reformat result as df
+        with filename.with_suffix(".json").open('w') as fp:
+            json.dump(results, fp, indent=4)
+
         self.console.print(f":pencil: writing {self.result_filename}",
                            style="underline yellow4")
-        as_df.to_csv(filename, index=False, float_format='%.4f')
-
+        # as_df.to_csv(filename, index=False, float_format='%.4f')

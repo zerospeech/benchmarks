@@ -1,6 +1,6 @@
 [project]
 name = "zerospeech-benchmarks"
-
+readme = "README.md"
 description = "Toolset for usage of the Zero Resource Challenge Benchmarks."
 authors = [
     {name = "Nicolas Hamilakis", email="nicolas.hamilakis@ens.psl.eu"},
@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Intended Audience :: Science/Research"
 ]
-dynamic = ["dependencies", "version", "readme"]
+dynamic = ["dependencies", "version"]
 
 [project.urls]
 documentation = "https://zerospeech.com/toolbox/"
@@ -31,6 +31,10 @@ zrc = "zerospeech.startup:main"
 [project.optional-dependencies]
 abx = [
     "zerospeech-libriabx>=1.0.5"
+]
+abx2 = [
+    "zerospeech-abx2",
+    "virtual-dataset"
 ]
 tde = [
     "zerospeech-tde>=2.0.2"
@@ -57,7 +61,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-readme = {file = "README.md"}
 
 [tool.setuptools.packages.find]
 where = ["."]

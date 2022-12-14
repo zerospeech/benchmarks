@@ -53,7 +53,7 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
 
 
 class AbxLSRobBenchmark(m_benchmark.Benchmark):
-    """ abx-LS-Rob is a benchmark on acoustic Units using the ABX metric.
+    """ abx-LS-Phoneme is a benchmark on acoustic Units using the ABX metric.
 
     It is a reimplementation of the ABX-LS benchmark with more robust .item files
 
@@ -66,7 +66,7 @@ class AbxLSRobBenchmark(m_benchmark.Benchmark):
     Each task has two subsets:  dev, test
     For ABX measuring we use this module : https://github.com/zerospeech/libri-light-abx2
     """
-    _name: ClassVar[str] = "abxLSRob"
+    _name: ClassVar[str] = "abxLSPhon"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_1/tasks_goals/"
     dataset: AbxLSDataset = Field(default_factory=lambda: AbxLSDataset.load())
 
