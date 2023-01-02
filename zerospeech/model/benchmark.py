@@ -136,7 +136,7 @@ class SubmissionValidation(BaseModel, abc.ABC):
         }
 
         results = []
-        for name, item in submission.items:
+        for name, item in iter(submission.items):
             validator = validators_items.get(name, None)
             if validator is not None:
                 res = validator(item)

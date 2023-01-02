@@ -18,46 +18,62 @@ class ABX17Submission(m_benchmark.Submission):
             tasks=('english', 'french', 'mandarin', 'german', 'wolof'),
             sets=('1s', '10s', '120s')
     ):
+        # submission object
+        submission = cls(
+            sets=sets,
+            tasks=tasks,
+            location=path
+        )
+
+        # if params not set export defaults
+        if not submission.params_file.is_file():
+            params = ABXParameters()
+            params.result_filename = "scores.csv"
+            params.export(submission.params_file)
+
+        # Load items
+        file_ext = submission.params.score_file_type.replace('.', '')
+        file_ext = m_data_items.FileTypes(file_ext)
         items = dict()
 
         if 'english' is tasks:
             if '1s' in sets:
                 items['english_1s'] = m_data_items.FileListItem.from_dir(
-                    path / 'english/1s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'english/1s', f_type=file_ext
                 )
             if '10s' in sets:
                 items['english_10s'] = m_data_items.FileListItem.from_dir(
-                    path / 'english/10s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'english/10s', f_type=file_ext
                 )
             if '120s' in sets:
                 items['english_120s'] = m_data_items.FileListItem.from_dir(
-                    path / 'english/120s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'english/120s', f_type=file_ext
                 )
         if 'french' in tasks:
             if '1s' in sets:
                 items['french_1s'] = m_data_items.FileListItem.from_dir(
-                    path / 'french/1s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'french/1s', f_type=file_ext
                 )
             if '10s' in sets:
                 items['french_10s'] = m_data_items.FileListItem.from_dir(
-                    path / 'french/10s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'french/10s', f_type=file_ext
                 )
             if '120s' in sets:
                 items['french_120s'] = m_data_items.FileListItem.from_dir(
-                    path / 'french/120s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'french/120s', f_type=file_ext
                 )
         if 'mandarin' in tasks:
             if '1s' in sets:
                 items['mandarin_1s'] = m_data_items.FileListItem.from_dir(
-                    path / 'mandarin/1s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'mandarin/1s', f_type=file_ext
                 )
             if '10s' in sets:
                 items['mandarin_10s'] = m_data_items.FileListItem.from_dir(
-                    path / 'mandarin/10s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'mandarin/10s', f_type=file_ext
                 )
             if '120s' in sets:
                 items['mandarin_120s'] = m_data_items.FileListItem.from_dir(
-                    path / 'mandarin/120s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    path / 'mandarin/120s', f_type=file_ext
                 )
         if 'german' in tasks:
             # retro-compatibility with old format
@@ -67,15 +83,15 @@ class ABX17Submission(m_benchmark.Submission):
 
             if '1s' in sets:
                 items['german_1s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '1s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '1s', f_type=file_ext
                 )
             if '10s' in sets:
                 items['german_10s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '10s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '10s', f_type=file_ext
                 )
             if '120s' in sets:
                 items['german_120s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '120s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '120s', f_type=file_ext
                 )
         if 'wolof' in tasks:
             # retro-compatibility with old format
@@ -85,31 +101,18 @@ class ABX17Submission(m_benchmark.Submission):
 
             if '1s' in sets:
                 items['wolof_1s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '1s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '1s', f_type=file_ext
                 )
             if '10s' in sets:
                 items['wolof_10s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '10s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '10s', f_type=file_ext
                 )
             if '120s' in sets:
                 items['wolof_120s'] = m_data_items.FileListItem.from_dir(
-                    gloc / '120s', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
+                    gloc / '120s', f_type=file_ext
                 )
 
-        # submission object
-        submission = cls(
-            sets=sets,
-            tasks=tasks,
-            location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items)
-        )
-
-        # if params not set export defaults
-        if not submission.params_file.is_file():
-            params = ABXParameters()
-            params.result_filename = "scores.csv"
-            params.export(submission.params_file)
-
+        submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
     def load_parameters(self) -> "ABXParameters":

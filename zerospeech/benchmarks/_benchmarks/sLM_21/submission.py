@@ -18,8 +18,19 @@ class SLM21Submission(m_benchmark.Submission):
              tasks=('lexical', 'syntactic', 'semantic'),
              sets=('dev', 'test')):
         """ Load submission for sLM21 benchmark (filter by available tasks & sets) """
-        items = dict()
+        # submission object
+        submission = cls(
+            sets=sets,
+            tasks=tasks,
+            location=path
+        )
 
+        # if params not set export defaults
+        if not submission.params_file.is_file():
+            SLM21BenchmarkParameters().export(submission.params_file)
+
+        # Load items
+        items = dict()
         # include lexical task for each set
         if 'lexical' in tasks:
             lexical_dir = path / 'lexical'
@@ -27,24 +38,6 @@ class SLM21Submission(m_benchmark.Submission):
                 items['lexical_dev'] = m_data_items.FileItem.from_file(lexical_dir / "dev.txt")
             if 'test' in sets:
                 items['lexical_test'] = m_data_items.FileItem.from_file(lexical_dir / "test.txt")
-
-        # include semantic task for each set
-        if 'semantic' in tasks:
-            semantic_dir = path / 'semantic'
-            if 'dev' in sets:
-                items['semantic_dev_synthetic'] = m_data_items.FileListItem.from_dir(
-                    semantic_dir / "dev/synthetic", f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-                items['semantic_dev_librispeech'] = m_data_items.FileListItem.from_dir(
-                    semantic_dir / "dev/librispeech", f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-            if 'test' in sets:
-                items['semantic_test_synthetic'] = m_data_items.FileListItem.from_dir(
-                    semantic_dir / "test/synthetic", f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-                items['semantic_test_librispeech'] = m_data_items.FileListItem.from_dir(
-                    semantic_dir / "test/librispeech", f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
 
         # include syntactic for each set
         if 'syntactic' in tasks:
@@ -54,18 +47,27 @@ class SLM21Submission(m_benchmark.Submission):
             if 'test' in sets:
                 items['syntactic_test'] = m_data_items.FileItem.from_file(syntactic_dir / "test.txt")
 
-        # submission object
-        submission = cls(
-            sets=sets,
-            tasks=tasks,
-            location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items)
-        )
+        # include semantic task for each set
+        file_ext = submission.params.syntactic.score_files_type.replace('.', '')
+        file_ext = m_data_items.FileTypes(file_ext)
+        if 'semantic' in tasks:
+            semantic_dir = path / 'semantic'
+            if 'dev' in sets:
+                items['semantic_dev_synthetic'] = m_data_items.FileListItem.from_dir(
+                    semantic_dir / "dev/synthetic", f_type=file_ext
+                )
+                items['semantic_dev_librispeech'] = m_data_items.FileListItem.from_dir(
+                    semantic_dir / "dev/librispeech", f_type=file_ext
+                )
+            if 'test' in sets:
+                items['semantic_test_synthetic'] = m_data_items.FileListItem.from_dir(
+                    semantic_dir / "test/synthetic", f_type=file_ext
+                )
+                items['semantic_test_librispeech'] = m_data_items.FileListItem.from_dir(
+                    semantic_dir / "test/librispeech", f_type=file_ext
+                )
 
-        # if params not set export defaults
-        if not submission.params_file.is_file():
-            SLM21BenchmarkParameters().export(submission.params_file)
-
+        submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
     def __zippable__(self) -> List[Tuple[str, Path]]:

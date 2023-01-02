@@ -21,34 +21,11 @@ class AbxLSRobSubmission(m_benchmark.Submission):
              tasks=('clean', 'other'),
              sets=('dev', 'test')):
         """ Load submission for ABX-Ls-ROB benchmark (filter by available tasks & sets) """
-        items = dict()
-
-        if 'clean' in tasks:
-            if 'dev' in sets:
-                items['dev_clean'] = m_data_items.FileListItem.from_dir(
-                    path / 'dev-clean', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-            if 'test' in sets:
-                items['test_clean'] = m_data_items.FileListItem.from_dir(
-                    path / 'test-clean', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-
-        if 'other' in tasks:
-            if 'dev' in sets:
-                items['dev_other'] = m_data_items.FileListItem.from_dir(
-                    path / 'dev-other', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-            if 'test' in sets:
-                items['test_other'] = m_data_items.FileListItem.from_dir(
-                    path / 'test-other', f_types=[m_data_items.FileTypes.npy, m_data_items.FileTypes.txt]
-                )
-
         # submission object
         submission = cls(
             sets=sets,
             tasks=tasks,
-            location=path,
-            items=m_datasets.Namespace[m_data_items.Item](store=items)
+            location=path
         )
 
         # if params not set export defaults
@@ -57,6 +34,31 @@ class AbxLSRobSubmission(m_benchmark.Submission):
             # TODO: define params for libri-abx2
             pass
 
+        # Load items
+        file_ext = submission.params.score_file_type.replace('.', '')
+        file_ext = m_data_items.FileTypes(file_ext)
+        items = dict()
+        if 'clean' in tasks:
+            if 'dev' in sets:
+                items['dev_clean'] = m_data_items.FileListItem.from_dir(
+                    path / 'dev-clean', f_type=file_ext
+                )
+            if 'test' in sets:
+                items['test_clean'] = m_data_items.FileListItem.from_dir(
+                    path / 'test-clean', f_type=file_ext
+                )
+
+        if 'other' in tasks:
+            if 'dev' in sets:
+                items['dev_other'] = m_data_items.FileListItem.from_dir(
+                    path / 'dev-other', f_type=file_ext
+                )
+            if 'test' in sets:
+                items['test_other'] = m_data_items.FileListItem.from_dir(
+                    path / 'test-other', f_type=file_ext
+                )
+
+        submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
     def load_parameters(self) -> "...":

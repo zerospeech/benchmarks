@@ -59,7 +59,8 @@ def numpy_array_list_check(
     results = []
 
     for fn in f_list_checks:
-        results.extend(fn(item))
+        r = fn(item)
+        results.extend(r)
 
     for i in item.files_list:
         results.extend(numpy_array_check(i, additional_checks))

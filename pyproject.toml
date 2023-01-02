@@ -41,7 +41,7 @@ tde = [
 ]
 
 all = [
-    "zerospeech-benchmarks[abx,tde]"
+    "zerospeech-benchmarks[abx,tde,abx2]"
 ]
 
 dev = [

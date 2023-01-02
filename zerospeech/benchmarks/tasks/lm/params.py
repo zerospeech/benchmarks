@@ -2,7 +2,7 @@ import enum
 import functools
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 import numpy as np
 import yaml
@@ -95,7 +95,11 @@ class LexicalParams(BaseModel):
     )
 
 
+FileTypes = Literal['.npy', '.txt']
+
+
 class SyntacticParams(BaseModel):
+    score_files_type: FileTypes = '.npy'
     result_filenames: FileNameType = dict(
         dev=dict(
             by_pair='score_syntactic_dev_by_pair.csv',

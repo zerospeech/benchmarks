@@ -20,9 +20,10 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
     if given != expected:
         has_less_files = expected - given
         has_more_files = given - expected
+        res = []
 
         if len(has_more_files) > 0:
-            res = []
+
             for e_file in has_more_files:
                 res.append(
                     m_benchmark.ValidationError(
@@ -30,15 +31,15 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
                         filename=e_file
                     )
                 )
-            return res
-
-        if len(has_less_files) > 0:
+        elif len(has_less_files) > 0:
             res = []
             for e_file in has_less_files:
                 res.append(m_benchmark.ValidationError(
                     "expected file not found",
                     filename=e_file
                 ))
+
+        return res
     else:
         return [m_benchmark.ValidationOK('expected files found')]
 
@@ -49,7 +50,7 @@ def file_list_checker(
     """ Check if a file list has expected files in it """
     file_names = [f.stem for f in item.files_list]
     expected_names = [f.stem for f in expected]
-    return list_checker(file_names, expected_names)
+    return list_checker(given=file_names, expected=expected_names)
 
 
 def dataframe_column_check(df: pd.DataFrame, expected_columns: List[str]) -> return_type:

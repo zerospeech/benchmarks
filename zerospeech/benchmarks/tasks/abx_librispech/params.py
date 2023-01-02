@@ -1,21 +1,11 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 
 import yaml
 
 from ....model import m_benchmark
-
-
-class ABXFileTypes(str, Enum):
-    """ Input file type for abx"""
-    pt = '.pt'
-    npy = '.npy'
-    txt = '.txt'
-    wav = '.wav'
-    flac = '.flac'
-    mp3 = '.mp3'
 
 
 class ABXMode(str, Enum):
@@ -40,6 +30,7 @@ class ABXDistanceMode(str, Enum):
 
 
 FileNameType = Dict[str, Dict[str, str]]
+FileTypesTXT = Literal['.npy', '.txt']
 
 
 class ABXParameters(m_benchmark.BenchmarkParameters):
@@ -60,6 +51,7 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
     max_x_across: int = 5
     # location to output the results
     out: Optional[str] = None
+    score_file_type: FileTypesTXT = '.npy'
     result_filename: str = "score_phonetic.csv"
 
     def get_task(self):
@@ -67,12 +59,12 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
 
     def to_meta(self) -> dict[str, Any]:
         """ Convert into leaderboard meta entry """
-        excluded = {'path_checkpoint', 'file_extension', 'out', 'result_filename'}
+        excluded = {'path_checkpoint', 'out', 'result_filename'}
         return dict(self._iter(to_dict=True, exclude=excluded))
 
     def export(self, file: Path):
         # filtering non-interfaced param values
-        excluded = {'path_checkpoint', 'file_extension', 'out'}
+        excluded = {'path_checkpoint', 'out'}
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
         # more complex types as Enum, datetimes, etc. as a simpler chain of

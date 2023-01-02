@@ -14,6 +14,7 @@ except ImportError:
 from .params import ABXParameters, ABXMode, ABXDistanceMode
 from ....model import m_benchmark, m_data_items
 from ....settings import get_settings
+from ....out import warning_console
 
 st = get_settings()
 
@@ -101,9 +102,9 @@ class SimpleABXTask(m_benchmark.Task, abc.ABC):
         abx_sets = self.extract_sets(submission, dataset)
 
         if self.cuda:
-            warnings.warn("GPU calculation mode is enabled !!!")
-            
-        for label, file_list, item_file in abx_sets:
+            warning_console.print("WARNING: gpu mode is set. You can disable this in the parameters.")
+
+        for label, item_file, file_list in abx_sets:
             self.console.print(f'==> Calculating abx distances for {label}')
             results[label] = self.get_abx(
                 sub_files=file_list,

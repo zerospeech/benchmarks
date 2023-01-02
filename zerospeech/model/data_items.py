@@ -75,19 +75,16 @@ class FileListItem(Item):
     files_list: List[Path]
 
     @classmethod
-    def from_dir(cls, path: Path, f_types: List[FileTypes]):
+    def from_dir(cls, path: Path, f_type: FileTypes):
         """ Build a FileListItem from a directory"""
-        file_type = ""
-        file_list = []
 
-        for ft in f_types:
-            file_type = ft
-            file_list = list(path.rglob(f"*{ft.ext}"))
-            if len(file_list) > 0:
-                break
+        temp = path
+        rgexp = f"*{f_type.ext}"
+        thing = temp.rglob(rgexp)
+        file_list = list(thing)
 
         return cls(
-            file_type=file_type,
+            file_type=f_type,
             files_list=file_list,
             relative_path=False
         )
