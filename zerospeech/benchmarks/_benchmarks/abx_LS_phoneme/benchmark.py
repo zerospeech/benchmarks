@@ -1,5 +1,6 @@
 from typing import Tuple, List, Dict, ClassVar
 
+import pandas
 import pandas as pd
 from pydantic import Field
 
@@ -15,7 +16,7 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
     """ ABX task for abx-LS-Rob """
 
     def format_results(self, results: Dict) -> pd.DataFrame:
-        return ...
+        return pandas.DataFrame(results)
 
     def extract_sets(self, submission: AbxLSRobSubmission, dataset: AbxLSDataset) -> return_type:
         """ Extract relevant data for abx from submission & dataset """

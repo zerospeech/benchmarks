@@ -1,9 +1,15 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 
 import yaml
+
+try:
+    from zrc_abx2.eval_ABX import SEED
+except ImportError:
+    # use this default value if variable does not exist
+    SEED = 3459
 
 from ....model import m_benchmark
 
@@ -60,9 +66,10 @@ class PoolingMode(str, Enum):
 
 
 FileNameType = Dict[str, Dict[str, str]]
+FileTypesTXT = Literal['.npy', '.txt']
 
 
-class ABXParameters(m_benchmark.BenchmarkParameters):
+class ABX2Parameters(m_benchmark.BenchmarkParameters):
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = None
     # size of a single feature
@@ -80,8 +87,11 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
     # When computing the ABX across score, maximum
     # number of speaker X to sample per couple A,B.
     max_x_across: int = 5
+    # Default seed to use
+    seed: int = SEED
     # location to output the results
     out: Optional[str] = None
+    score_file_type: FileTypesTXT = '.npy'
     result_filename: str = "score_all_phonetic.csv"
 
     def get_task(self):
@@ -89,12 +99,12 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
 
     def to_meta(self) -> dict[str, Any]:
         """ Convert into leaderboard meta entry """
-        excluded = {'path_checkpoint', 'file_extension', 'out', 'result_filename'}
+        excluded = {'path_checkpoint', 'out', 'result_filename'}
         return dict(self._iter(to_dict=True, exclude=excluded))
 
     def export(self, file: Path):
         # filtering non-interfaced param values
-        excluded = {'path_checkpoint', 'file_extension', 'out'}
+        excluded = {'path_checkpoint', 'out'}
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
         # more complex types as Enum, datetimes, etc. as a simpler chain of

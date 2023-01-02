@@ -14,13 +14,13 @@ except ImportError:
     mount, unmount = ..., ...
     warnings.warn("abx2 module not installed")
 
-from .params import ABXParameters, ABXMode, ABXDistanceMode, ContextMode
+from .params import ABX2Parameters, ABXMode, ABXDistanceMode, ContextMode
 from ....model import m_benchmark, m_data_items
 from ....settings import get_settings
 
 st = get_settings()
 
-default_params = ABXParameters()
+default_params = ABX2Parameters()
 extract_return_type = Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]
 
 
@@ -44,6 +44,8 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
     # When computing the ABX across score, maximum
     # number of speaker X to sample per couple A,B.
     max_x_across: int = default_params.max_x_across
+    # Default seed to use
+    seed: int = default_params.seed
     # location to output the results
     out: Optional[str] = default_params.out
 
@@ -56,16 +58,18 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         if zrc_abx2:
             path_data = mount(file_list)
             abx_args = zrc_abx2.EvalArgs(
-                path_data=path_data,
+                path_data=str(path_data),
                 path_item_file=str(item_file),
+                speaker_mode=self.mode,
+                context_mode=self.context,
                 distance_mode=self.distance_mode,
                 feature_size=self.feature_size,
                 cuda=self.cuda,
                 file_extension=file_ext,
                 path_checkpoint=self.path_checkpoint,
-                mode=self.mode,
                 max_size_group=self.max_size_group,
-                max_x_across=self.max_x_across
+                max_x_across=self.max_x_across,
+                seed=self.seed
             )
             return abx_args
         else:
@@ -109,21 +113,15 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         if self.cuda:
             warnings.warn("GPU calculation mode is enabled !!!")
 
-        for label, file_list, item_file in abx_sets:
+        for label, item_file, file_list in abx_sets:
             self.console.print(f'==> Calculating abx distances for {label}')
             results[label] = self.get_abx(
                 sub_files=file_list,
                 item_file=item_file
             )
 
-        # todo: result formatting not yet available
-        # as_df = self.format_results(results)
-
+        as_df = self.format_results(results)
         filename = output_dir / self.result_filename
-        # todo: reformat result as df
-        with filename.with_suffix(".json").open('w') as fp:
-            json.dump(results, fp, indent=4)
-
         self.console.print(f":pencil: writing {self.result_filename}",
                            style="underline yellow4")
-        # as_df.to_csv(filename, index=False, float_format='%.4f')
+        as_df.to_csv(filename, index=False, float_format='%.4f')

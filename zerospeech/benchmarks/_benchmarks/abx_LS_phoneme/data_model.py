@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 # from .validators import AbxLSSubmissionValidator
-# from ...tasks.abx_librispeech import ABXParameters
+from ...tasks.abx_phoneme import ABX2Parameters
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 from ....settings import get_settings
@@ -30,9 +30,7 @@ class AbxLSRobSubmission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            # ABXParameters().export(submission.params_file)
-            # TODO: define params for libri-abx2
-            pass
+            ABX2Parameters().export(submission.params_file)
 
         # Load items
         file_ext = submission.params.score_file_type.replace('.', '')
@@ -61,18 +59,15 @@ class AbxLSRobSubmission(m_benchmark.Submission):
         submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
-    def load_parameters(self) -> "...":
+    def load_parameters(self) -> ABX2Parameters:
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            # todo: define libriabx2 params object
-            # return ABXParameters.parse_obj(obj)
-        # todo: define libriabx2 params object
-        # return ABXParameters()
-        return ...
+            return ABX2Parameters.parse_obj(obj)
+        return ABX2Parameters()
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        # todo: define validation for abx-ls-rob
+        # todo: use abxLS validation for abx-ls-rob submission (its the same ?)
         # self.validation_output = AbxLSSubmissionValidator().validate(self)
         pass
 
@@ -88,8 +83,7 @@ class AbxLSRobSubmission(m_benchmark.Submission):
         # scores dir
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        # todo: define params for libriabx2
-        # ABXParameters().export(location / ABXParameters.file_stem)
+        ABX2Parameters().export(location / ABX2Parameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(
