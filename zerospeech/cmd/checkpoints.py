@@ -11,6 +11,7 @@ from ..settings import get_settings
 
 st = get_settings()
 
+
 class CheckpointsCMD(CMD):
     """Manipulate Checkpoints """
     COMMAND = "checkpoints"
@@ -43,7 +44,8 @@ class CheckpointsCMD(CMD):
                 dts.name, host, dts.origin.size_label, f"{dts.installed}"
             )
 
-        console.print(Padding(f"==> RootDir: {checkpoints_dir.root_dir}", (1, 0, 1, 0), style="bold grey70", expand=False))
+        console.print(
+            Padding(f"==> RootDir: {checkpoints_dir.root_dir}", (1, 0, 1, 0), style="bold grey70", expand=False))
         console.print(table)
 
 
@@ -54,6 +56,7 @@ class PullCheckpointCMD(CMD):
 
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument('name')
+        parser.add_argument('-u', '--skip-verification', action='store_true', help="Skip archive verification")
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
@@ -63,7 +66,7 @@ class PullCheckpointCMD(CMD):
 
         datasets = checkpoints.CheckpointDir.load()
         dataset = datasets.get(argv.name, cls=checkpoints.CheckPointItem)
-        dataset.pull(quiet=argv.quiet, show_progress=True)
+        dataset.pull(quiet=argv.quiet, show_progress=True, verify=not argv.skip_verification)
 
 
 class RemoveCheckpointCMD(CMD):

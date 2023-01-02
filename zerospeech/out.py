@@ -1,7 +1,7 @@
 """ File containing rich printing utilities """
 import contextlib
 from types import TracebackType
-from typing import IO, Type, AnyStr, Iterator, Iterable, Union, Optional
+from typing import IO, Type, AnyStr, Iterator, Iterable, Union, Optional, List
 
 from rich.console import Console
 from rich.progress import (
@@ -34,7 +34,7 @@ class DevNull(IO[str]):
     def readline(self, __limit: int = ...) -> AnyStr:
         pass
 
-    def readlines(self, __hint: int = ...) -> list[AnyStr]:
+    def readlines(self, __hint: int = ...) -> List[AnyStr]:
         pass
 
     def seek(self, __offset: int, __whence: int = ...) -> int:

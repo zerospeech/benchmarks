@@ -58,6 +58,7 @@ class PullDatasetCMD(CMD):
 
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument('name')
+        parser.add_argument('-u', '--skip-verification', action='store_true', help="Skip archive verification")
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
@@ -67,7 +68,7 @@ class PullDatasetCMD(CMD):
 
         datasets_dir = datasets.DatasetsDir.load()
         dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
-        dataset.pull(quiet=argv.quiet, show_progress=True)
+        dataset.pull(quiet=argv.quiet, show_progress=True, verify=not argv.skip_verification)
 
 
 class ImportDatasetCMD(CMD):

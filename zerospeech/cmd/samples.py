@@ -57,6 +57,7 @@ class PullSampleCMD(CMD):
 
     def init_parser(self, parser: argparse.ArgumentParser):
         parser.add_argument('name')
+        parser.add_argument('-u', '--skip-verification', action='store_true', help="Skip archive verification")
         parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
@@ -66,7 +67,7 @@ class PullSampleCMD(CMD):
 
         sample_dir = samples.SamplesDir.load()
         sample_itm = sample_dir.get(argv.name, cls=samples.SampleItem)
-        sample_itm.pull(quiet=argv.quiet, show_progress=True)
+        sample_itm.pull(quiet=argv.quiet, show_progress=True, verify=not argv.skip_verification)
 
 
 class RemoveSampleCMD(CMD):

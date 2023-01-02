@@ -25,7 +25,7 @@ class CheckPointItem(DownloadableItem):
 
 class CheckpointDir(RepoItemDir):
     """ Checkpoint Directory Management """
-    item_type: Type[DownloadableItem] = CheckPointItem
+    item_type: ClassVar[Type[DownloadableItem]] = CheckPointItem
 
     @classmethod
     def load(cls):
