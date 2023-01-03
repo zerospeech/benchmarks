@@ -117,25 +117,25 @@ class SLM21BenchmarkParameters(m_benchmark.BenchmarkParameters):
     syntactic: SyntacticParams = SyntacticParams()
     semantic: SemanticParams = SemanticParams()
 
-    def get_lexical(self) -> dict[str, Any]:
+    def get_lexical(self) -> Dict[str, Any]:
         return {
             "quiet": self.quiet,
             **self.lexical.dict()
         }
 
-    def get_semantic(self) -> dict[str, Any]:
+    def get_semantic(self) -> Dict[str, Any]:
         return {
             "quiet": self.quiet,
             **self.semantic.dict()
         }
 
-    def get_syntactic(self) -> dict[str, Any]:
+    def get_syntactic(self) -> Dict[str, Any]:
         return {
             "quiet": self.quiet,
             **self.syntactic.dict()
         }
 
-    def to_meta(self) -> dict[str, Any]:
+    def to_meta(self) -> Dict[str, Any]:
         """ Convert into leaderboard meta entry """
         # filtering non-interfaced param values
         excluded = {

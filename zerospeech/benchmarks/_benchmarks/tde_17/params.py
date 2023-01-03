@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 import yaml
 
@@ -16,7 +16,7 @@ class TDE17BenchmarkParams(m_benchmark.BenchmarkParameters):
     def get_task(self):
         return self.dict()
 
-    def to_meta(self) -> dict[str, Any]:
+    def to_meta(self) -> Dict[str, Any]:
         """ Convert into leaderboard meta entry """
         excluded = {'result_filename', 'out'}
         return dict(self._iter(to_dict=True, exclude=excluded))

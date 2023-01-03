@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from pathlib import Path
-from typing import List, Any, Type
+from typing import List, Any, Type, Dict
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel
@@ -158,7 +158,7 @@ class BenchmarkParameters(BaseModel, abc.ABC):
     quiet: bool = False
 
     @abc.abstractmethod
-    def to_meta(self) -> dict[str, Any]:
+    def to_meta(self) -> Dict[str, Any]:
         """ Convert into leaderboard meta entry """
         pass
 

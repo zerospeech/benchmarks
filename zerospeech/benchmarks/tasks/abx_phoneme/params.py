@@ -97,7 +97,7 @@ class ABX2Parameters(m_benchmark.BenchmarkParameters):
     def get_task(self):
         return self.dict()
 
-    def to_meta(self) -> dict[str, Any]:
+    def to_meta(self) -> Dict[str, Any]:
         """ Convert into leaderboard meta entry """
         excluded = {'path_checkpoint', 'out', 'result_filename'}
         return dict(self._iter(to_dict=True, exclude=excluded))
