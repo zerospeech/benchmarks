@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from typing import Tuple
 
-# from .validators import AbxLSSubmissionValidator
+from .validators import AbxLSSubmissionValidator
 from ...tasks.abx_phoneme import ABX2Parameters
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
@@ -67,9 +67,7 @@ class AbxLSRobSubmission(m_benchmark.Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        # todo: use abxLS validation for abx-ls-rob submission (its the same ?)
-        # self.validation_output = AbxLSSubmissionValidator().validate(self)
-        pass
+        self.validation_output = AbxLSSubmissionValidator().validate(self)
 
     @classmethod
     def init_dir(cls, location: Path):
