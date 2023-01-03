@@ -2,10 +2,10 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from .leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
-from ...tasks.abx_librispech import ABXParameters
-from ....data_loaders import load_dataframe
-from ....model import m_score_dir, m_leaderboard
+from zerospeech.benchmarks._benchmarks.abx_LS.leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
+from zerospeech.benchmarks.tasks.abx_librispech import ABXParameters
+from zerospeech.data_loaders import load_dataframe
+from zerospeech.model import m_score_dir, m_leaderboard
 
 
 class ABXLSScoreDir(m_score_dir.ScoreDir):

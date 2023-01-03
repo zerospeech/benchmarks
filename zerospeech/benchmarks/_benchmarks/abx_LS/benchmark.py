@@ -1,66 +1,159 @@
+from pathlib import Path
 from typing import Tuple, List, Dict, ClassVar
 
+import pandas
 import pandas as pd
 from pydantic import Field
 
 from .data_model import AbxLSSubmission
 from ...datasets import AbxLSDataset
-from ...tasks.abx_librispech import SimpleABXTask
+from ...tasks.abx_phoneme import SimpleABXPhonemeTask, ContextMode
 from ....model import m_benchmark, m_data_items
 
-return_type = List[Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]]
+return_type = Tuple[str, m_data_items.FileItem, m_data_items.FileListItem, ContextMode]
 
 
-class AbxLSTask(SimpleABXTask):
-    """ Abx task for abx-LS """
+class AbxLSTask(SimpleABXPhonemeTask):
+    """ ABX task for abx-LS-Rob """
 
     def format_results(self, results: Dict) -> pd.DataFrame:
-        """ Format the results as a dataframe """
-        results = [
-            (dset.split('-')[0], dset.split('-')[1], mode, score)
-            for dset, v in results.items() for mode, score in v.items()
-        ]
-        return pd.DataFrame(
-            results, columns=['dataset', 'sub-dataset', 'type', 'score']
-        )
+        formatted_results = []
 
-    def extract_sets(self, submission: AbxLSSubmission, dataset: AbxLSDataset) -> return_type:
+        for key, lst in results.items():
+            for obj in lst:
+                formatted_results.append(
+                    dict(
+                        subset='-'.join(key.split('-')[:2]),
+                        speaker_mode=obj.get("abx-s-condition"),
+                        context_mode=obj.get('abx-c-condition'),
+                        granularity=obj.get('dataset'),
+                        score=obj.get('score'),
+                        item_file=Path(obj.get('item-file')).name,
+                        pooling=obj.get('pooling'),
+                        seed=obj.get('seed'),
+                    )
+                )
+
+        return pandas.DataFrame(formatted_results)
+
+    def extract_sets(
+            self, submission: AbxLSSubmission,
+            dataset: AbxLSDataset, context: ContextMode = ContextMode.all) -> List[return_type]:
         """ Extract relevant data for abx from submission & dataset """
         self.sets = submission.sets
         self.tasks = submission.tasks
         abx_sets = []
-        if 'dev' in self.sets:
-            if 'clean' in self.tasks:
-                abx_sets.append((
-                    'dev-clean',
-                    dataset.index.subsets.dev_clean.items.item_file,
-                    submission.items.dev_clean
-                ))
-            if 'other' in self.tasks:
-                abx_sets.append((
-                    'dev-other',
-                    dataset.index.subsets.dev_other.items.item_file,
-                    submission.items.dev_other,
-                ))
 
-        if 'test' in self.sets:
-            if 'clean' in self.tasks:
-                abx_sets.append((
-                    'test-clean',
-                    dataset.index.subsets.test_clean.items.item_file,
-                    submission.items.test_clean,
-                ))
-            if 'other' in self.tasks:
-                abx_sets.append((
-                    'test-other',
-                    dataset.index.subsets.test_other.items.item_file,
-                    submission.items.test_other,
-                ))
-        return abx_sets
+        if ContextMode.triphone_within in context.as_set():
+            item_type = "triphone_item_file"
+            if 'dev' in self.sets:
+                if 'clean' in self.tasks:
+                    abx_sets.append((
+                        'dev-clean-triphone-within',
+                        dataset.index.subsets.dev_clean.items.get(item_type),
+                        submission.items.dev_clean,
+                        context.triphone_within
+                    ))
+                if 'other' in self.tasks:
+                    abx_sets.append((
+                        'dev-other-triphone-within',
+                        dataset.index.subsets.dev_other.items.get(item_type),
+                        submission.items.dev_other,
+                        context.triphone_within
+                    ))
+
+            if 'test' in self.sets:
+                if 'clean' in self.tasks:
+                    abx_sets.append((
+                        'test-clean-triphone-within',
+                        dataset.index.subsets.test_clean.items.get(item_type),
+                        submission.items.test_clean,
+                        context.triphone_within
+                    ))
+                if 'other' in self.tasks:
+                    abx_sets.append((
+                        'test-other-triphone-within',
+                        dataset.index.subsets.test_other.items.get(item_type),
+                        submission.items.test_other,
+                        context.triphone_within
+                    ))
+
+            if ContextMode.phoneme_within in context.as_set():
+                item_type = "phoneme_item_file"
+                if 'dev' in self.sets:
+                    if 'clean' in self.tasks:
+                        abx_sets.append((
+                            'dev-clean-phoneme-within',
+                            dataset.index.subsets.dev_clean.items.get(item_type),
+                            submission.items.dev_clean,
+                            context.phoneme_within
+                        ))
+                    if 'other' in self.tasks:
+                        abx_sets.append((
+                            'dev-other-phoneme-within',
+                            dataset.index.subsets.dev_other.items.get(item_type),
+                            submission.items.dev_other,
+                            context.phoneme_within
+                        ))
+
+                if 'test' in self.sets:
+                    if 'clean' in self.tasks:
+                        abx_sets.append((
+                            'test-clean-phoneme-within',
+                            dataset.index.subsets.test_clean.items.get(item_type),
+                            submission.items.test_clean,
+                            context.phoneme_within
+                        ))
+                    if 'other' in self.tasks:
+                        abx_sets.append((
+                            'test-other-phoneme-within',
+                            dataset.index.subsets.test_other.items.get(item_type),
+                            submission.items.test_other,
+                            context.phoneme_within
+                        ))
+
+                if ContextMode.phoneme_any in context.as_set():
+                    item_type = "phoneme_item_file"
+                    if 'dev' in self.sets:
+                        if 'clean' in self.tasks:
+                            abx_sets.append((
+                                'dev-clean-phoneme-any',
+                                dataset.index.subsets.dev_clean.items.get(item_type),
+                                submission.items.dev_clean,
+                                context.phoneme_any
+                            ))
+                        if 'other' in self.tasks:
+                            abx_sets.append((
+                                'dev-other-phoneme-any',
+                                dataset.index.subsets.dev_other.items.get(item_type),
+                                submission.items.dev_other,
+                                context.phoneme_any
+                            ))
+
+                    if 'test' in self.sets:
+                        if 'clean' in self.tasks:
+                            abx_sets.append((
+                                'test-clean-phoneme-any',
+                                dataset.index.subsets.test_clean.items.get(item_type),
+                                submission.items.test_clean,
+                                context.phoneme_any
+                            ))
+                        if 'other' in self.tasks:
+                            abx_sets.append((
+                                'test-other-phoneme-any',
+                                dataset.index.subsets.test_other.items.get(item_type),
+                                submission.items.test_other,
+                                context.phoneme_any
+                            ))
+
+            return abx_sets
 
 
 class AbxLSBenchmark(m_benchmark.Benchmark):
-    """abx-LS is a benchmark on acoustic Units using the ABX metric.
+    """ abx-LS-Phoneme is a benchmark on acoustic Units using the ABX metric.
+
+    It is a reimplementation of the ABX-LS benchmark with more robust .item files
+
 
     This benchmark has 2 sub-tasks :
 
@@ -68,17 +161,16 @@ class AbxLSBenchmark(m_benchmark.Benchmark):
     - other
 
     Each task has two subsets:  dev, test
-    For ABX measuring we use this module : https://github.com/zerospeech/libri-light-abx
+    For ABX measuring we use this module : https://github.com/zerospeech/libri-light-abx2
     """
     _name: ClassVar[str] = "abxLS"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_1/tasks_goals/"
     dataset: AbxLSDataset = Field(default_factory=lambda: AbxLSDataset.load())
 
     def run(self, submission: AbxLSSubmission):
-        """ Run abx-LS tasks """
+        """ run ABX-LSRob tasks """
         params = submission.params
         self.console.print(f'Running {self.name} benchmark on {submission.location.name}')
-
         # create output dir
         submission.score_dir.mkdir(exist_ok=True, parents=True)
         task = AbxLSTask(**params.get_task())

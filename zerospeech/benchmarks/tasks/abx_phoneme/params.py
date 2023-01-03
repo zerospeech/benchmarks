@@ -24,7 +24,7 @@ class ABXFileTypes(str, Enum):
     mp3 = '.mp3'
 
 
-class ABXMode(str, Enum):
+class ABXSpeakerMode(str, Enum):
     """ ABX mode of computation """
     all = 'all'
     within = 'within'
@@ -39,15 +39,26 @@ class ABXMode(str, Enum):
 
 class ContextMode(str, Enum):
     """ ABX context mode of computation """
-    all = 'all'
-    within = 'within'
-    any = 'any'
+    all = "all"
+    phoneme_any = "phoneme-any"
+    phoneme_within = "phoneme-within"
+    triphone_within = 'triphone-within'
 
     def as_set(self):
         if self == self.all:
-            return self.within, self.any
+            return self.phoneme_within, self.phoneme_any, self.triphone_within
         else:
             return self,
+
+    def as_abx2_value(self) -> str:
+        if self == self.phoneme_within:
+            return "within"
+        elif self == self.phoneme_any:
+            return "any"
+        elif self == self.triphone_within:
+            return "within"
+        else:
+            raise ValueError('Current context has not representable value in abx2 module')
 
 
 class ABXDistanceMode(str, Enum):
@@ -77,9 +88,9 @@ class ABX2Parameters(m_benchmark.BenchmarkParameters):
     # Use the GPU to compute distances
     cuda: bool = True
     # Choose the mode of the ABX score to compute
-    mode: ABXMode = 'all'
+    speaker_mode: ABXSpeakerMode = ABXSpeakerMode.all
     # Choose the context type of the ABX score to compute
-    context: ContextMode = 'all'
+    context: ContextMode = ContextMode.all
     # Choose the kind of distance to use to compute
     distance_mode: ABXDistanceMode = 'cosine'
     # Max size of a group while computing the ABX score
