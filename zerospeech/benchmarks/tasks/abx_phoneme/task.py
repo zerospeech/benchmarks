@@ -2,7 +2,7 @@ import abc
 import json
 import warnings
 from pathlib import Path
-from typing import Optional, Tuple, Dict, List
+from typing import Optional, Tuple, Dict, List, Any
 
 import pandas as pd
 
@@ -75,14 +75,14 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         else:
             raise ValueError('No abx backend detected')
 
-    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem) -> Dict[str, float]:
+    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem) -> List[Dict[str, Any]]:
         """  Run abx evaluations on a fileList using a specific .item file
 
         Returns:
             scores<Dict[str, float]>: where keys represent abx mode (across, within) and float represents the score.
         """
         if None in (sub_files, item_file):
-            return {f'{t.value}': '-' for t in self.mode.as_set()}
+            return [{f'{t.value}': '-' for t in self.mode.as_set()}]
 
         arg_obj = self.abx_args(sub_files.files_list, sub_files.file_type.ext, item_file.file)
         if zrc_abx2:
@@ -95,7 +95,8 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         return res
 
     @abc.abstractmethod
-    def extract_sets(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset) -> extract_return_type:
+    def extract_sets(self, submission: m_benchmark.Submission,
+                     dataset: m_benchmark.Dataset, context: ContextMode = 'all') -> extract_return_type:
         """ Extract relevant data for abx from submission & dataset """
         pass
 

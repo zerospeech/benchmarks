@@ -6,7 +6,7 @@ from pydantic import Field
 
 from .data_model import AbxLSRobSubmission
 from ...datasets import AbxLSDataset
-from ...tasks.abx_phoneme import SimpleABXPhonemeTask
+from ...tasks.abx_phoneme import SimpleABXPhonemeTask, ContextMode
 from ....model import m_benchmark, m_data_items
 
 return_type = List[Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]]
@@ -18,39 +18,74 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
     def format_results(self, results: Dict) -> pd.DataFrame:
         return pandas.DataFrame(results)
 
-    def extract_sets(self, submission: AbxLSRobSubmission, dataset: AbxLSDataset) -> return_type:
+    def extract_sets(
+            self, submission: AbxLSRobSubmission,
+            dataset: AbxLSDataset, context: ContextMode = 'all') -> return_type:
         """ Extract relevant data for abx from submission & dataset """
         self.sets = submission.sets
         self.tasks = submission.tasks
         abx_sets = []
-        if 'dev' in self.sets:
-            if 'clean' in self.tasks:
-                abx_sets.append((
-                    'dev-clean',
-                    dataset.index.subsets.dev_clean.items.item_file,
-                    submission.items.dev_clean
-                ))
-            if 'other' in self.tasks:
-                abx_sets.append((
-                    'dev-other',
-                    dataset.index.subsets.dev_other.items.item_file,
-                    submission.items.dev_other,
-                ))
+        if ContextMode.within in context.as_set():
+            item_type = "phoneme_item_file"
+            if 'dev' in self.sets:
+                if 'clean' in self.tasks:
+                    abx_sets.append((
+                        'dev-clean',
+                        dataset.index.subsets.dev_clean.items.get(item_type),
+                        submission.items.dev_clean
+                    ))
+                if 'other' in self.tasks:
+                    abx_sets.append((
+                        'dev-other',
+                        dataset.index.subsets.dev_other.items.get(item_type),
+                        submission.items.dev_other,
+                    ))
 
-        if 'test' in self.sets:
-            if 'clean' in self.tasks:
-                abx_sets.append((
-                    'test-clean',
-                    dataset.index.subsets.test_clean.items.item_file,
-                    submission.items.test_clean,
-                ))
-            if 'other' in self.tasks:
-                abx_sets.append((
-                    'test-other',
-                    dataset.index.subsets.test_other.items.item_file,
-                    submission.items.test_other,
-                ))
-        return abx_sets
+            if 'test' in self.sets:
+                if 'clean' in self.tasks:
+                    abx_sets.append((
+                        'test-clean',
+                        dataset.index.subsets.test_clean.items.get(item_type),
+                        submission.items.test_clean,
+                    ))
+                if 'other' in self.tasks:
+                    abx_sets.append((
+                        'test-other',
+                        dataset.index.subsets.test_other.items.get(item_type),
+                        submission.items.test_other,
+                    ))
+
+            if ContextMode.any in context.as_set():
+                item_type = "triphone_item_file"
+                if 'dev' in self.sets:
+                    if 'clean' in self.tasks:
+                        abx_sets.append((
+                            'dev-clean',
+                            dataset.index.subsets.dev_clean.items.get(item_type),
+                            submission.items.dev_clean
+                        ))
+                    if 'other' in self.tasks:
+                        abx_sets.append((
+                            'dev-other',
+                            dataset.index.subsets.dev_other.items.get(item_type),
+                            submission.items.dev_other,
+                        ))
+
+                if 'test' in self.sets:
+                    if 'clean' in self.tasks:
+                        abx_sets.append((
+                            'test-clean',
+                            dataset.index.subsets.test_clean.items.get(item_type),
+                            submission.items.test_clean,
+                        ))
+                    if 'other' in self.tasks:
+                        abx_sets.append((
+                            'test-other',
+                            dataset.index.subsets.test_other.items.get(item_type),
+                            submission.items.test_other,
+                        ))
+
+            return abx_sets
 
 
 class AbxLSRobBenchmark(m_benchmark.Benchmark):
