@@ -17,6 +17,7 @@ except ImportError:
 from .params import ABX2Parameters, ABXMode, ABXDistanceMode, ContextMode
 from ....model import m_benchmark, m_data_items
 from ....settings import get_settings
+from ....out import warning_console
 
 st = get_settings()
 
@@ -96,7 +97,7 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
 
     @abc.abstractmethod
     def extract_sets(self, submission: m_benchmark.Submission,
-                     dataset: m_benchmark.Dataset, context: ContextMode = 'all') -> extract_return_type:
+                     dataset: m_benchmark.Dataset, context: ContextMode = ContextMode.all) -> extract_return_type:
         """ Extract relevant data for abx from submission & dataset """
         pass
 
@@ -112,7 +113,7 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         abx_sets = self.extract_sets(submission, dataset)
 
         if self.cuda:
-            warnings.warn("GPU calculation mode is enabled !!!")
+            warning_console.print("WARNING: gpu mode is set. You can disable this in the parameters.")
 
         for label, item_file, file_list in abx_sets:
             self.console.print(f'==> Calculating abx distances for {label}')
@@ -123,6 +124,9 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
 
         as_df = self.format_results(results)
         filename = output_dir / self.result_filename
+        with (output_dir / "results.debug.json").open('w') as fp:
+            json.dump(results, fp, indent=4)
+
         self.console.print(f":pencil: writing {self.result_filename}",
                            style="underline yellow4")
         as_df.to_csv(filename, index=False, float_format='%.4f')

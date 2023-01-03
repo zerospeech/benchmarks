@@ -20,7 +20,7 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
 
     def extract_sets(
             self, submission: AbxLSRobSubmission,
-            dataset: AbxLSDataset, context: ContextMode = 'all') -> return_type:
+            dataset: AbxLSDataset, context: ContextMode = ContextMode.all) -> return_type:
         """ Extract relevant data for abx from submission & dataset """
         self.sets = submission.sets
         self.tasks = submission.tasks
@@ -30,13 +30,13 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
             if 'dev' in self.sets:
                 if 'clean' in self.tasks:
                     abx_sets.append((
-                        'dev-clean',
+                        'dev-clean-phoneme',
                         dataset.index.subsets.dev_clean.items.get(item_type),
                         submission.items.dev_clean
                     ))
                 if 'other' in self.tasks:
                     abx_sets.append((
-                        'dev-other',
+                        'dev-other-phoneme',
                         dataset.index.subsets.dev_other.items.get(item_type),
                         submission.items.dev_other,
                     ))
@@ -44,13 +44,13 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
             if 'test' in self.sets:
                 if 'clean' in self.tasks:
                     abx_sets.append((
-                        'test-clean',
+                        'test-clean-phoneme',
                         dataset.index.subsets.test_clean.items.get(item_type),
                         submission.items.test_clean,
                     ))
                 if 'other' in self.tasks:
                     abx_sets.append((
-                        'test-other',
+                        'test-other-phoneme',
                         dataset.index.subsets.test_other.items.get(item_type),
                         submission.items.test_other,
                     ))
@@ -60,13 +60,13 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
                 if 'dev' in self.sets:
                     if 'clean' in self.tasks:
                         abx_sets.append((
-                            'dev-clean',
+                            'dev-clean-triphone',
                             dataset.index.subsets.dev_clean.items.get(item_type),
                             submission.items.dev_clean
                         ))
                     if 'other' in self.tasks:
                         abx_sets.append((
-                            'dev-other',
+                            'dev-other-triphone',
                             dataset.index.subsets.dev_other.items.get(item_type),
                             submission.items.dev_other,
                         ))
@@ -74,13 +74,13 @@ class AbxLSRobTask(SimpleABXPhonemeTask):
                 if 'test' in self.sets:
                     if 'clean' in self.tasks:
                         abx_sets.append((
-                            'test-clean',
+                            'test-clean-triphone',
                             dataset.index.subsets.test_clean.items.get(item_type),
                             submission.items.test_clean,
                         ))
                     if 'other' in self.tasks:
                         abx_sets.append((
-                            'test-other',
+                            'test-other-triphone',
                             dataset.index.subsets.test_other.items.get(item_type),
                             submission.items.test_other,
                         ))
