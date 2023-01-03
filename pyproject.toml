@@ -33,7 +33,7 @@ abx = [
     "zerospeech-libriabx>=1.0.5"
 ]
 abx2 = [
-    "zerospeech-abx2",
+    "zerospeech-libriabx2>=0.9.7",
     "virtual-dataset"
 ]
 tde = [
