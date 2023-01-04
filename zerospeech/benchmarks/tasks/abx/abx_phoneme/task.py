@@ -128,7 +128,7 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
 
         as_df = self.format_results(results)
         filename = output_dir / self.result_filename
-        with (output_dir / "results.debug.json").open('w') as fp:
+        with (output_dir / "results.raw.json").open('w') as fp:
             json.dump(results, fp, indent=4)
 
         self.console.print(f":pencil: writing {self.result_filename}",
