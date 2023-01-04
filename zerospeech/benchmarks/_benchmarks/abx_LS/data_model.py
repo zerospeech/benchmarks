@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 
 from .validators import AbxLSSubmissionValidator
-from ...tasks.abx_phoneme import ABX2Parameters
+from ...tasks.abx.abx_phoneme import ABX2Parameters
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 from ....settings import get_settings

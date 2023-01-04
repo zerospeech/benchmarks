@@ -7,7 +7,7 @@ from pydantic import Field
 
 from .data_model import AbxLSSubmission
 from ...datasets import AbxLSDataset
-from ...tasks.abx_phoneme import SimpleABXPhonemeTask, ContextMode
+from ...tasks.abx.abx_phoneme import SimpleABXPhonemeTask, ContextMode
 from ....model import m_benchmark, m_data_items
 
 return_type = Tuple[str, m_data_items.FileItem, m_data_items.FileListItem, ContextMode]

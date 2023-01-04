@@ -3,13 +3,13 @@ from datetime import datetime
 from typing import Optional
 
 from zerospeech.benchmarks._benchmarks.abx_LS.leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
-from zerospeech.benchmarks.tasks.abx_librispech import ABXParameters
+from zerospeech.benchmarks.tasks.abx.abx_phoneme import ABX2Parameters
 from zerospeech.data_loaders import load_dataframe
 from zerospeech.model import m_score_dir, m_leaderboard
 
 
 class ABXLSScoreDir(m_score_dir.ScoreDir):
-    params: Optional[ABXParameters] = ABXParameters()
+    params: Optional[ABX2Parameters] = ABX2Parameters()
 
     @property
     def scores_phonetic(self):

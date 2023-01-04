@@ -5,10 +5,26 @@ from typing import Optional, Dict, Any, Literal
 
 import yaml
 
-from ....model import m_benchmark
+try:
+    from zrc_abx2.eval_ABX import SEED
+except ImportError:
+    # use this default value if variable does not exist
+    SEED = 3459
+
+from .....model import m_benchmark
 
 
-class ABXMode(str, Enum):
+class ABXFileTypes(str, Enum):
+    """ Input file type for abx"""
+    pt = '.pt'
+    npy = '.npy'
+    txt = '.txt'
+    wav = '.wav'
+    flac = '.flac'
+    mp3 = '.mp3'
+
+
+class ABXSpeakerMode(str, Enum):
     """ ABX mode of computation """
     all = 'all'
     within = 'within'
@@ -21,6 +37,30 @@ class ABXMode(str, Enum):
             return self,
 
 
+class ContextMode(str, Enum):
+    """ ABX context mode of computation """
+    all = "all"
+    phoneme_any = "phoneme-any"
+    phoneme_within = "phoneme-within"
+    triphone_within = 'triphone-within'
+
+    def as_set(self):
+        if self == self.all:
+            return self.phoneme_within, self.phoneme_any, self.triphone_within
+        else:
+            return self,
+
+    def as_abx2_value(self) -> str:
+        if self == self.phoneme_within:
+            return "within"
+        elif self == self.phoneme_any:
+            return "any"
+        elif self == self.triphone_within:
+            return "within"
+        else:
+            raise ValueError('Current context has not representable value in abx2 module')
+
+
 class ABXDistanceMode(str, Enum):
     """ Enumeration for distance mode for abx algorithm"""
     euclidian = 'euclidian'
@@ -29,11 +69,18 @@ class ABXDistanceMode(str, Enum):
     kl_symmetric = 'kl_symmetric'
 
 
+class PoolingMode(str, Enum):
+    """ Pooling method """
+    none = "none"
+    mean = "mean"
+    hamming = "hamming"
+
+
 FileNameType = Dict[str, Dict[str, str]]
 FileTypesTXT = Literal['.npy', '.txt']
 
 
-class ABXParameters(m_benchmark.BenchmarkParameters):
+class ABX2Parameters(m_benchmark.BenchmarkParameters):
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = None
     # size of a single feature
@@ -41,7 +88,9 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
     # Use the GPU to compute distances
     cuda: bool = True
     # Choose the mode of the ABX score to compute
-    mode: ABXMode = 'all'
+    speaker_mode: ABXSpeakerMode = ABXSpeakerMode.all
+    # Choose the context type of the ABX score to compute
+    context: ContextMode = ContextMode.all
     # Choose the kind of distance to use to compute
     distance_mode: ABXDistanceMode = 'cosine'
     # Max size of a group while computing the ABX score
@@ -49,10 +98,12 @@ class ABXParameters(m_benchmark.BenchmarkParameters):
     # When computing the ABX across score, maximum
     # number of speaker X to sample per couple A,B.
     max_x_across: int = 5
+    # Default seed to use
+    seed: int = SEED
     # location to output the results
     out: Optional[str] = None
     score_file_type: FileTypesTXT = '.npy'
-    result_filename: str = "score_phonetic.csv"
+    result_filename: str = "score_all_phonetic.csv"
 
     def get_task(self):
         return self.dict()
