@@ -4,7 +4,7 @@ from typing import Tuple
 
 from ....misc import load_obj
 from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
-from ...tasks.abx_librispech import ABXParameters
+from ...tasks.abx.abx_librispeech import ABXParameters
 
 
 class ABX17Submission(m_benchmark.Submission):

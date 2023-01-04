@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from zerospeech.benchmarks._benchmarks.abx_LS.leaderboard import ABXLSEntry, ABXLSScores, ABXLSScoresSet
+from .leaderboard import ABXLSEntry, ABXLSScore
 from zerospeech.benchmarks.tasks.abx.abx_phoneme import ABX2Parameters
 from zerospeech.data_loaders import load_dataframe
 from zerospeech.model import m_score_dir, m_leaderboard
@@ -32,44 +32,10 @@ class ABXLSScoreDir(m_score_dir.ScoreDir):
             parameters=self.params.to_meta()
         )
 
-    def get_scores(self) -> ABXLSScores:
+    def get_scores(self) -> List[ABXLSScore]:
         """ Extract & format scores """
-
-        def e(d):
-            return {s['type']: s['score'] for s in d}
-
-        frame = self.scores_phonetic
-        dev_clean = frame[(frame["dataset"] == 'dev') & (frame["sub-dataset"] == 'clean')][['type', 'score']] \
-            .to_dict(orient='records')
-        dev_other = frame[(frame["dataset"] == 'dev') & (frame["sub-dataset"] == 'other')][['type', 'score']] \
-            .to_dict(orient='records')
-        test_clean = frame[(frame["dataset"] == 'test') & (frame["sub-dataset"] == 'clean')][['type', 'score']] \
-            .to_dict(orient='records')
-        test_other = frame[(frame["dataset"] == 'test') & (frame["sub-dataset"] == 'other')][['type', 'score']] \
-            .to_dict(orient='records')
-
-        return ABXLSScores(
-            clean=ABXLSScoresSet(
-                dev=m_leaderboard.ABXScoreTuple(
-                    within=e(dev_clean)['within'],
-                    across=e(dev_clean)['across']
-                ),
-                test=m_leaderboard.ABXScoreTuple(
-                    within=e(test_clean)['within'],
-                    across=e(test_clean)['across']
-                ),
-            ),
-            other=ABXLSScoresSet(
-                dev=m_leaderboard.ABXScoreTuple(
-                    within=e(dev_other)['within'],
-                    across=e(dev_other)['across']
-                ),
-                test=m_leaderboard.ABXScoreTuple(
-                    within=e(test_other)['within'],
-                    across=e(test_other)['across']
-                ),
-            )
-        )
+        # todo: format scores to fit leaderboard
+        return ...
 
     def build_leaderboard(self) -> ABXLSEntry:
         model_id = ""
