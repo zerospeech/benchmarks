@@ -14,15 +14,15 @@ except ImportError:
     mount, unmount = ..., ...
     warnings.warn("abx2 module not installed")
 
-from .params import ABX2Parameters, ABXMode, ABXDistanceMode, ContextMode
-from ....model import m_benchmark, m_data_items
-from ....settings import get_settings
-from ....out import warning_console
+from .params import ABX2Parameters, ABXSpeakerMode, ABXDistanceMode, ContextMode
+from .....model import m_benchmark, m_data_items
+from .....settings import get_settings
+from .....out import warning_console
 
 st = get_settings()
 
 default_params = ABX2Parameters()
-extract_return_type = Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]
+extract_return_type = Tuple[str, m_data_items.FileItem, m_data_items.FileListItem, ContextMode]
 
 
 class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
@@ -35,7 +35,7 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
     # Use the GPU to compute distances
     cuda: bool = default_params.cuda
     # Choose the mode of the ABX score to compute
-    mode: ABXMode = default_params.mode
+    speaker_mode: ABXSpeakerMode = default_params.speaker_mode
     # Choose the context type of the ABX score to compute
     context: ContextMode = default_params.context
     # Choose the kind of distance to use to compute
@@ -54,15 +54,16 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
     tasks: Tuple = ('clean', 'other')
     result_filename = default_params.result_filename
 
-    def abx_args(self, file_list: List[Path], file_ext, item_file):
+    def abx_args(self, file_list: List[Path], file_ext, item_file, context: ContextMode):
         """ Build ABX arguments from class attributes """
         if zrc_abx2:
             path_data = mount(file_list)
+            abx2_context = context.as_abx2_value()
             abx_args = zrc_abx2.EvalArgs(
                 path_data=str(path_data),
                 path_item_file=str(item_file),
-                speaker_mode=self.mode,
-                context_mode=self.context,
+                speaker_mode=self.speaker_mode,
+                context_mode=abx2_context,
                 distance_mode=self.distance_mode,
                 feature_size=self.feature_size,
                 cuda=self.cuda,
@@ -76,16 +77,18 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         else:
             raise ValueError('No abx backend detected')
 
-    def get_abx(self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem) -> List[Dict[str, Any]]:
+    def get_abx(
+            self, sub_files: m_data_items.FileListItem, item_file: m_data_items.FileItem, context: ContextMode
+    ) -> List[Dict[str, Any]]:
         """  Run abx evaluations on a fileList using a specific .item file
 
         Returns:
             scores<Dict[str, float]>: where keys represent abx mode (across, within) and float represents the score.
         """
         if None in (sub_files, item_file):
-            return [{f'{t.value}': '-' for t in self.mode.as_set()}]
+            return [{f'{t.value}': '-' for t in self.speaker_mode.as_set()}]
 
-        arg_obj = self.abx_args(sub_files.files_list, sub_files.file_type.ext, item_file.file)
+        arg_obj = self.abx_args(sub_files.files_list, sub_files.file_type.ext, item_file.file, context)
         if zrc_abx2:
             res = zrc_abx2.EvalABX().eval_abx(arg_obj)
         else:
@@ -97,7 +100,7 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
 
     @abc.abstractmethod
     def extract_sets(self, submission: m_benchmark.Submission,
-                     dataset: m_benchmark.Dataset, context: ContextMode = ContextMode.all) -> extract_return_type:
+                     dataset: m_benchmark.Dataset, context: ContextMode = ContextMode.all) -> List[extract_return_type]:
         """ Extract relevant data for abx from submission & dataset """
         pass
 
@@ -115,18 +118,19 @@ class SimpleABXPhonemeTask(m_benchmark.Task, abc.ABC):
         if self.cuda:
             warning_console.print("WARNING: gpu mode is set. You can disable this in the parameters.")
 
-        for label, item_file, file_list in abx_sets:
+        for label, item_file, file_list, context in abx_sets:
             self.console.print(f'==> Calculating abx distances for {label}')
             results[label] = self.get_abx(
                 sub_files=file_list,
-                item_file=item_file
+                item_file=item_file,
+                context=context
             )
 
         as_df = self.format_results(results)
         filename = output_dir / self.result_filename
-        with (output_dir / "results.debug.json").open('w') as fp:
+        with filename.with_suffix('.raw.json').open('w') as fp:
             json.dump(results, fp, indent=4)
 
         self.console.print(f":pencil: writing {self.result_filename}",
                            style="underline yellow4")
-        as_df.to_csv(filename, index=False, float_format='%.4f')
+        as_df.to_csv(filename.with_suffix('.csv'), index=False, float_format='%.4f')

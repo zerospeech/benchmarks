@@ -1,22 +1,20 @@
-from typing import List
+from typing import List, Literal
 
-from pydantic import BaseModel
-
-from ....model import m_leaderboard
+from zerospeech.model import m_leaderboard
 
 
-class ABXLSScoresSet(BaseModel):
-    dev: m_leaderboard.ABXScoreTuple
-    test: m_leaderboard.ABXScoreTuple
-
-
-class ABXLSScores(m_leaderboard.LeaderboardScores):
-    clean: ABXLSScoresSet
-    other: ABXLSScoresSet
+class ABXLSScore(m_leaderboard.LeaderboardScores):
+    subset: Literal['dev-clean', 'dev-other', 'test-clean', 'test-other']
+    granularity: Literal['triphone', 'phoneme']
+    speaker_mode: Literal['across', 'within']
+    context_mode: Literal['within', 'any']
+    score: float
+    pooling: str
+    seed: int
 
 
 class ABXLSEntry(m_leaderboard.LeaderboardEntry):
-    scores: ABXLSScores
+    scores: List[ABXLSScore]
 
 
 class ABXLS(m_leaderboard.Leaderboard):

@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any, Literal
 
 import yaml
 
-from ....model import m_benchmark
+from .....model import m_benchmark
 
 
 class ABXMode(str, Enum):

@@ -34,4 +34,3 @@ The number of lines depends on the speech sample duration.
 metric used for evaluation of those features.
 
 - Each array must contain at least 2 frames (i.e. each file must have at least 2 lines).
-

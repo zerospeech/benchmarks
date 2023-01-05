@@ -1,3 +1,2 @@
-from .data_model import AbxLSSubmission
-from .benchmark import AbxLSBenchmark
+from .benchmark import AbxLSBenchmark, AbxLSSubmission
 from .scores import ABXLSScoreDir

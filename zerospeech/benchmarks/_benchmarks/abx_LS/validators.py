@@ -9,6 +9,7 @@ from ....model import m_benchmark, m_data_items
 
 
 class AbxLSSubmissionValidator(m_benchmark.SubmissionValidation):
+    """ File Validation for an ABXLS submission """
     dataset: AbxLSDataset = Field(default_factory=lambda: AbxLSDataset.load())
 
     @m_benchmark.validation_fn(target='dev_clean')

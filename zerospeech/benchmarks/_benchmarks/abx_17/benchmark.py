@@ -5,7 +5,7 @@ from pydantic import Field
 
 from .data_model import ABX17Submission
 from ...datasets import ZRC2017Dataset
-from ...tasks.abx_librispech import SimpleABXTask
+from ...tasks.abx.abx_librispeech import SimpleABXTask
 from ....model import m_benchmark, m_data_items
 
 return_type = List[Tuple[str, m_data_items.FileListItem, m_data_items.FileItem]]

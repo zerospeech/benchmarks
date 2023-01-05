@@ -3,16 +3,16 @@ from pathlib import Path
 from typing import Tuple
 
 from .validators import AbxLSSubmissionValidator
-from ...tasks.abx_librispech import ABXParameters
+from ...tasks.abx.abx_phoneme import ABX2Parameters
 from ....misc import load_obj
-from ....model import m_datasets, m_benchmark, m_data_items, m_meta_file
+from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
 from ....settings import get_settings
 
 st = get_settings()
 
 
 class AbxLSSubmission(m_benchmark.Submission):
-    """ Submission for ABX-LS Benchmark """
+    """ Submission for ABX-LS-ROB Benchmark """
     sets: Tuple = ('dev', 'test')
     tasks: Tuple = ('clean', 'other')
 
@@ -20,7 +20,7 @@ class AbxLSSubmission(m_benchmark.Submission):
     def load(cls, path: Path, *,
              tasks=('clean', 'other'),
              sets=('dev', 'test')):
-        """ Load submission for ABX-LS benchmark (filter by available tasks & sets)"""
+        """ Load submission for ABX-Ls-ROB benchmark (filter by available tasks & sets) """
         # submission object
         submission = cls(
             sets=sets,
@@ -30,9 +30,9 @@ class AbxLSSubmission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            ABXParameters().export(submission.params_file)
+            ABX2Parameters().export(submission.params_file)
 
-        # Loading items
+        # Load items
         file_ext = submission.params.score_file_type.replace('.', '')
         file_ext = m_data_items.FileTypes(file_ext)
         items = dict()
@@ -59,11 +59,11 @@ class AbxLSSubmission(m_benchmark.Submission):
         submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
-    def load_parameters(self) -> "ABXParameters":
+    def load_parameters(self) -> ABX2Parameters:
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            return ABXParameters.parse_obj(obj)
-        return ABXParameters()
+            return ABX2Parameters.parse_obj(obj)
+        return ABX2Parameters()
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
@@ -81,7 +81,7 @@ class AbxLSSubmission(m_benchmark.Submission):
         # scores dir
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        ABXParameters().export(location / ABXParameters.file_stem)
+        ABX2Parameters().export(location / ABX2Parameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(

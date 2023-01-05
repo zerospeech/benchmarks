@@ -12,9 +12,9 @@ except ImportError:
     warnings.warn("abx module not installed")
 
 from .params import ABXParameters, ABXMode, ABXDistanceMode
-from ....model import m_benchmark, m_data_items
-from ....settings import get_settings
-from ....out import warning_console
+from .....model import m_benchmark, m_data_items
+from .....settings import get_settings
+from .....out import warning_console
 
 st = get_settings()
 
