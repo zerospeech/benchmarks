@@ -7,24 +7,20 @@
 #### benchmarks 
 
 - [X] `zrc benchmarks`: list existing benchmarks
-> TODO: remove score_dir option from CMD
-- [ ] `zrc benchmarks:run <name> <submission_dir>`: run a benchmark on a submission
+- [X] `zrc benchmarks:run <name> <submission_dir>`: run a benchmark on a submission
 - [X] `zrc benchmarks:run <name> -t <task_name>`: run only some tasks of a benchmark on a submission
 - [X] `zrc benchmarks:run <name> -s <set_name>`: run a benchmark only on specific subsets of a submission
 
 #### submissions
-> TODO: deduce benchmark from meta.yaml (remove it as argument to the command)
-> TODO: integrate leaderboard generation into submission
-> TODO: add verification for upload
 - [X] `zrc submission:init <benchmark_name> <submission_dir>`: create a submission directory
+  - [X] TODO: deduce benchmark from meta.yaml (remove it as argument to the command)
 - [X] `zrc submission:params <submission_dir>`:  show current parameters 
 - [X] `zrc submission:verify <submission_dir>`: validate a submission directory
-- [ ] `zrc submission:leaderboard <submission_dir>`: show leaderboard for submission
-- [ ] `zrc submission:leaderboard -g <submission_dir>` generate leaderboard entry
 - [ ] `zrc submission:upload <submission_dir> `: upload a submission from a directory
+  - [ ] TODO: integrate leaderboard generation into submission 
+  - [ ] TODO: add verification before upload
 - [ ] `zrc submission:upload --check <submission_dir> `: check if submission can be uploaded (does not upload)
-
-
+  
 #### user 
 
 - [X] `zrc user`
@@ -37,6 +33,7 @@
 - [X] sLM21
 - [X] abxLS
 - [ ] abx17
+> TODO: has some weird bugs when evaluating (check source)
 > TODO: add score dir and leaderboard generation
 > TODO: add validation
 - [ ] abx15
@@ -45,6 +42,7 @@
 > TODO: add validation
 > TODO: score dir & leaderboard 
 - [X] tde17
+> TODO: eval not tested
 > TODO: add score dir and leaderboard generation
 > TODO: add validation
 - [ ] tde15
@@ -59,9 +57,8 @@
 
 #### potential extensions & plugins
 
-- plugin 1 : extractors --> implement some basic extractor for the most used models
+- extension 1 : extractors --> implement some basic extractor for the most used models
     Extractor for CPC, Bert, LSTM, etc...
 
-- plugin 2 : infSim adaptor wrapper package
+- extension 2 : infSim adaptor wrapper package
     Wrapper module that allows to use this API to allow running benchmarks on infSim architecture
-
