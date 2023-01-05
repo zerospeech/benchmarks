@@ -103,7 +103,7 @@ class ABX2Parameters(m_benchmark.BenchmarkParameters):
     # location to output the results
     out: Optional[str] = None
     score_file_type: FileTypesTXT = '.npy'
-    result_filename: str = "score_all_phonetic.csv"
+    result_filename: str = "score_all_phonetic"
 
     def get_task(self):
         return self.dict()

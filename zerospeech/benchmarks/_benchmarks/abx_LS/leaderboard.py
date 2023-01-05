@@ -9,7 +9,6 @@ class ABXLSScore(m_leaderboard.LeaderboardScores):
     speaker_mode: Literal['across', 'within']
     context_mode: Literal['within', 'any']
     score: float
-    item_file: str
     pooling: str
     seed: int
 

@@ -2,10 +2,10 @@ import uuid
 from datetime import datetime
 from typing import Optional, List
 
-from .leaderboard import ABXLSEntry, ABXLSScore
 from zerospeech.benchmarks.tasks.abx.abx_phoneme import ABX2Parameters
 from zerospeech.data_loaders import load_dataframe
 from zerospeech.model import m_score_dir, m_leaderboard
+from .leaderboard import ABXLSEntry, ABXLSScore
 
 
 class ABXLSScoreDir(m_score_dir.ScoreDir):
@@ -13,7 +13,7 @@ class ABXLSScoreDir(m_score_dir.ScoreDir):
 
     @property
     def scores_phonetic(self):
-        csv_file = self.location / self.params.result_filename
+        csv_file = (self.location / self.params.result_filename).with_suffix('.csv')
         return load_dataframe(csv_file)
 
     def get_details(self) -> m_leaderboard.EntryDetails:
@@ -34,8 +34,20 @@ class ABXLSScoreDir(m_score_dir.ScoreDir):
 
     def get_scores(self) -> List[ABXLSScore]:
         """ Extract & format scores """
-        # todo: format scores to fit leaderboard
-        return ...
+        scores = []
+        for _, row in self.scores_phonetic.iterrows():
+            scores.append(
+                ABXLSScore(
+                    subset=row['subset'],
+                    granularity=row['granularity'],
+                    speaker_mode=row['speaker_mode'],
+                    context_mode=row['context_mode'],
+                    score=row['score'],
+                    pooling=row['pooling'],
+                    seed=row['seed']
+                )
+            )
+        return scores
 
     def build_leaderboard(self) -> ABXLSEntry:
         model_id = ""

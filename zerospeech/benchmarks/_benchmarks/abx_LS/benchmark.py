@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Tuple, List, Dict, ClassVar
 
 import pandas
@@ -28,7 +27,7 @@ class AbxLSTask(SimpleABXPhonemeTask):
                         context_mode=obj.get('abx-c-condition'),
                         granularity=obj.get('dataset'),
                         score=obj.get('score'),
-                        item_file=Path(obj.get('item-file')).name,
+                        # item_file=Path(obj.get('item-file')).name,
                         pooling=obj.get('pooling'),
                         seed=obj.get('seed'),
                     )
