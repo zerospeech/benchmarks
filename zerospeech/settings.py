@@ -48,6 +48,11 @@ class ZerospeechBenchmarkSettings(BaseSettings):
     def user_credentials(self):
         return self.APP_DIR / 'creds.json'
 
+    @property
+    def submit_available_url(self) -> AnyHttpUrl:
+        """ URL to check if submit is available """
+        return parse_obj_as(AnyHttpUrl, f"{str(self.api_root)}/_private/submit-available")
+
     def mkdtemp(self) -> Path:
         tmp_loc = Path(tempfile.mkdtemp(prefix="zr", dir=self.TMP_DIR))
 

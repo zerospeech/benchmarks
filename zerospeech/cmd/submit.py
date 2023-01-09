@@ -3,6 +3,9 @@ import json
 import sys
 from pathlib import Path
 
+import requests
+from pydantic import parse_obj_as, ValidationError
+
 from .cli_lib import CMD
 from ..auth import CurrentUser
 from ..benchmarks import BenchmarkList
@@ -12,6 +15,38 @@ from ..out import error_console, warning_console, console as std_console
 from ..settings import get_settings
 
 st = get_settings()
+
+SUBMIT_AVAILABLE_MSG = """
+[blink bold red uu on white]Submissions are now open[/blink bold red uu on white]
+   
+You need to update this module to be able to use the submit option.
+
+You can run: 
+
+    pip install -U "zerospeech-benchmarks\[all]"
+
+Further instructions can be found @ [Toolbox documentation](https://version2.zerospeech.com/toolbox/#upload)
+"""
+
+SUBMIT_WIP_MESSAGE = """
+[large][red]The submit functionality is a Work In Progress[/red][/large]
+
+It will be available soon !!! 
+
+An announcement will be made on our news section https://version2.zerospeech.com/news/
+
+If you have any questions please contact us @ mailto:contact@zerospeech.com
+"""
+
+
+def is_submit_available():
+    resp = requests.get(str(st.submit_available_url))
+    if resp.status_code != 200:
+        return False
+    try:
+        return parse_obj_as(bool, resp.content)
+    except ValidationError:
+        return False
 
 
 class SubmitOnline(CMD):
@@ -116,5 +151,9 @@ class SubmitOnline(CMD):
         # submission_archive = self.build_archive(submission)
         # 6) upload
         # self.upload_submission(submission_archive, current_user)
-        warning_console.print("The submit functionality is a work in progress")
-        warning_console.print("It will be available in January 2023 !!!")
+
+        if is_submit_available():
+            warning_console.print(SUBMIT_AVAILABLE_MSG)
+        else:
+            warning_console.print(SUBMIT_WIP_MESSAGE)
+
