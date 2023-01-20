@@ -50,3 +50,26 @@ class AbxLSDataset(m_datasets.Dataset):
             dataset.index.make_absolute()
 
         return dataset
+
+
+class ProsodyLMDataset(m_datasets.Dataset):
+    """ Class interfacing usage of the Prosody LM Benchmark """
+    __dataset_name__: ClassVar[str] = "slm-prosody-dataset"
+
+    @classmethod
+    @functools.lru_cache
+    def load(cls, load_index: bool = True) -> Optional["ProsodyLMDataset"]:
+        dataset = m_datasets.DatasetsDir.load().get(cls.__dataset_name__, cls=cls)
+
+        if dataset is None:
+            raise m_datasets.DatasetNotFoundError(f"The {cls.__dataset_name__} does not exist")
+
+        if not dataset.installed:
+            raise m_datasets.DatasetNotInstalledError(f"The {cls.__dataset_name__} is not installed locally")
+
+        if load_index:
+            dataset.load_index()
+            # convert all paths to absolute paths
+            dataset.index.make_absolute()
+
+        return dataset

@@ -8,7 +8,7 @@ from pydantic import BaseModel, AnyUrl, ValidationError
 from .leaderboard import PublicationEntry
 from ..misc import load_obj
 
-BenchmarkList = Literal["sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15", ""]
+BenchmarkList = Literal["sLMProsody", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15", ""]
 
 
 class PublicationInfo(BaseModel):
