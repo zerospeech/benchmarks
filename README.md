@@ -96,9 +96,11 @@ To delete a sample from your system you can use `zrc samples:rm [name]`
 
 You can list available benchmarks by typing the `zrc benchmarks` command.
 
-To create a submission you have to follow the instructions on each of our task pages [Task1](/tasks/task_1/getting_started/), 
-[Task2](/tasks/task_2/getting_started/), [Task3](/tasks/task_3/getting_started/),
-[Task4](/tasks/task_4/getting_started)
+To create a submission you have to follow the instructions on each of our task pages 
+[Task1](https://zerospeech.com/tasks/task_1/tasks_goals/), 
+[Task2](https://zerospeech.com/tasks/task_2/tasks_goals/), 
+[Task3](https://zerospeech.com/tasks/task_3/tasks_goals/),
+[Task4](https://zerospeech.com/tasks/task_4/tasks_goals/)
 
 
 **Some older benchmarks may not be available straight away, but they will be added as soon as possible.**
