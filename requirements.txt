@@ -8,5 +8,4 @@ humanize
 PyYAML
 requests
 joblib
-sox
 treelib
