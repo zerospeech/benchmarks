@@ -1,7 +1,7 @@
 import enum
 
 from ..model import m_benchmark, m_score_dir
-from ._benchmarks import sLM_21, abx_LS, tde_17, abx_17
+from ._benchmarks import sLM_21, abx_LS, tde_17, abx_17, pros_audit
 
 
 class BenchmarkList(str, enum.Enum):
@@ -28,4 +28,5 @@ class BenchmarkList(str, enum.Enum):
     abx_17 = abx_17.ABX17Benchmark, abx_17.ABX17Submission, None
     # TODO: implement score_dir, leaderboard & verification
     tde_17 = tde_17.TDE17Benchmark, tde_17.TDE17Submission, None
+    pros_audit = pros_audit.SLMProsodyBenchmark, pros_audit.ProsodySubmission, None
 

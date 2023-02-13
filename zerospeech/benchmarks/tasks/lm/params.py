@@ -49,7 +49,7 @@ class SemanticPooling(str, enum.Enum):
             return lambda x: x
         else:
             raise ValueError(
-                f'pooling method must be {",".join([f.value for f in self])}'
+                f'pooling method must be {",".join([f.value for f in self])}' # noqa: enum typing is bad
             )
 
 
@@ -165,17 +165,18 @@ class SLM21BenchmarkParameters(m_benchmark.BenchmarkParameters):
 
 class ProsodyLMParameters(m_benchmark.BenchmarkParameters):
     """ Parameters for the prosodic benchmark """
-    results_filename: str = "scores.csv"
+    results_filename: str = "score_prosodic_{0}_{1}_{2}.csv"
+
 
     def to_meta(self) -> Dict[str, Any]:
         """ Convert into leaderboard meta entry """
         # filtering non-interfaced param values
-        excluded = {}
+        excluded = {'results_filename'}
         return dict(self._iter(to_dict=True, exclude=excluded))
 
     def export(self, file: Path):
         # filtering non-interfaced param values
-        excluded = {}
+        excluded = {'result_filename'}
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
         # more complex types as Enum, datetimes, etc. as a simpler chain of

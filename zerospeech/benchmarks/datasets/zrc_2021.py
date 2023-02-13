@@ -52,13 +52,13 @@ class AbxLSDataset(m_datasets.Dataset):
         return dataset
 
 
-class ProsodyLMDataset(m_datasets.Dataset):
+class ProsAuditLMDataset(m_datasets.Dataset):
     """ Class interfacing usage of the Prosody LM Benchmark """
-    __dataset_name__: ClassVar[str] = "slm-prosody-dataset"
+    __dataset_name__: ClassVar[str] = "prosaudit-dataset"
 
     @classmethod
     @functools.lru_cache
-    def load(cls, load_index: bool = True) -> Optional["ProsodyLMDataset"]:
+    def load(cls, load_index: bool = True) -> Optional["ProsAuditLMDataset"]:
         dataset = m_datasets.DatasetsDir.load().get(cls.__dataset_name__, cls=cls)
 
         if dataset is None:
