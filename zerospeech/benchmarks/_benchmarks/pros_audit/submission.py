@@ -7,7 +7,7 @@ import pandas as pd
 from pydantic import Field
 
 from zerospeech import validators, data_loaders
-from zerospeech.model import  m_benchmark, m_data_items, m_datasets, m_meta_file, m_leaderboard
+from zerospeech.model import m_benchmark, m_data_items, m_datasets, m_meta_file, m_leaderboard
 from zerospeech.misc import load_obj
 from ...tasks.lm import ProsodyLMParameters
 from ...datasets import ProsAuditLMDataset
@@ -16,7 +16,6 @@ from ...datasets import ProsAuditLMDataset
 class ProsodySubmissionValidation(m_benchmark.SubmissionValidation):
     """ Class that contains all function to validate a ProsAudit Submission"""
     dataset: ProsAuditLMDataset = Field(default_factory=lambda: ProsAuditLMDataset.load())
-
 
     @m_benchmark.validation_fn(target="english_dev")
     def validation_english_dev(self, english_dev: m_data_items.FileItem):
@@ -83,7 +82,6 @@ class ProsAuditScoreDir(m_benchmark.ScoreDir):
             return data_loaders.load_dataframe(csv_file)
         return None
 
-
     @property
     def english_dev_score_by_type(self) -> Optional[pd.DataFrame]:
         csv_file = self.location / self.params.results_filename.format('english', 'dev', 'by_type')
@@ -112,7 +110,7 @@ class ProsAuditScoreDir(m_benchmark.ScoreDir):
 
 class ProsodySubmission(m_benchmark.Submission):
     sets = ('dev', 'test')
-    tasks = ('english', )
+    tasks = ('english',)
 
     @classmethod
     def load(cls, path: Path, *, sets=('dev', 'test'),
@@ -133,7 +131,6 @@ class ProsodySubmission(m_benchmark.Submission):
                 items['english_dev'] = m_data_items.FileItem.from_file(path / 'english_dev.txt')
             if 'test' in sets:
                 items['english_test'] = m_data_items.FileItem.from_file(path / 'english_test.txt')
-
 
         submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission

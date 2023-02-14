@@ -14,6 +14,7 @@ class Benchmark(str, Enum):
     TTS0_19 = "TTS0-19"
     TTS0_LSLJ = "TTS0-LSLJ"
     sLM_21 = "sLM-21"
+    prosAudit = "prosAudit"
 
 
 class ABXScoreTuple(BaseModel):
