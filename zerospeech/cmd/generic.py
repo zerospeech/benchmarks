@@ -16,6 +16,19 @@ from ..out import error_console, console as std_console
 st = get_settings()
 
 
+class ResetIndex(CMD):
+    """ Reset remote index """
+    COMMAND = "reset-index"
+    NAMESPACE = ""
+
+    def init_parser(self, parser: argparse.ArgumentParser):
+        pass
+
+    def run(self, argv: argparse.Namespace):
+        st.repository_index.unlink(missing_ok=True)
+        std_console.print("Index has been reset successfully !!", style="bold green")
+
+
 class Version(CMD):
     """ Print the current version used """
     COMMAND = "version"

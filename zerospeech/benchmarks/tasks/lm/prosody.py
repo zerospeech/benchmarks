@@ -26,23 +26,26 @@ class ProsodicTask(m_benchmark.Task):
         """ Returns a dataframe with the scores by (something non something) pair"""
         # compute the score for each pair in an additional 'score' column, then
         # delete the 'score word' and 'score non word' columns that become useless
+
         score = data.loc[:, ['score sentence', 'score non sentence']].to_numpy()
         data['score'] = (
                 0.5 * (score[:, 0] == score[:, 1])
                 + (score[:, 0] > score[:, 1]))
-
         data.drop(columns=['score sentence', 'score non sentence'], inplace=True)
 
         # finally get the mean score across voices for all pairs
-        score = data.groupby(['type', 'id']).apply(lambda x: (
-            x.iat[0, 2],  # type
-            x.iat[0, 3],  # sentence
-            x.iat[0, 4],  # non sentence
-            x['score'].mean()))
 
+        score = data.groupby(['type', 'id']).apply(lambda x: (
+            x.iat[0, 0],  # id
+            # x.iat[0, 1],  # voice
+            x.iat[0, 2],  # type
+            # x.iat[0, 3],  # subtype
+            # x.iat[0, 4],  # sentence
+            # x.iat[0, 5],  # non sentence
+            x['score'].mean()))
         return pd.DataFrame(
             score.to_list(),
-            columns=['type', 'sentence', 'non sentence', 'score'])
+            columns=['id', 'type', 'score'])
 
     @staticmethod
     def prosodic_by_type(data: pd.DataFrame) -> pd.DataFrame:
@@ -73,14 +76,17 @@ class ProsodicTask(m_benchmark.Task):
             data.loc[data['correct'] == 0].reset_index().rename(
                 lambda x: 'ns_' + x, axis=1)], axis=1)
         data.drop(
-            ['s_index', 'ns_index', 'ns_type',
+            ['s_index', 'ns_index', 'ns_voice', 'ns_type', 'ns_subtype',
              's_correct', 'ns_correct', 'ns_id'],
             axis=1, inplace=True)
 
         data.rename(
             {'s_id': 'id',
+             's_voice': 'voice',
              's_type': 'type',
              's_subtype': 'subtype',
+             's_transcription': 'sentence',
+             'ns_transcription': 'non sentence',
              's_score': 'score sentence',
              'ns_score': 'score non sentence'},
             axis=1, inplace=True)
@@ -89,7 +95,7 @@ class ProsodicTask(m_benchmark.Task):
         by_type = self.prosodic_by_type(by_pair)
 
         # remove (type, subtype) from by_pair data since by_type is complete
-        by_pair.drop(['type', 'subtype'], axis=1, inplace=True)
+        # by_pair.drop(['type', 'subtype'], axis=1, inplace=True)
 
         return by_pair, by_type
 
@@ -116,7 +122,6 @@ class ProsodicTask(m_benchmark.Task):
                 self.console.print(f":pencil: writing {filename.name}",
                                    style="underline yellow4")
                 by_type.to_csv(filename, index=False, float_format='%.4f')
-
 
         if 'test' in self.sets:
             if 'english' in self.tasks:
