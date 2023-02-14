@@ -6,6 +6,7 @@ import webbrowser
 from importlib.metadata import version, PackageNotFoundError
 from typing import Optional
 
+import distro
 from rich.table import Table
 
 from .cli_lib import CMD
@@ -65,8 +66,11 @@ class Version(CMD):
         table.add_row(end_section=True)
 
         table.add_row("python", sys.version, end_section=True)
-        table.add_row("Operating System", platform.platform(aliased=True))
-
+        os_alias = platform.platform(aliased=True)
+        if 'linux' in platform.system().lower():
+            table.add_row("Operating System", f"{distro.name(pretty=True)}\n{platform.platform(aliased=True)}")
+        else:
+            table.add_row("Operating System", f"{platform.platform(aliased=True)}")
         std_console.print(table)
 
 

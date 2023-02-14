@@ -1,3 +1,4 @@
+distro
 pydantic[email]
 rich
 pycryptodome
