@@ -6,6 +6,7 @@ import webbrowser
 from importlib.metadata import version, PackageNotFoundError
 from typing import Optional
 
+import distro
 from rich.table import Table
 
 from .cli_lib import CMD
@@ -13,6 +14,19 @@ from ..settings import get_settings
 from ..out import error_console, console as std_console
 
 st = get_settings()
+
+
+class ResetIndex(CMD):
+    """ Reset remote index """
+    COMMAND = "reset-index"
+    NAMESPACE = ""
+
+    def init_parser(self, parser: argparse.ArgumentParser):
+        pass
+
+    def run(self, argv: argparse.Namespace):
+        st.repository_index.unlink(missing_ok=True)
+        std_console.print("Index has been reset successfully !!", style="bold green")
 
 
 class Version(CMD):
@@ -65,8 +79,11 @@ class Version(CMD):
         table.add_row(end_section=True)
 
         table.add_row("python", sys.version, end_section=True)
-        table.add_row("Operating System", platform.platform(aliased=True))
-
+        os_alias = platform.platform(aliased=True)
+        if 'linux' in platform.system().lower():
+            table.add_row("Operating System", f"{distro.name(pretty=True)}\n{platform.platform(aliased=True)}")
+        else:
+            table.add_row("Operating System", f"{platform.platform(aliased=True)}")
         std_console.print(table)
 
 

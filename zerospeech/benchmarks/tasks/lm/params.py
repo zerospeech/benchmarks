@@ -49,7 +49,7 @@ class SemanticPooling(str, enum.Enum):
             return lambda x: x
         else:
             raise ValueError(
-                f'pooling method must be {",".join([f.value for f in self])}'
+                f'pooling method must be {",".join([f.value for f in self])}' # noqa: enum typing is bad
             )
 
 
@@ -153,6 +153,30 @@ class SLM21BenchmarkParameters(m_benchmark.BenchmarkParameters):
             'syntactic': True,
             'semantic': {'result_filenames', 'correlations'}
         }
+        # conversion order  self -> json -> pydict -> yaml
+        # json is added in before pydict to leverage the pydantic serializer for
+        # more complex types as Enum, datetimes, etc. as a simpler chain of
+        # self -> pydict -> yaml leaves those unserialised and the yaml serializer fails.
+        # see https://pydantic-docs.helpmanual.io/usage/types/#standard-library-types
+        as_obj = json.loads(self.json(exclude=excluded))
+        with file.open('w') as fp:
+            yaml.dump(as_obj, fp)
+
+
+class ProsodyLMParameters(m_benchmark.BenchmarkParameters):
+    """ Parameters for the prosodic benchmark """
+    results_filename: str = "score_prosodic_{0}_{1}_{2}.csv"
+
+
+    def to_meta(self) -> Dict[str, Any]:
+        """ Convert into leaderboard meta entry """
+        # filtering non-interfaced param values
+        excluded = {'results_filename'}
+        return dict(self._iter(to_dict=True, exclude=excluded))
+
+    def export(self, file: Path):
+        # filtering non-interfaced param values
+        excluded = {'result_filename'}
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
         # more complex types as Enum, datetimes, etc. as a simpler chain of

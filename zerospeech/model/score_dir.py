@@ -5,6 +5,7 @@ from pydantic import BaseModel, DirectoryPath
 
 from .leaderboard import LeaderboardEntry, PublicationEntry
 from .meta_file import MetaFile
+from ..misc import load_obj
 
 
 class ScoreDir(BaseModel, abc.ABC):
@@ -12,6 +13,11 @@ class ScoreDir(BaseModel, abc.ABC):
     location: DirectoryPath
     params: Optional[Any] = None
     meta_file: Optional[MetaFile] = None
+
+    def load_meta(self):
+        """ Load metadata from submission """
+        obj = load_obj(self.submission_dir / MetaFile.file_stem)
+        self.meta_file = MetaFile.parse_obj(obj)
 
     @abc.abstractmethod
     def build_leaderboard(self) -> LeaderboardEntry:

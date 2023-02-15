@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from ....model import m_leaderboard
+from zerospeech.model import m_leaderboard
 
 
 class LexicalByLength(BaseModel):
