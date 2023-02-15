@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from pydantic import BaseModel
 
@@ -11,15 +11,15 @@ class ProsAuditScoreEntity(BaseModel):
     std: float
 
 
-class ProsAuditScores(m_leaderboard.LeaderboardScores):
-    protosyntax: ProsAuditScoreEntity
-    lexical: ProsAuditScoreEntity
+class ProsAuditEntryScores(m_leaderboard.LeaderboardScores):
+    protosyntax: Dict[str, ProsAuditScoreEntity]
+    lexical: Dict[str, ProsAuditScoreEntity]
 
 
 class ProsAuditLeaderboardEntry(m_leaderboard.LeaderboardEntry):
-    scores = ProsAuditScores
+    scores: ProsAuditEntryScores
 
 
 class ProsAuditLeaderboard(m_leaderboard.Leaderboard):
-    data = List[ProsAuditLeaderboardEntry]
+    data: List[ProsAuditLeaderboardEntry]
     _type = m_leaderboard.Benchmark.prosAudit

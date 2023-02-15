@@ -224,6 +224,10 @@ class Submission(BaseModel, abc.ABC):
         """ Set alternative scores location """
         self.__score_dir__ = score_location
 
+    def has_scores(self) -> bool:
+        """ Check if score dir is emtpy """
+        return len(list(self.score_dir.rglob('*'))) > 0
+
     @property
     def get_scores(self):
         if self.score_dir.is_dir():
