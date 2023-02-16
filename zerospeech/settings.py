@@ -4,20 +4,30 @@ import shutil
 import tempfile
 from functools import lru_cache
 from pathlib import Path
+from tempfile import gettempdir
 
-from pydantic import BaseSettings, AnyHttpUrl, parse_obj_as, validator, DirectoryPath, EmailStr
+from pydantic import (
+    BaseSettings,
+    AnyHttpUrl,
+    parse_obj_as,
+    validator,
+    DirectoryPath,
+    EmailStr,
+)
 
 
 class ZerospeechBenchmarkSettings(BaseSettings):
     APP_DIR: Path = Path.home() / "zr-data"
-    TMP_DIR: DirectoryPath = Path('/tmp')
+    TMP_DIR: DirectoryPath = Path(gettempdir())
     api_root: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://api.zerospeech.com")
-    repo_origin: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://download.zerospeech.com/repo.json")
+    repo_origin: AnyHttpUrl = parse_obj_as(
+        AnyHttpUrl, "https://download.zerospeech.com/repo.json"
+    )
     admin_email: EmailStr = parse_obj_as(EmailStr, "nicolas.hamilakis@ens.psl.eu")
     client_id: str = "zrc-commandline-benchmark-tool"
     client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
 
-    @validator('repo_origin', pre=True)
+    @validator("repo_origin", pre=True)
     def cast_url(cls, v):
         """ Cast strings to AnyHttpUrl """
         if isinstance(v, str):
@@ -42,16 +52,18 @@ class ZerospeechBenchmarkSettings(BaseSettings):
     @property
     def repository_index(self) -> Path:
         """ Path to local repository index """
-        return self.APP_DIR / 'repo.json'
+        return self.APP_DIR / "repo.json"
 
     @property
     def user_credentials(self):
-        return self.APP_DIR / 'creds.json'
+        return self.APP_DIR / "creds.json"
 
     @property
     def submit_available_url(self) -> AnyHttpUrl:
         """ URL to check if submit is available """
-        return parse_obj_as(AnyHttpUrl, f"{str(self.api_root)}/_private/submit-available")
+        return parse_obj_as(
+            AnyHttpUrl, f"{str(self.api_root)}/_private/submit-available"
+        )
 
     def mkdtemp(self) -> Path:
         tmp_loc = Path(tempfile.mkdtemp(prefix="zr", dir=self.TMP_DIR))
@@ -68,8 +80,10 @@ class ZerospeechBenchmarkSettings(BaseSettings):
 @lru_cache()
 def get_settings() -> ZerospeechBenchmarkSettings:
     """ Build & return global settings """
-    env_file = os.environ.get('ZR_ENV', None)
+    env_file = os.environ.get("ZR_ENV", None)
 
     if env_file:
-        return ZerospeechBenchmarkSettings(_env_file=env_file, _env_file_encoding='utf-8')
+        return ZerospeechBenchmarkSettings(
+            _env_file=env_file, _env_file_encoding="utf-8"
+        )
     return ZerospeechBenchmarkSettings()
