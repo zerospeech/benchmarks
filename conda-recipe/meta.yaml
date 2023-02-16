@@ -36,11 +36,12 @@ requirements:
     - pyyaml
     - requests
     - joblib
+    - future
     - treelib
 
 test:
   imports:
-    - zerospeech.benchmarks
+    - zerospeech
   commands:
     - pip check
     - zrc --help
