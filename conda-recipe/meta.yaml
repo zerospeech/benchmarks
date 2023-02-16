@@ -40,7 +40,7 @@ requirements:
 
 test:
   imports:
-    - zerospeech
+    - zerospeech.benchmarks
   commands:
     - pip check
     - zrc --help
