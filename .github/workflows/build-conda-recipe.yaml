@@ -1,0 +1,25 @@
+name: Build Conda packages
+
+on: [push]
+
+jobs:
+  build-conda:
+    name: build-conda
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v2
+      - name: setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          conda-build-version: "*"
+      - name: build recipe
+        shell: bash -el {0}
+        run: conda build conda-recipe --output-folder dist
+      - name: upload builds
+        uses: actions/upload-artifact@v3
+        with:
+          name: conda
+          path: dist
+          retention-days: 5
+          if-no-files-found: error
