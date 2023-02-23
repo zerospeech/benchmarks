@@ -1,0 +1,37 @@
+name: Build Conda packages
+
+on: workflow_dispatch
+
+env:
+  ANACONDA_USERNAME: ${{ vars.ANACONDA_USERNAME }}
+
+jobs:
+  build-conda:
+    name: build-conda
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v2
+      - name: setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          conda-build-version: "*"
+      - name: build recipe
+        shell: bash -el {0}
+        run: conda build conda-recipe -c conda-forge --output-folder dist
+      # - name: upload builds
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: conda
+      #     path: dist
+      #     retention-days: 5
+      #     if-no-files-found: error
+      - name: upload builds to anaconda
+        shell: bash -el {0}
+        run: |
+          [ -z "$ANACONDA_USERNAME" ] && echo "ANACONDA_USERNAME missing!"
+          [ -z "${{ secrets.ANACONDA_TOKEN}}" ] && echo "ANACONDA_TOKEN missing!"
+          conda install anaconda-client
+          fs=( $(find dist -name '*.tar.bz2') )
+          echo "to upload: ${fs[*]}"
+          anaconda -t "${{ secrets.ANACONDA_TOKEN }}" upload -u "$ANACONDA_USERNAME" "${fs[@]}" --force

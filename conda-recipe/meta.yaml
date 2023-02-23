@@ -1,0 +1,56 @@
+{% set name = "zerospeech-benchmarks" %}
+{% set version = "0.9" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/zerospeech-benchmarks-{{ version }}.tar.gz
+  sha256: 8b6ef91a910ac88187f00e35602985b884ed9af259bc8ee7bca90e0798b79cce
+
+build:
+  entry_points:
+    - zrc = zerospeech.startup:main
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.8
+    - setuptools >=45
+    - setuptools-scm >=6.2
+    - pip
+  run:
+    - python >=3.8
+    - distro
+    - pydantic
+    - email_validator >=1.3.0
+    - rich
+    - pycryptodome
+    - pandas
+    - numpy
+    - scipy
+    - humanize
+    - pyyaml
+    - requests
+    - joblib
+    - future
+    - treelib
+
+test:
+  imports:
+    - zerospeech
+  commands:
+    - pip check
+    - zrc --help
+  requires:
+    - pip
+
+about:
+  home: https://pypi.org/project/zerospeech-benchmarks/
+  doc_source_url: https://github.com/zerospeech/benchmarks/blob/master/README.md
+  summary: Toolset for usage of the Zero Resource Challenge Benchmarks.
+  license: GPL-3.0
+  license_file: LICENSE.txt
