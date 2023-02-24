@@ -113,7 +113,7 @@ class ProsAuditScoreDir(m_benchmark.ScoreDir):
 
         test_df = self.english_test_score_by_type
         test_lexical: Dict = test_df.loc[test_df['type'] == 'lexical'].to_dict(orient="records")[0]
-        test_protosyntax: Dict = test_df.loc[test_df['type'] == 'lexical'].to_dict(orient="records")[0]
+        test_protosyntax: Dict = test_df.loc[test_df['type'] == 'protosyntax'].to_dict(orient="records")[0]
 
         return ProsAuditEntryScores.parse_obj(
             dict(
