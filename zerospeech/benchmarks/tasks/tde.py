@@ -50,46 +50,45 @@ class TDETask(m_benchmark.Task, abc.ABC):
 
         # Boundary
         if 'boundary' in self.metrics:
-            self.console.status(f"Computing {lang} boundary")
-            boundary = Boundary(gold, discovered)
-            boundary.compute_boundary()
-            scores['boundary'].update(dict(
-                precision=boundary.precision,
-                recall=boundary.recall,
-                fscore=boundary.fscore
-            ))
-            self.console.print(f"Boundary computed :heavy_check_mark:", style="bold green")
+            with self.console.status(f"Computing {lang} boundary"):
+                boundary = Boundary(gold, discovered)
+                boundary.compute_boundary()
+                scores['boundary'].update(dict(
+                    precision=boundary.precision,
+                    recall=boundary.recall,
+                    fscore=boundary.fscore
+                ))
+            self.console.print(f"Boundary computed for {lang} :heavy_check_mark:", style="bold green")
 
         # Token & Type
         if 'token_type' in self.metrics:
-            self.console.status(f"Computing {lang} token & type")
-            token_type = TokenType(gold, discovered)
-            token_type.compute_token_type()
-            scores['token'] = dict()
-            scores['type'] = dict()
-            scores['token']['precision'], scores['type']['precision'] = token_type.precision
-            scores['token']['recall'], scores['type']['recall'] = token_type.recall
-            scores['token']['fscore'], scores['type']['fscore'] = token_type.fscore
-            scores['nlp']['nwords'] = len(token_type.type_seen),
-            self.console.print(f"Token & Type computed :heavy_check_mark:", style="bold green")
+            with self.console.status(f"Computing {lang} token & type"):
+                token_type = TokenType(gold, discovered)
+                token_type.compute_token_type()
+                scores['token'] = dict()
+                scores['type'] = dict()
+                scores['token']['precision'], scores['type']['precision'] = token_type.precision
+                scores['token']['recall'], scores['type']['recall'] = token_type.recall
+                scores['token']['fscore'], scores['type']['fscore'] = token_type.fscore
+                scores['nlp']['nwords'] = len(token_type.type_seen),
+            self.console.print(f"Token & Type computed for {lang} :heavy_check_mark:", style="bold green")
 
         # NLP
         if 'nlp' in self.metrics:
-            self.console.status(f"Computing {lang} NLP")
-            coverage = Coverage(gold, discovered)
-            coverage.compute_coverage()
-            ned = Ned(discovered)
-            ned.compute_ned()
-            scores["nlp"].update(dict(
-                ned=ned.ned,
-                coverage=coverage.coverage,
-                npairs=ned.n_pairs
-            ))
+            with self.console.status(f"Computing {lang} NLP"):
+                coverage = Coverage(gold, discovered)
+                coverage.compute_coverage()
+                ned = Ned(discovered)
+                ned.compute_ned()
+                scores["nlp"].update(dict(
+                    ned=ned.ned,
+                    coverage=coverage.coverage,
+                    npairs=ned.n_pairs
+                ))
+            self.console.print(f"NLP computed for {lang} :heavy_check_mark:", style="bold green")
 
         # Grouping
         if 'grouping' in self.metrics:
-            self.console.status(f"Computing {lang} Grouping")
-
             def handler(signum, frame): # noqa: needs to follow signature
                 self.console.print(f'==> Grouping of {lang} takes too long, skipping..', style='red bold')
                 raise TimeoutError('timeout')
@@ -100,19 +99,22 @@ class TDETask(m_benchmark.Task, abc.ABC):
             signal.alarm(self.grouping_max_time)
 
             try:
-                grouping = Grouping(discovered)
-                grouping.compute_grouping()
-                scores['grouping'].update(dict(
-                    precision=grouping.precision,
-                    recall=grouping.recall,
-                    fscore=grouping.fscore
-                ))
+                with self.console.status(f"Computing {lang} Grouping"):
+                    grouping = Grouping(discovered)
+                    grouping.compute_grouping()
+                    scores['grouping'].update(dict(
+                        precision=grouping.precision,
+                        recall=grouping.recall,
+                        fscore=grouping.fscore
+                    ))
+                self.console.print(f"Grouping computed for {lang} :heavy_check_mark:", style="bold green")
             except TimeoutError:
                 scores['grouping'].update(dict(
                     precision=None,
                     recall=None,
                     fscore=None
                 ))
+                self.console.print(f"Grouping computing for {lang} was aborted due to timeout !!", style="bold red")
 
         def score_or_none(data):
             if len(data):
@@ -134,14 +136,17 @@ class TDETask(m_benchmark.Task, abc.ABC):
     def _eval_lang(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset, lang: str):
         """ Evaluate tde for specific language """
         current_input_classes_file = self.from_submission(submission, lang)
-        gold = self.load_gold(dataset, lang)
+        with self.console.status(f"Loading gold for {lang}..."):
+            gold = self.load_gold(dataset, lang)
 
         # load discovered intervals
-        discovered = self.read_discovered(
-            current_input_classes_file, gold
-        )
+        with self.console.status(f"Loading disc for {lang}..."):
+            discovered = self.read_discovered(
+                current_input_classes_file, gold
+            )
 
         # return results
+        self.console(f"Gathering metrics for {lang} ...")
         return lang, self.gather_metrics(gold, discovered, lang)
 
     def eval(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset):
@@ -149,9 +154,9 @@ class TDETask(m_benchmark.Task, abc.ABC):
 
         # Run evaluation with multiprocess if specified
         res = joblib.Parallel(n_jobs=self.n_jobs)(
-            joblib.delayed(self._eval_lang)(self, submission, dataset, lang) for lang in self.tasks
+            joblib.delayed(self._eval_lang)(submission, dataset, lang) for lang in self.tasks
         )
         scores = dict(res)
-        self.console.print(f":pencil: writing {self.result_filename}", style="underline yellow4")
+        self.console.print(f":pencil: writing scores {self.result_filename}", style="underline yellow4")
         with (submission.score_dir / self.result_filename).open('w') as fp:
             json.dump(scores, fp)

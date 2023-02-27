@@ -9,7 +9,7 @@ from ....model import m_benchmark, m_data_items
 
 
 class TDE17Task(tde.TDETask):
-    task: Tuple = ('english', 'french', 'mandarin', 'german', 'wolof')
+    tasks: Tuple = ('english', 'french', 'mandarin', 'german', 'wolof')
 
     def from_submission(self, submission: TDE17Submission, lang: str) -> m_data_items.FileItem:
         """ Extract current input class file from submission """
@@ -61,7 +61,7 @@ class TDE17Benchmark(m_benchmark.Benchmark):
 
         # create output dir
         submission.score_dir.mkdir(exist_ok=True, parents=True)
-        task = TDE17Task(**params.dict())
+        task = TDE17Task.parse_obj(params.dict())
         task.eval(submission, self.dataset)
 
         self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
