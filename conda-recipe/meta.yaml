@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/zerospeech-benchmarks-{{ version }}.tar.gz
-  sha256: 8b6ef91a910ac88187f00e35602985b884ed9af259bc8ee7bca90e0798b79cce
+  sha256: 59668c988d80386fa94940dbac3afd4a5ea408f8c0472747abbdd332b86e4d52
 
 build:
   entry_points:
