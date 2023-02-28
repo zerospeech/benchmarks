@@ -136,17 +136,17 @@ class TDETask(m_benchmark.Task, abc.ABC):
     def _eval_lang(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset, lang: str):
         """ Evaluate tde for specific language """
         current_input_classes_file = self.from_submission(submission, lang)
-        with self.console.status(f"Loading gold for {lang}..."):
-            gold = self.load_gold(dataset, lang)
+        self.console.print(f"Loading gold for {lang}...")
+        gold = self.load_gold(dataset, lang)
 
         # load discovered intervals
-        with self.console.status(f"Loading disc for {lang}..."):
-            discovered = self.read_discovered(
-                current_input_classes_file, gold
-            )
+        self.console.print(f"Loading class discovery for {lang}...")
+        discovered = self.read_discovered(
+            current_input_classes_file, gold
+        )
 
         # return results
-        self.console(f"Gathering metrics for {lang} ...")
+        self.console.print(f"Gathering metrics for {lang} ...")
         return lang, self.gather_metrics(gold, discovered, lang)
 
     def eval(self, submission: m_benchmark.Submission, dataset: m_benchmark.Dataset):

@@ -17,6 +17,7 @@ class FileTypes(str, Enum):
     yaml = "yaml"
     phn = "phn"  # phone alignment file
     wrd = "wrd"  # words alignment file
+    vad = "vad.csv" # vad segmentation file in csv format
 
     @property
     def ext(self) -> str:
@@ -25,7 +26,7 @@ class FileTypes(str, Enum):
     @classmethod
     def dataframe_types(cls):
         return {
-            cls.csv, cls.txt, cls.tsv, cls.item
+            cls.csv, cls.txt, cls.tsv, cls.item, cls.vad, cls.wrd, cls.phn
         }
 
     @classmethod
@@ -56,7 +57,7 @@ class Item(BaseModel):
     @validator('file_type', pre=True)
     def fix_file_extension(cls, v):
         if isinstance(v, str):
-            return v.replace('.', '')
+            return v.lstrip('.')
         return v
 
     def relative_to(self, path: Path):
