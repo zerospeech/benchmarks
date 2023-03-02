@@ -1,10 +1,13 @@
 import atexit
+import functools
 import os
 import shutil
 import tempfile
+from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 from tempfile import gettempdir
+from typing import Dict, Tuple, Any, Optional, Union, Callable
 
 from pydantic import (
     BaseSettings,
@@ -12,20 +15,79 @@ from pydantic import (
     parse_obj_as,
     validator,
     DirectoryPath,
-    EmailStr,
+    Field,
+    EmailStr, BaseModel,
 )
+
+StrOrCallable = Union[str, Callable[..., str]]
+
+
+class Token(BaseModel):
+    """ Dataclass defining a session token"""
+    username: str
+    access_token: str
+    token_type: str
+    expiry: datetime = Field(default_factory=lambda: datetime.now() + timedelta(days=5))
+
+    def is_expired(self) -> bool:
+        return datetime.now() > self.expiry
+
+
+class ZerospeechAPI(BaseModel):
+    client_id: str = "zrc-commandline-benchmark-tool"
+    client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
+    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:8000")
+    API_ROUTES = {
+        "user_login": '/auth/login',
+        "user_info": functools.partial(lambda username: f'/users/{username}/profile'),
+        "new_model": functools.partial(
+            lambda username, author_name: f'/users/{username}/models/create?author_name={author_name}'),
+        "new_submission": functools.partial(lambda username: f'/users/{username}/submissions/create'),
+        "submission_content_init": functools.partial(
+            lambda submission_id: f'/submissions/{submission_id}/content/init'),
+        "submission_content_add": functools.partial(
+            lambda submission_id: f'/submissions/{submission_id}/content/add'),
+        "submission_content_reset": functools.partial(
+            lambda submission_id: f'/submissions/{submission_id}/content/reset'),
+    }
+
+    @staticmethod
+    def build_api_headers(token: Optional[Token]):
+        """ Build correct headers for connecting with the zerospeech API"""
+        if token is None:
+            return dict()
+
+        if token.is_expired():
+            raise ValueError('token is expired, please create a new session')
+        headers = {}
+
+        if token.token_type == 'bearer':
+            headers['Authorization'] = f"Bearer {token.access_token}"
+
+        return headers
+
+    def request_params(self, route_name: str, token: Optional[Token], **kwargs) -> Tuple[StrOrCallable, Dict[str, Any]]:
+        """ Build params for sending request to api """
+        sub_route = self.API_ROUTES.get(route_name, None)
+        if sub_route is None:
+            raise ValueError(f'route {route_name} does not exist')
+
+        if callable(sub_route):
+            sub_route = sub_route(**kwargs)
+
+        route_url = f"{self.API_URL}{sub_route}"
+
+        return route_url, self.build_api_headers(token)
 
 
 class ZerospeechBenchmarkSettings(BaseSettings):
     APP_DIR: Path = Path.home() / "zr-data"
     TMP_DIR: DirectoryPath = Path(gettempdir())
-    api_root: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://api.zerospeech.com")
     repo_origin: AnyHttpUrl = parse_obj_as(
         AnyHttpUrl, "https://download.zerospeech.com/repo.json"
     )
     admin_email: EmailStr = parse_obj_as(EmailStr, "nicolas.hamilakis@ens.psl.eu")
-    client_id: str = "zrc-commandline-benchmark-tool"
-    client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
+    api: ZerospeechAPI = ZerospeechAPI()
 
     @validator("repo_origin", pre=True)
     def cast_url(cls, v):

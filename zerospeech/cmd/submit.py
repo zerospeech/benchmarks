@@ -7,7 +7,7 @@ import requests
 from pydantic import parse_obj_as, ValidationError
 
 from .cli_lib import CMD
-from ..auth import CurrentUser
+from zerospeech.upload import CurrentUser
 from ..benchmarks import BenchmarkList
 from ..data_loaders import zip_zippable
 from ..model import m_meta_file
