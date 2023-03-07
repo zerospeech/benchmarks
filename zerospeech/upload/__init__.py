@@ -1,2 +1,5 @@
-from .auth import CurrentUser
+from .user_api import (
+    CurrentUser, Token, NewSubmissionInfo, NewModelInfo
+)
+
 

@@ -42,5 +42,5 @@ class SLM21Benchmark(m_benchmark.Benchmark):
             task3 = SyntacticTask(**params.get_syntactic())
             task3.eval(submission, self.dataset)
 
-        self.console.print(f'[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
+        self.console.print('[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")

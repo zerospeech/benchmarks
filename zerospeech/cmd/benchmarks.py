@@ -16,6 +16,7 @@ class BenchmarksCMD(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ No extra arguments"""
         pass
 
     def run(self, argv: argparse.Namespace):
@@ -55,7 +56,7 @@ class BenchmarkRunCMD(CMD):
 
         sub_dir = Path(argv.submission_dir)
         if not sub_dir.is_dir():
-            error_console.log(f"Submission directory given does not exist !!!")
+            error_console.log("Submission directory given does not exist !!!")
             sys.exit(1)
 
         load_args = {}

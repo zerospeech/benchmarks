@@ -127,14 +127,15 @@ class ZerospeechBenchmarkSettings(BaseSettings):
             AnyHttpUrl, f"{str(self.api_root)}/_private/submit-available"
         )
 
-    def mkdtemp(self) -> Path:
+    def mkdtemp(self, auto_clean: bool = True) -> Path:
         tmp_loc = Path(tempfile.mkdtemp(prefix="zr", dir=self.TMP_DIR))
 
         def clean_tmp(d):
             shutil.rmtree(d)
 
-        # create an auto-clean action
-        atexit.register(clean_tmp, d=tmp_loc)
+        if auto_clean:
+            # create an auto-clean action
+            atexit.register(clean_tmp, d=tmp_loc)
 
         return tmp_loc
 

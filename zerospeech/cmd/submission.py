@@ -39,7 +39,7 @@ class SubmissionInit(CMD):
 
         location = Path(argv.location)
         if location.is_dir():
-            error_console.log(f"Location specified already exists !!!")
+            error_console.log("Location specified already exists !!!")
             sys.exit(2)
 
         with std_console.status("Initialising submission dir"):
@@ -60,7 +60,7 @@ class BenchmarkParamsCMD(CMD):
     def run(self, argv: argparse.Namespace):
         location = Path(argv.submission_dir)
         if not location.is_dir():
-            error_console(f"Location specified does not exist !!!")
+            error_console("Location specified does not exist !!!")
             sys.exit(2)
 
         benchmark_name = None
@@ -101,7 +101,7 @@ class SubmissionVerify(CMD):
     def run(self, argv: argparse.Namespace):
         location = Path(argv.location)
         if not location.is_dir():
-            error_console(f"Location specified does not exist !!!")
+            error_console("Location specified does not exist !!!")
             sys.exit(2)
 
         benchmark_name = None

@@ -12,6 +12,7 @@ from .datasets import Dataset
 from .datasets import Namespace
 from .meta_file import MetaFile
 from .score_dir import ScoreDir
+from .validation_context import ValidationResponse, ValidationWarning
 from ..out import console as out_console, void_console, error_console, warning_console
 
 
@@ -28,64 +29,6 @@ def validation_fn(target: str):
         return _impl
 
     return fn_wrapper
-
-
-class ValidationResponse(abc.ABC):
-    """ Abstract class defining a Message object specifying validation Errors/Warnings/Checks """
-
-    def __init__(self, msg, *, data=None, item_name=None, filename=None, location=None):
-        self.item_name = item_name
-        self.filename = filename
-        self.location = location
-        self.msg = msg
-        self.data = data
-
-    def valid(self):
-        return getattr(self, '__is_valid__', False)
-
-    def warning(self):
-        return getattr(self, '__is_warning__', False)
-
-    def error(self):
-        return getattr(self, '__is_error__', False)
-
-    def ok(self):
-        return getattr(self, '__is_ok__', False)
-
-    def __str__(self):
-        item_name = '-'
-        if self.item_name:
-            item_name = self.item_name
-        filename = '[-'
-        if self.filename:
-            filename = f"[{self.filename}"
-        location = ':-]'
-        if self.location:
-            location = f":{self.location}]"
-        msg = ''
-        if self.msg:
-            msg = self.msg
-
-        cls_name = self.__class__.__name__
-        return f'{cls_name}({item_name}){filename}{location}>> {msg}'
-
-
-class ValidationWarning(ValidationResponse):
-    """ Class designating a validation warning """
-    __is_warning__ = True
-    __is_valid__ = True
-
-
-class ValidationError(ValidationResponse):
-    """ Class designating a validation error """
-    __is_error__ = True
-    __is_valid__ = False
-
-
-class ValidationOK(ValidationResponse):
-    """ Class designating a successful validation check """
-    __is_ok__ = True
-    __is_valid__ = True
 
 
 def add_item(item_name: str, resp: List[ValidationResponse]):
@@ -171,7 +114,7 @@ class BenchmarkParameters(BaseModel, abc.ABC):
 class Submission(BaseModel, abc.ABC):
     location: Path
     items: Optional[Namespace[Item]]
-    params_obj: BenchmarkParameters = None
+    params_obj: Optional[BenchmarkParameters] = None
     meta_obj: Optional[MetaFile] = None
     validation_output: List[ValidationResponse] = Field(default_factory=list)
     __score_dir__: Optional[Path] = None

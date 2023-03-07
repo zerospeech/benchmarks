@@ -2,9 +2,10 @@ import warnings
 from pathlib import Path
 from typing import List, Union, Callable, Any
 
+from zerospeech.data_loaders import load_dataframe, load_numpy_array, FileError
+from zerospeech.model import data_items, m_benchmark
+from zerospeech.model.validation_context import ValidationError, ValidationOK
 from .base_validators import BASE_VALIDATOR_FN_TYPE
-from ..data_loaders import load_dataframe, load_numpy_array, FileError
-from ..model import data_items, m_benchmark
 
 return_type = List[m_benchmark.ValidationResponse]
 COMPLEX_VALIDATION_FN = Callable[[Any, List[BASE_VALIDATOR_FN_TYPE]], return_type]
@@ -18,15 +19,15 @@ def dataframe_check(
     results = []
 
     if item.file_type not in data_items.FileTypes.dataframe_types():
-        return [m_benchmark.ValidationError(f'file type {item.file_type} cannot be converted into a dataframe',
+        return [ValidationError(f'file type {item.file_type} cannot be converted into a dataframe',
                                             data=item.file)]
 
     try:
         df = load_dataframe(item, **kwargs)
     except Exception as e:  # noqa: broad exception is on purpose
-        return [m_benchmark.ValidationError(f'{e}', data=item.file)]
+        return [ValidationError(f'{e}', data=item.file)]
 
-    results.append(m_benchmark.ValidationOK(f"File {item.file} is a valid dataframe !"))
+    results.append(ValidationOK(f"File {item.file} is a valid dataframe !"))
 
     for fn in additional_checks:
         results.extend(fn(df))
@@ -41,9 +42,9 @@ def numpy_array_check(file_item: Union[data_items.FileItem, Path],
     try:
         array = load_numpy_array(file_item)
     except (FileError, ValueError, UserWarning):
-        return [m_benchmark.ValidationError(f'File does not contain a numpy array', data=file_item)]
+        return [ValidationError('File does not contain a numpy array', data=file_item)]
 
-    results = [m_benchmark.ValidationOK(f'File contains a numpy array !', data=file_item)]
+    results = [ValidationOK('File contains a numpy array !', data=file_item)]
 
     for fn in additional_checks:
         results.extend(fn(array))
