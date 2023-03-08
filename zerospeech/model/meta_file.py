@@ -14,7 +14,7 @@ BenchmarkList = Literal["sLMProsody", "sLM21", "abxLS", "abx17", "abx15", "tde17
 
 
 def check_no_template(obj, root: str = "") -> ValidationContext:
-    """ Chek that object str fields do not have template values (in <,> tags)"""
+    """ Check that object str fields do not have template values (in <,> tags)"""
     ctx = ValidationContext()
     if root:
         root = f"{root}."

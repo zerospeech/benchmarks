@@ -224,3 +224,22 @@ class CurrentUser(BaseModel):
             token=self.token
         )
         return model_dt
+
+    def new_submission(
+            self, model_id: str, filename: str, filehash: str,
+            has_scores: bool, leaderboard: Dict[str, Path],
+            index: Optional[List[SubmissionRequestFileIndexItem]] = None
+    ):
+        return _UserAPIMethods.make_new_submission(
+            new_sub_info=NewSubmissionInfo(
+                username=self.username,
+                model_id=model_id,
+                filename=filename,
+                hash=filehash,
+                multipart=index is not None,
+                has_scores=has_scores,
+                leaderboards=leaderboard,
+                index=index
+            ),
+            token=self.token
+        )

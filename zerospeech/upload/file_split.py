@@ -1,6 +1,8 @@
+import abc
 import json
+import shutil
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Iterator, Iterable
 
 import pandas as pd
 from Crypto.Hash import MD5
@@ -57,51 +59,92 @@ def split_archive(zipfile: Path, chunk_max_size: int = 500000000, hash_parts: bo
     return manifest, output_dir
 
 
-class MultipartUploadHandler(BaseModel):
-    """ Data Model used for the binary split function as a manifest to allow merging """
+class FileUploadHandler(BaseModel, abc.ABC):
     file: Path
     filehash: str
-    index: Optional[List[ManifestIndexItem]]
-    uploaded: List[ManifestIndexItem] = Field(default_factory=list)
-    output_dir: Optional[Path]
+
+    @property
+    def current_dir(self) -> Path:
+        return self.file.parent
+
+    @classmethod
+    @abc.abstractmethod
+    def _create(cls, target_file: Path):
+        """ Abstract method to create manifest """
+        pass
+
+    @abc.abstractmethod
+    def clean(self):
+        """ Clean upload temp files """
+        pass
 
     @staticmethod
-    def resume_file(source: Path) -> Path:
+    def __resume_path(source: Path):
+        """ Path builder to resume file """
         return source.parent / f"{source.stem}.upload.json"
+
+    @property
+    def resume_file(self) -> Path:
+        """ Current resume file """
+        return self.__resume_path(self.file)
 
     def save(self):
         """ Save progress to disk """
-        with self.resume_file(self.file).open("w") as fp:
+        with self.resume_file.open("w") as fp:
             fp.write(self.json(indent=4))
 
     @classmethod
-    def create(cls, target_file: Path) -> "MultipartUploadHandler":
+    def create_or_load(cls, target_file: Path) -> Optional["FileUploadHandler"]:
+        """ Create or load manifest """
         if not target_file.is_file():
             raise FileExistsError(f'{target_file} does not exist')
 
-        if (target_file.parent / f"{target_file.stem}.upload.json").is_file():
+        if cls.__resume_path(target_file).is_file():
             """ If resume file exists load this instead of recreating it """
-            with cls.resume_file(target_file).open() as fp:
+            with cls.__resume_path(target_file).open() as fp:
                 return cls.parse_obj(json.load(fp))
 
+        # if no resume file build new manifest
+        return cls._create(target_file)
+
+
+class MultipartUploadHandler(FileUploadHandler):
+    """ Data Model used for the binary split function as a manifest to allow merging """
+    index: Optional[List[ManifestIndexItem]]
+    uploaded: List[ManifestIndexItem] = Field(default_factory=list)
+    parts_dir: Optional[Path]
+
+    @classmethod
+    def _create(cls, target_file: Path):
+        """ Build multipart upload manifest """
         file_hash = md5sum(target_file)
-        manifest = cls(file=target_file, filehash=file_hash, index=[])
 
         # split file & create upload index
         files_manifest, output_dir = split_archive(target_file)
-        manifest.index = files_manifest
-        manifest.output_dir = output_dir
-
+        manifest = cls(
+            file=target_file, filehash=file_hash,
+            index=files_manifest, parts_dir=output_dir
+        )
         # save to disk to allow resume
         manifest.save()
         return manifest
 
+    def clean(self):
+        """ Clean upload temp files """
+        self.resume_file.unlink(missing_ok=True)
+        shutil.rmtree(self.parts_dir)
 
-    # todo should upload_next be an iterable and work with resume ?
 
+class SinglePartUpload(FileUploadHandler):
 
-class SinglePartUpload(BaseModel):
-    file: Path
-    filehash: str
+    @classmethod
+    def _create(cls, target_file: Path):
+        """ Build singlepart upload manifest """
+        return cls(
+            file=target_file,
+            filehash=md5sum(target_file)
+        )
 
-    # todo: write section for single part
+    def clean(self):
+        """ Clean upload temp files """
+        self.resume_file.unlink(missing_ok=True)

@@ -1,20 +1,17 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from rich.console import Console
 
+from zerospeech.data_loaders import zip_zippable
 from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console
-from zerospeech.data_loaders import zip_zippable
 from zerospeech.settings import get_settings
+from .file_split import (
+    FileUploadHandler, MultipartUploadHandler, SinglePartUpload
+)
 from .user_api import CurrentUser
 
 st = get_settings()
-
-
-class SubmissionAPI:
-
-    def add_part(self):
-        pass
 
 
 def get_first_author(authors: str) -> Tuple[str, str]:
@@ -30,16 +27,18 @@ def get_first_author(authors: str) -> Tuple[str, str]:
 
 
 class SubmissionUploader:
-    ## TODO: setup upload manifest & resume from temp dir
 
-    def __init__(self, submission: m_benchmark.Submission, quiet: bool = False):
+    def __init__(
+            self, submission: m_benchmark.Submission, credentials: Tuple[str, str],
+            multipart: bool = True, quiet: bool = False
+    ):
+        self.upload_handler: Optional[FileUploadHandler] = None
         self.submission = submission
         self.tmp_dir = st.mkdtemp(auto_clean=False)
         self.archive_file = self.tmp_dir / f"{submission.location.name}.zip"
         self._quiet = quiet
         # load or create user
-        creds = CurrentUser.get_credentials_from_user()
-        self.user = CurrentUser.login(creds)
+        self.user = CurrentUser.login(credentials)
 
         # fetch system data & update submission
         with self.console.status("Building submission..."):
@@ -54,7 +53,13 @@ class SubmissionUploader:
                 model_id=self._get_model_id()
             )
 
-        self.console.print(":heavy_check_mark: Submission Valid !!!", style="bold green")
+        # Making archive
+        self._make_archive(multipart)
+
+        with self.console.status("Checking Submission ID"):
+            self._register_submission()
+
+        self.console.print(":heavy_check_mark: Submission valid & ready for upload !!!", style="bold green")
 
     @property
     def console(self) -> Console:
@@ -114,19 +119,35 @@ class SubmissionUploader:
             fp.write(ld_data.json(indent=4))
         # check model_id
 
-    def archive(self):
-        with self.console.status("Creating Archive..."):
-            zip_zippable(self.submission, self.archive_file)
+    def _make_archive(self, multipart: bool = True):
+        if not self.archive_file.is_file():
+            with self.console.status("Creating Archive..."):
+                zip_zippable(self.submission, self.archive_file)
+
+        with self.console.status("Building manifest..."):
+            if multipart:
+                self.upload_handler = MultipartUploadHandler.create_or_load(
+                    self.archive_file
+                )
+            else:
+                self.upload_handler = SinglePartUpload.create_or_load(
+                    self.archive_file
+                )
         self.console.print(":heavy_check_mark: archive created !!", style="bold green")
 
-    def create_entries(self):
-        # todo choice: multipart, singlepart [??]
-        # todo make new submission
-        resp_obj = self.user.make_new_submission(
-            ...,
-            token=self.user.token
-        )
-        # todo create upload index/Manifest
-        man = ...
-        man.upload()
+    def _register_submission(self):
+        if self.submission.meta.submission_id is not None:
+            # todo make new submission
+            resp_obj = self.user.make_new_submission(
+                ...,
+                token=self.user.token
+            )
+            # set in submission
+            self.submission.meta.set_submission_id(
+                submission_location=self.submission.location,
+                submission_id=resp_obj
+            )
 
+    def upload(self):
+        # todo: make uploader by iterating on upload_handler
+        pass
