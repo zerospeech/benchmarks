@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from pathlib import Path
-from typing import List, Any, Type, Dict
+from typing import List, Any, Type, Dict, Protocol
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel
@@ -14,6 +14,39 @@ from .meta_file import MetaFile
 from .score_dir import ScoreDir
 from .validation_context import ValidationResponse, ValidationWarning
 from ..out import console as out_console, void_console, error_console, warning_console
+
+
+class ContextualItem(Protocol):
+    """ Item providing context to exceptions """
+
+    def print(self, allow_warnings: bool = False):
+        """ protocol function allowing to print context """
+        pass
+
+
+class ContextualException(Exception):
+    """ Custom exception providing a context """
+
+    def __init__(self, msg: str, ctx: Optional[ContextualItem] = None):
+        self._context: ContextualItem = ctx
+        super().__init__(msg)
+
+    def print_context(self, allow_warnings: bool = False):
+        """ Prints the current context """
+        if self._context:
+            self._context.print(allow_warnings)
+
+
+class ScoresNotFound(ContextualException):
+    pass
+
+
+class MetaYamlNotValid(ContextualException):
+    pass
+
+
+class InvalidSubmissionError(ContextualException):
+    pass
 
 
 def validation_fn(target: str):
@@ -61,7 +94,6 @@ def show_errors(resp: List[ValidationResponse], allow_warnings: bool = True):
 
 
 class SubmissionValidation(BaseModel, abc.ABC):
-    # todo: add validation of Metafile as well
     dataset: Dataset
 
     def _is_validation_fn(self, fn_name):
@@ -90,11 +122,6 @@ class SubmissionValidation(BaseModel, abc.ABC):
         return results
 
 
-class InvalidSubmissionError(Exception):
-    """ Error used to signal a non valid submission """
-    pass
-
-
 class BenchmarkParameters(BaseModel, abc.ABC):
     """ Abstract Parameter class """
     file_stem: ClassVar[str] = "params.yaml"
@@ -116,9 +143,9 @@ class Submission(BaseModel, abc.ABC):
     items: Optional[Namespace[Item]]
     params_obj: Optional[BenchmarkParameters] = None
     meta_obj: Optional[MetaFile] = None
-    validation_output: List[ValidationResponse] = Field(default_factory=list)
     __score_dir__: Optional[Path] = None
     __score_cls__: ClassVar[Type[ScoreDir]]
+    validation_output: List[ValidationResponse] = Field(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True

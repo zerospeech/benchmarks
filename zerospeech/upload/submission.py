@@ -1,5 +1,8 @@
-from typing import Tuple, Optional
+import json
+from pathlib import Path
+from typing import Tuple, Optional, Any
 
+from pydantic import BaseModel
 from rich.console import Console
 
 from zerospeech.data_loaders import zip_zippable
@@ -26,12 +29,47 @@ def get_first_author(authors: str) -> Tuple[str, str]:
         return "john", "doe"
 
 
+class UploadManifest(BaseModel):
+    submission_location: Path
+    submission_validated: bool
+    multipart: bool
+    user_logged_in: bool
+    tmp_dir: Path
+    archive_filename: str
+    submission_id: str
+    model_id: str
+
+    @staticmethod
+    def index_stem() -> str:
+        return ".manifest"
+
+    @classmethod
+    def load(cls, location: Path):
+        """ Load Manifest from location """
+        if not (location / cls.index_stem()).is_file():
+            raise FileNotFoundError("No Index file")
+
+        with (location / cls.index_stem()).open() as fp:
+            return cls.parse_obj(json.load(fp))
+
+    def save(self):
+        """ Save to disk """
+        with (self.tmp_dir / self.index_stem()).open('w') as fp:
+            fp.write(self.json(indent=4))
+
+    def update(self, field: str, value: Any):
+        """ Update a field """
+        setattr(self, field, value)
+        self.save()
+
+
 class SubmissionUploader:
 
     def __init__(
             self, submission: m_benchmark.Submission, credentials: Tuple[str, str],
             multipart: bool = True, quiet: bool = False
     ):
+        # todo: add check for if resume exists
         self.upload_handler: Optional[FileUploadHandler] = None
         self.submission = submission
         self.tmp_dir = st.mkdtemp(auto_clean=False)
@@ -39,6 +77,18 @@ class SubmissionUploader:
         self._quiet = quiet
         # load or create user
         self.user = CurrentUser.login(credentials)
+
+        self._manifest = UploadManifest(
+            submission_location=submission.location,
+            submission_validated=False,
+            multipart=multipart,
+            user_logged_in=self.user is not None,
+            tmp_dir=self.tmp_dir,
+            archive_filename=self.archive_file.name,
+            submission_id="",
+            model_id=""
+        )
+        self._manifest.save()
 
         # fetch system data & update submission
         with self.console.status("Building submission..."):
@@ -102,16 +152,20 @@ class SubmissionUploader:
 
     def _check_submission(self):
         """ Performs all checks on submission before upload to API """
-        # todo: submission checks
-        # [ ] check meta.yaml (ask for more info hard-written rules)
+
+        if not self.submission.meta.is_valid():
+            raise m_benchmark.MetaYamlNotValid('meta.yaml not valid', ctx=self.submission.meta.validation_context)
+
         # validate submission
         if not self.submission.valid:
+            # todo convert submission validation to use context protocol
             m_benchmark.show_errors(self.submission.validation_output)
-            raise ValueError('submission not valid')
+            raise m_benchmark.InvalidSubmissionError('submission not valid')
 
         # check scores (has_scores)
         if not self.submission.has_scores():
-            raise ValueError('submission has no scores')
+            raise m_benchmark.ScoresNotFound('submission has no scores')
+
         # generate leaderboard
         scores = self.submission.get_scores
         ld_data = scores.build_leaderboard()

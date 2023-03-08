@@ -30,7 +30,6 @@ def check_no_template(obj, root: str = "") -> ValidationContext:
     return ctx
 
 
-
 class PublicationInfo(BaseModel):
     author_label: str = ""
     authors: str
@@ -122,7 +121,6 @@ class ModelInfo(BaseModel):
         return ctx
 
 
-
 class MetaFile(BaseModel):
     username: Optional[str]
     submission_id: Optional[str]
@@ -133,6 +131,10 @@ class MetaFile(BaseModel):
     code_url: Optional[Union[AnyUrl, str]]
     file_stem: ClassVar[str] = "meta.yaml"
     _validation: ValidationContext = Field(exclude=True, default_factory=lambda: ValidationContext())
+
+    @property
+    def validation_context(self) -> Optional[ValidationContext]:
+        return self._validation
 
     @classmethod
     def from_file(cls, file: Path, enforce: bool = False):
@@ -181,7 +183,6 @@ class MetaFile(BaseModel):
         self.submission_id = submission_id
         # write to file
         self.to_yaml(submission_location / self.file_stem, excluded=dict())
-
 
     def get_publication_info(self) -> PublicationEntry:
         pub = self.publication
@@ -232,7 +233,6 @@ class MetaFile(BaseModel):
         self._validation.add_filename(filename=self.file_stem)
 
         return not self._validation.fails()
-
 
     @classmethod
     def benchmark_from_submission(cls, location: Path) -> Optional[BenchmarkList]:
