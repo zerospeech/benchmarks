@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, Union
 
 from pydantic import BaseModel
 from rich.console import Console
 
+from zerospeech.benchmarks import BenchmarkList
 from zerospeech.data_loaders import zip_zippable
 from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console
@@ -66,10 +67,16 @@ class UploadManifest(BaseModel):
 class SubmissionUploader:
 
     def __init__(
-            self, submission: m_benchmark.Submission, credentials: Tuple[str, str],
+            self, submission: Union[Path, m_benchmark.Submission] , credentials: Tuple[str, str],
             multipart: bool = True, quiet: bool = False
     ):
+        if isinstance(submission, Path):
+            bench = BenchmarkList.from_submission(submission)
+            submission = bench.submission.load(submission)
+
+
         # todo: add check for if resume exists
+        # todo generic submission loader in misc of benchmark (??)
         self.upload_handler: Optional[FileUploadHandler] = None
         self.submission = submission
         self.tmp_dir = st.mkdtemp(auto_clean=False)

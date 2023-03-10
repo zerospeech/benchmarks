@@ -1,7 +1,14 @@
 import enum
+from pathlib import Path
 
-from ..model import m_benchmark, m_score_dir
+import yaml
+
+from ..model import m_benchmark, m_meta_file
 from ._benchmarks import sLM_21, abx_LS, tde_17, abx_17, pros_audit
+
+
+class InvalidBenchmarkError(Exception):
+    pass
 
 
 class BenchmarkList(str, enum.Enum):
@@ -9,8 +16,7 @@ class BenchmarkList(str, enum.Enum):
 
     def __new__(
             cls,
-            benchmark, submission: m_benchmark.Submission,
-            score_dir: m_score_dir.ScoreDir
+            benchmark: m_benchmark.Benchmark, submission: m_benchmark.Submission
     ):
         """ Allow setting parameters on enum """
         label = benchmark._name # noqa: allow private access
@@ -18,15 +24,25 @@ class BenchmarkList(str, enum.Enum):
         obj._value_ = label
         obj.benchmark = benchmark
         obj.submission = submission
-        obj.score_dir = score_dir
         obj.doc_url = benchmark._doc_url  # noqa: allow private access
         return obj
 
-    sLM21 = sLM_21.SLM21Benchmark, sLM_21.SLM21Submission, sLM_21.SLM21ScoreDir
-    abx_LS = abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission, abx_LS.ABXLSScoreDir
+    sLM21 = sLM_21.SLM21Benchmark, sLM_21.SLM21Submission
+    abx_LS = abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission
     # TODO: implement score_dir, leaderboard & verification
-    abx_17 = abx_17.ABX17Benchmark, abx_17.ABX17Submission, None
+    abx_17 = abx_17.ABX17Benchmark, abx_17.ABX17Submission
     # TODO: implement score_dir, leaderboard & verification
-    tde_17 = tde_17.TDE17Benchmark, tde_17.TDE17Submission, None
-    pros_audit = pros_audit.SLMProsodyBenchmark, pros_audit.ProsodySubmission, None
+    tde_17 = tde_17.TDE17Benchmark, tde_17.TDE17Submission
+    pros_audit = pros_audit.SLMProsodyBenchmark, pros_audit.ProsodySubmission
+
+    @classmethod
+    def from_submission(cls, location: Path) -> "BenchmarkList":
+        benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+        if benchmark_name is None:
+            raise m_benchmark.InvalidSubmissionError("meta.yaml not found or invalid")
+
+        try:
+            return cls(benchmark_name)
+        except ValueError:
+            raise InvalidBenchmarkError(f"{benchmark_name} is not a valid benchmark !!")
 
