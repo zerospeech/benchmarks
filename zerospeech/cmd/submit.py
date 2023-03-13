@@ -2,48 +2,12 @@ import argparse
 import sys
 from pathlib import Path
 
-import requests
-from pydantic import parse_obj_as, ValidationError
-
-from zerospeech.upload import SubmissionUploader
-from zerospeech.out import warning_console, console as std, error_console
+from zerospeech.out import console as std, error_console
 from zerospeech.settings import get_settings
+from zerospeech.upload import SubmissionUploader
 from .cli_lib import CMD
 
 st = get_settings()
-
-SUBMIT_AVAILABLE_MSG = """
-[blink bold red uu on white]Submissions are now open[/blink bold red uu on white]
-   
-You need to update this module to be able to use the submit option.
-
-You can run: 
-
-    pip install -U "zerospeech-benchmarks\[all]"
-
-Further instructions can be found @ [Toolbox documentation](https://version2.zerospeech.com/toolbox/#upload)
-"""
-
-SUBMIT_WIP_MESSAGE = """
-[large][red]The submit functionality is a Work In Progress[/red][/large]
-
-It will be available soon !!! 
-
-An announcement will be made on our news section https://version2.zerospeech.com/news/
-
-If you have any questions please contact us @ mailto:contact@zerospeech.com
-"""
-
-
-def is_submit_available():
-    resp = requests.get(str(st.submit_available_url))
-    if resp.status_code != 200:
-        return False
-    try:
-        return parse_obj_as(bool, resp.content)
-    except ValidationError:
-        return False
-
 
 class SubmitOnline(CMD):
     """ Submit your results to zerospeech.com """

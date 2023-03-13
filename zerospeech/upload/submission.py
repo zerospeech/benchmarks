@@ -12,7 +12,7 @@ from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console
 from zerospeech.settings import get_settings
 from .file_split import (
-    FileUploadHandler, MultipartUploadHandler, SinglePartUpload
+    FileUploadHandler, MultipartUploadHandler, SinglePartUpload, ManifestIndexItem
 )
 from .user_api import CurrentUser
 
@@ -29,6 +29,12 @@ def get_first_author(authors: str) -> Tuple[str, str]:
         if usr:
             return usr.first_name, usr.last_name
         return "john", "doe"
+
+
+def upload_part(item, user: CurrentUser):
+    # todo: implement upload function
+
+    return "malakies", 200
 
 
 class UploadManifest(BaseModel):
@@ -173,12 +179,11 @@ class SubmissionUploader:
                 # update manifest
                 self._manifest.update('model_id', mdi)
 
-        # Making archive
-        if not self._manifest.archive_created:
-            self._make_archive(multipart)
+        # Making archive or load if existing
+        self._make_archive(multipart)
 
-            # update manifest
-            self._manifest.update('archive_created', True)
+        # update manifest
+        self._manifest.update('archive_created', True)
 
         with self.console.status("Checking Submission ID"):
             if self._manifest.submission_id is None:
@@ -312,4 +317,13 @@ class SubmissionUploader:
 
     def upload(self):
         # todo: make uploader by iterating on upload_handler
-        print('Fake upload')
+        # todo make smart iterator on upload_handler
+        # todo: add mark_complete method
+        # todo: see how to handle errors
+        for item in self.upload_handler:
+            msg, code = upload_part(item, self.user)
+
+            if code == 200:
+                self.upload_handler.mark_completed(item)
+            else:
+                print(f"Failed item, skipping (try again) {msg}")
