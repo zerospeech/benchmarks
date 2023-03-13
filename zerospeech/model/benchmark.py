@@ -198,7 +198,6 @@ class Submission(BaseModel, abc.ABC):
         """ Check if score dir is emtpy """
         return len(list(self.score_dir.rglob('*'))) > 0
 
-    @property
     def get_scores(self):
         if self.score_dir.is_dir():
             return self.__score_cls__(

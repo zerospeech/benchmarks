@@ -193,8 +193,7 @@ class CurrentUser(BaseModel):
             return None
 
         with cls.session_file.open() as fp:
-            data = json.load(fp)
-        return cls(**data)
+            return cls.parse_obj(json.load(fp))
 
     @classmethod
     def load_or_create(cls, credentials: Optional[Tuple[str, str]] = None):

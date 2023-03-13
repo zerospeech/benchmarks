@@ -54,7 +54,7 @@ def split_archive(zipfile: Path, chunk_max_size: int = 500000000, hash_parts: bo
 
     if hash_parts:
         for item in manifest:
-            item.file_hash = md5sum(output_dir / item.filename)
+            item.filehash = md5sum(output_dir / item.filename)
 
     return manifest, output_dir
 

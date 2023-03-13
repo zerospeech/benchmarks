@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from typing import Tuple, Optional, Any, Union
 
@@ -32,13 +33,15 @@ def get_first_author(authors: str) -> Tuple[str, str]:
 
 class UploadManifest(BaseModel):
     submission_location: Path
-    submission_validated: bool
     multipart: bool
-    user_logged_in: bool
-    tmp_dir: Path
-    archive_filename: str
-    submission_id: str
-    model_id: str
+    tmp_dir: Optional[Path] = None
+    archive_filename: Optional[str] = None
+    submission_id: Optional[str] = None
+    model_id: Optional[str] = None
+    submission_validated: bool = False
+    local_data_set: bool = False
+    archive_created: bool = False
+    quiet: bool = False
 
     @staticmethod
     def index_stem() -> str:
@@ -66,55 +69,120 @@ class UploadManifest(BaseModel):
 
 class SubmissionUploader:
 
-    def __init__(
-            self, submission: Union[Path, m_benchmark.Submission] , credentials: Tuple[str, str],
+    @classmethod
+    def resume(cls, tmp_dir: Path, quiet: bool = False) -> 'SubmissionUploader':
+        """ Resume Uploader from a manifest file """
+        man = UploadManifest.load(tmp_dir)
+
+        return cls(
+            submission=man.submission_location,
+            user_cred=None,
+            **man.dict(exclude={'submission_location', 'user_logged_in'})
+        )
+
+    @classmethod
+    def from_submission(
+            cls, submission: Union[Path, m_benchmark.Submission], usr: Optional[CurrentUser] = None,
             multipart: bool = True, quiet: bool = False
+    ) -> 'SubmissionUploader':
+        """ Create uploader from submission """
+        return cls(
+            submission=submission, user_cred=usr, multipart=multipart, quiet=quiet)
+
+    def __init__(
+            self, submission: Union[Path, m_benchmark.Submission],
+            user_cred: Union[CurrentUser, Tuple[str, str], None] = None,
+            tmp_dir: Optional[Path] = None,
+            archive_filename: Optional[str] = None,
+            multipart: bool = True,
+            quiet: bool = False,
+            submission_validated: bool = False,
+            local_data_set: bool = False,
+            archive_created: bool = False,
+            model_id: Optional[str] = None,
+            submission_id: Optional[str] = None
     ):
         if isinstance(submission, Path):
             bench = BenchmarkList.from_submission(submission)
-            submission = bench.submission.load(submission)
+            self.submission = bench.submission.load(submission)
+        else:
+            self.submission = submission
 
+        if user_cred is None:
+            usr = CurrentUser.load()
+            if usr is None:
+                creds = CurrentUser.get_credentials_from_user()
+                usr = CurrentUser.login(creds)
+            self.user = usr
+        elif isinstance(user_cred, CurrentUser):
+            self.user = user_cred
+        else:
+            self.user = CurrentUser.login(user_cred)
 
-        # todo: add check for if resume exists
-        # todo generic submission loader in misc of benchmark (??)
+        if tmp_dir is None:
+            self.tmp_dir = st.mkdtemp(auto_clean=False)
+        else:
+            self.tmp_dir = tmp_dir
+
+        if archive_filename is None:
+            self.archive_file = self.tmp_dir / f"{self.submission.location.name}.zip"
+        else:
+            self.archive_file = self.tmp_dir / archive_filename
+
         self.upload_handler: Optional[FileUploadHandler] = None
-        self.submission = submission
-        self.tmp_dir = st.mkdtemp(auto_clean=False)
-        self.archive_file = self.tmp_dir / f"{submission.location.name}.zip"
+
         self._quiet = quiet
-        # load or create user
-        self.user = CurrentUser.login(credentials)
 
         self._manifest = UploadManifest(
-            submission_location=submission.location,
-            submission_validated=False,
+            submission_location=submission,
+            submission_validated=submission_validated,
             multipart=multipart,
-            user_logged_in=self.user is not None,
             tmp_dir=self.tmp_dir,
             archive_filename=self.archive_file.name,
-            submission_id="",
-            model_id=""
+            submission_id=submission_id,
+            model_id=model_id,
+            local_data_set=local_data_set,
+            archive_created=archive_created
         )
         self._manifest.save()
 
         # fetch system data & update submission
         with self.console.status("Building submission..."):
-            self._fetch_local_data()
+            if not self._manifest.local_data_set:
+                self._fetch_local_data()
+
+                # update manifest
+                self._manifest.update('local_data_set', True)
+
         # check submission
         with self.console.status("Checking submission..."):
-            self._check_submission()
+            if not self._manifest.submission_validated:
+                self._check_submission()
+
+                # update manifest
+                self._manifest.update('submission_validated', True)
 
         with self.console.status("Checking model ID..."):
-            self.submission.meta.set_model_id(
-                submission_location=self.submission.location,
-                model_id=self._get_model_id()
-            )
+            if self._manifest.model_id is None:
+                mdi = self._get_model_id()
+                self.submission.meta.set_model_id(
+                    submission_location=self.submission.location,
+                    model_id=mdi
+                )
+
+                # update manifest
+                self._manifest.update('model_id', mdi)
 
         # Making archive
-        self._make_archive(multipart)
+        if not self._manifest.archive_created:
+            self._make_archive(multipart)
+
+            # update manifest
+            self._manifest.update('archive_created', True)
 
         with self.console.status("Checking Submission ID"):
-            self._register_submission()
+            if self._manifest.submission_id is None:
+                self._register_submission()
 
         self.console.print(":heavy_check_mark: Submission valid & ready for upload !!!", style="bold green")
 
@@ -123,6 +191,31 @@ class SubmissionUploader:
         if self._quiet:
             return void_console
         return std_console
+
+    @property
+    def ready(self) -> bool:
+        """Check if submission is ready for uplaod """
+        if self._manifest.submission_id is None:
+            print("No Submission ID")
+            return False
+
+        if self._manifest.model_id is None:
+            print("No Model ID")
+            return False
+
+        if not self._manifest.submission_validated:
+            print("Submission invalid")
+            return False
+
+        if not self._manifest.local_data_set:
+            print("Failed to set all data (check user)")
+            return False
+
+        if not self._manifest.archive_created:
+            print("No archive created")
+            return False
+
+        return True
 
     def _get_model_id(self) -> str:
         model_id = self.submission.meta.model_info.model_id
@@ -140,7 +233,7 @@ class SubmissionUploader:
                 code_url=self.submission.meta.code_url
             )
 
-        return model_id
+        return model_id.replace('"', '').replace("'", "")
 
     def _fetch_local_data(self):
         """ Fetch all system data & update meta.yaml """
@@ -174,7 +267,7 @@ class SubmissionUploader:
             raise m_benchmark.ScoresNotFound('submission has no scores')
 
         # generate leaderboard
-        scores = self.submission.get_scores
+        scores = self.submission.get_scores()
         ld_data = scores.build_leaderboard()
         with (scores.location / scores.leaderboard_file_name).open("w") as fp:
             fp.write(ld_data.json(indent=4))
@@ -197,18 +290,26 @@ class SubmissionUploader:
         self.console.print(":heavy_check_mark: archive created !!", style="bold green")
 
     def _register_submission(self):
-        if self.submission.meta.submission_id is not None:
-            # todo make new submission
-            resp_obj = self.user.make_new_submission(
-                ...,
-                token=self.user.token
-            )
+        if self.submission.meta.submission_id is None:
+            resp_obj = "FAKE_SUBMISSION_ID_FOR_TESTING"
+            # todo make request to api
+            # resp_obj = self.user.make_new_submission(
+            #     ...,
+            #     token=self.user.token
+            # )
             # set in submission
             self.submission.meta.set_submission_id(
                 submission_location=self.submission.location,
                 submission_id=resp_obj
             )
 
+        # update manifest
+        self._manifest.update('submission_id', self.submission.meta.submission_id)
+
+    def clean(self):
+        """ Remove all temp files """
+        shutil.rmtree(self.tmp_dir)
+
     def upload(self):
         # todo: make uploader by iterating on upload_handler
-        pass
+        print('Fake upload')

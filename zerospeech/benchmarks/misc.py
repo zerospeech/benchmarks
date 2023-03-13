@@ -1,5 +1,6 @@
 import enum
 from pathlib import Path
+from typing import Type
 
 import yaml
 
@@ -16,15 +17,15 @@ class BenchmarkList(str, enum.Enum):
 
     def __new__(
             cls,
-            benchmark: m_benchmark.Benchmark, submission: m_benchmark.Submission
+            benchmark: Type[m_benchmark.Benchmark], submission: Type[m_benchmark.Submission]
     ):
         """ Allow setting parameters on enum """
-        label = benchmark._name # noqa: allow private access
+        label = benchmark._name  # noqa: allow private access
         obj = str.__new__(cls, label)
         obj._value_ = label
-        obj.benchmark = benchmark
-        obj.submission = submission
-        obj.doc_url = benchmark._doc_url  # noqa: allow private access
+        obj._benchmark = benchmark
+        obj._submission = submission
+        obj._doc_url = benchmark._doc_url  # noqa: allow private access
         return obj
 
     sLM21 = sLM_21.SLM21Benchmark, sLM_21.SLM21Submission
@@ -46,3 +47,20 @@ class BenchmarkList(str, enum.Enum):
         except ValueError:
             raise InvalidBenchmarkError(f"{benchmark_name} is not a valid benchmark !!")
 
+    @property
+    def benchmark(self) -> Type[m_benchmark.Benchmark]:
+        """ Benchmark Class (used for typing mostly) """
+        return self._benchmark
+
+    @property
+    def submission(self) -> Type[m_benchmark.Submission]:
+        """ Submission Class property (used for typing mostly) """
+        return self._submission
+
+    @property
+    def doc_url(self) -> str:
+        return self._doc_url
+
+    @property
+    def name(self) -> str:
+        return self._value_

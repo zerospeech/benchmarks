@@ -10,7 +10,7 @@ from .leaderboard import PublicationEntry
 from .validation_context import ValidationContext
 from ..misc import load_obj
 
-BenchmarkList = Literal["sLMProsody", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15", "test-challenge", ""]
+BenchmarkList = Literal["prosAudit", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15", "test-challenge", ""]
 
 
 def check_no_template(obj, root: str = "") -> ValidationContext:
@@ -130,11 +130,14 @@ class MetaFile(BaseModel):
     open_source: bool
     code_url: Optional[Union[AnyUrl, str]]
     file_stem: ClassVar[str] = "meta.yaml"
-    _validation: ValidationContext = Field(exclude=True, default_factory=lambda: ValidationContext())
+    validation_context: ValidationContext = ValidationContext()
 
-    @property
-    def validation_context(self) -> Optional[ValidationContext]:
-        return self._validation
+    class Config:
+        arbitrary_types_allowed = True
+        fields = {
+            'validation_context': {'exclude': True},
+            'file_stem': {'exclude': True}
+        }
 
     @classmethod
     def from_file(cls, file: Path, enforce: bool = False):
@@ -206,33 +209,34 @@ class MetaFile(BaseModel):
         )
 
     def to_yaml(self, file: Path, excluded: Dict):
-        excluded['_validation'] = True
         with file.open("w") as fp:
             yaml.dump(dict(self._iter(to_dict=True, exclude=excluded)), fp)
 
     def is_valid(self) -> bool:
         """Check if meta.yaml has minimal values for submission """
+        validation = ValidationContext()
 
         # check no template
-        self._validation += check_no_template(self)
+        validation += check_no_template(self)
 
         # username (required)
-        self._validation.error_assertion(
+        validation.error_assertion(
             self.username is not None and len(self.username) > 0,
             msg="Username is required"
         )
 
         # url (recommended)
-        self._validation.warn_assertion(
+        validation.warn_assertion(
             self.code_url is not None and len(self.code_url) > 0,
             msg="code_url : If possible we would appreciate a URL to the code of the system"
         )
 
-        self._validation += self.model_info.get_validation()
-        self._validation += self.publication.get_validation()
-        self._validation.add_filename(filename=self.file_stem)
+        validation += self.model_info.get_validation()
+        validation += self.publication.get_validation()
+        validation.add_filename(filename=self.file_stem)
 
-        return not self._validation.fails()
+        self.validation_context = validation
+        return not validation.fails()
 
     @classmethod
     def benchmark_from_submission(cls, location: Path) -> Optional[BenchmarkList]:
@@ -246,5 +250,6 @@ class MetaFile(BaseModel):
         try:
             meta = cls.parse_obj(meta_obj)
             return meta.benchmark_name
-        except ValidationError:
+        except ValidationError as e:
+            print(e)
             return None

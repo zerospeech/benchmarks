@@ -36,7 +36,7 @@ class Token(BaseModel):
 class ZerospeechAPI(BaseModel):
     client_id: str = "zrc-commandline-benchmark-tool"
     client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
-    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:8000")
+    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:5050")
     API_ROUTES = {
         "user_login": '/auth/login',
         "user_info": functools.partial(lambda username: f'/users/{username}/profile'),
@@ -124,11 +124,11 @@ class ZerospeechBenchmarkSettings(BaseSettings):
     def submit_available_url(self) -> AnyHttpUrl:
         """ URL to check if submit is available """
         return parse_obj_as(
-            AnyHttpUrl, f"{str(self.api_root)}/_private/submit-available"
+            AnyHttpUrl, f"{str(self.api.API_URL)}/_private/submit-available"
         )
 
     def mkdtemp(self, auto_clean: bool = True) -> Path:
-        tmp_loc = Path(tempfile.mkdtemp(prefix="zr", dir=self.TMP_DIR))
+        tmp_loc = Path(tempfile.mkdtemp(prefix="zeroC", dir=self.TMP_DIR))
 
         def clean_tmp(d):
             shutil.rmtree(d)
