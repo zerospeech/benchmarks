@@ -6,8 +6,9 @@ from typing import Union, Optional, Dict, Tuple, ClassVar, List
 import requests
 from pydantic import BaseModel, EmailStr, Field, AnyHttpUrl
 from rich.console import Console
-
 from zerospeech.settings import get_settings, Token
+
+from .requests_w import get, post
 
 _st = get_settings()
 out = Console()
@@ -42,21 +43,21 @@ class NewModelInfo(BaseModel):
 
 
 class SubmissionRequestFileIndexItem(BaseModel):
-    file_name: str
-    file_size: int
-    file_hash: Optional[str] = None
+    filename: str
+    filesize: int
+    filehash: str = ""
 
 
 class NewSubmissionInfo(BaseModel):
     """ Info required to create a new submission """
-    username: str
     model_id: str
+    benchmark_id: str
     filename: str
     hash: str
-    multipart: bool
     has_scores: bool
-    leaderboards: Dict[str, Path]
+    multipart: bool
     index: Optional[List[SubmissionRequestFileIndexItem]]
+    leaderboard: Optional[str]
 
     def clean_dict(self):
         return json.loads(self.json())
@@ -70,7 +71,7 @@ class _UserAPIMethods:
         """ Request Session token from the API by providing valid credentials """
         route_url, _ = _st.api.request_params(route_name='user_login', token=None)
 
-        response = requests.post(
+        response = post(
             route_url,
             data={
                 "grant_type": "password",
@@ -92,7 +93,7 @@ class _UserAPIMethods:
     def get_user_info(token: Token) -> Dict:
         route_url, headers = _st.api.request_params(route_name='user_info', token=token, username=token.username)
 
-        response = requests.get(
+        response = get(
             route_url,
             headers=headers
         )
@@ -108,7 +109,7 @@ class _UserAPIMethods:
         route_url, headers = _st.api.request_params(
             route_name='new_model', token=token, username=username, author_name=author_name)
 
-        response = requests.post(
+        response = post(
             route_url,
             json=new_model_info.clean_dict(),
             headers=headers
@@ -121,13 +122,14 @@ class _UserAPIMethods:
         return response.content.decode()
 
     @staticmethod
-    def make_new_submission(new_sub_info: NewSubmissionInfo, token: Token) -> str:
+    def make_new_submission(username: str, new_sub_info: NewSubmissionInfo, token: Token) -> str:
         """ Create a new submission """
         route_url, headers = _st.api.request_params(
-            route_name='new_submission', token=token, username=new_sub_info.username)
+            route_name='new_submission', token=token, username=username)
 
-        response = requests.post(
+        response = post(
             route_url,
+            debug=True,
             json=new_sub_info.clean_dict(),
             headers=headers
         )
@@ -136,7 +138,7 @@ class _UserAPIMethods:
             raise APIHTTPException(
                 method="new_submission", status_code=response.status_code, message=reason
             )
-        return response.content.decode()
+        return response.content.decode().replace('"', '').replace("'", "")
 
 
 class CurrentUser(BaseModel):
@@ -224,20 +226,22 @@ class CurrentUser(BaseModel):
         )
         return model_dt
 
-    def new_submission(
+    def make_new_submission(
             self, model_id: str, filename: str, filehash: str,
-            has_scores: bool, leaderboard: Dict[str, Path],
+            has_scores: bool, leaderboard: str,
             index: Optional[List[SubmissionRequestFileIndexItem]] = None
     ):
         return _UserAPIMethods.make_new_submission(
+            username=self.username,
             new_sub_info=NewSubmissionInfo(
-                username=self.username,
                 model_id=model_id,
+                # todo setup way to fetch real id
+                benchmark_id="test-challenge",
                 filename=filename,
                 hash=filehash,
                 multipart=index is not None,
                 has_scores=has_scores,
-                leaderboards=leaderboard,
+                leaderboard=leaderboard,
                 index=index
             ),
             token=self.token

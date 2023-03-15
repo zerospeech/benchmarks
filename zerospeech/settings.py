@@ -36,7 +36,7 @@ class Token(BaseModel):
 class ZerospeechAPI(BaseModel):
     client_id: str = "zrc-commandline-benchmark-tool"
     client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
-    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:5050")
+    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:5055")
     API_ROUTES = {
         "user_login": '/auth/login',
         "user_info": functools.partial(lambda username: f'/users/{username}/profile'),

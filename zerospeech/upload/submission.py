@@ -12,7 +12,7 @@ from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console
 from zerospeech.settings import get_settings
 from .file_split import (
-    FileUploadHandler, MultipartUploadHandler, SinglePartUpload, ManifestIndexItem
+    FileUploadHandler, MultipartUploadHandler, SinglePartUpload, ManifestIndexItem, md5sum
 )
 from .user_api import CurrentUser
 
@@ -83,7 +83,8 @@ class SubmissionUploader:
         return cls(
             submission=man.submission_location,
             user_cred=None,
-            **man.dict(exclude={'submission_location', 'user_logged_in'})
+            quiet=quiet,
+            **man.dict(exclude={'submission_location', 'user_logged_in', 'quiet'})
         )
 
     @classmethod
@@ -108,11 +109,12 @@ class SubmissionUploader:
             model_id: Optional[str] = None,
             submission_id: Optional[str] = None
     ):
+        self._quiet = quiet
         if isinstance(submission, Path):
             bench = BenchmarkList.from_submission(submission)
-            self.submission = bench.submission.load(submission)
-        else:
-            self.submission = submission
+            submission = bench.submission.load(submission)
+
+        self.submission = submission
 
         if user_cred is None:
             usr = CurrentUser.load()
@@ -130,6 +132,8 @@ class SubmissionUploader:
         else:
             self.tmp_dir = tmp_dir
 
+        self.console.print(f"Upload dir:::> {self.tmp_dir}")
+
         if archive_filename is None:
             self.archive_file = self.tmp_dir / f"{self.submission.location.name}.zip"
         else:
@@ -137,10 +141,8 @@ class SubmissionUploader:
 
         self.upload_handler: Optional[FileUploadHandler] = None
 
-        self._quiet = quiet
-
         self._manifest = UploadManifest(
-            submission_location=submission,
+            submission_location=self.submission.location,
             submission_validated=submission_validated,
             multipart=multipart,
             tmp_dir=self.tmp_dir,
@@ -296,13 +298,20 @@ class SubmissionUploader:
 
     def _register_submission(self):
         if self.submission.meta.submission_id is None:
-            resp_obj = "FAKE_SUBMISSION_ID_FOR_TESTING"
-            # todo make request to api
-            # resp_obj = self.user.make_new_submission(
-            #     ...,
-            #     token=self.user.token
-            # )
-            # set in submission
+            leaderboard_file = ""
+            if self.submission.has_scores():
+                leaderboard_file = str(self.submission.leaderboard_file.relative_to(self.submission.location))
+
+            filehash = md5sum(self.archive_file)
+            resp_obj = self.user.make_new_submission(
+                model_id=self.submission.meta.model_info.model_id,
+                filename=self.archive_file.name,
+                filehash=filehash,
+                has_scores=self.submission.has_scores(),
+                leaderboard=leaderboard_file,
+                index= self.upload_handler.api_index()
+            )
+
             self.submission.meta.set_submission_id(
                 submission_location=self.submission.location,
                 submission_id=resp_obj
@@ -320,10 +329,11 @@ class SubmissionUploader:
         # todo make smart iterator on upload_handler
         # todo: add mark_complete method
         # todo: see how to handle errors
-        for item in self.upload_handler:
-            msg, code = upload_part(item, self.user)
-
-            if code == 200:
-                self.upload_handler.mark_completed(item)
-            else:
-                print(f"Failed item, skipping (try again) {msg}")
+        # for item in self.upload_handler:
+        #     msg, code = upload_part(item, self.user)
+        #
+        #     if code == 200:
+        #         self.upload_handler.mark_completed(item)
+        #     else:
+        #         print(f"Failed item, skipping (try again) {msg}")
+        print(f'Submission was {self.submission.meta.submission_id} was not uploaded !!')

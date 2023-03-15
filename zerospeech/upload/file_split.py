@@ -2,12 +2,14 @@ import abc
 import json
 import shutil
 from pathlib import Path
-from typing import Optional, List, Iterator, Iterable
+from typing import Optional, List
 
 import pandas as pd
 from Crypto.Hash import MD5
 from filesplit.split import Split
 from pydantic import BaseModel, Extra, Field
+
+from .user_api import SubmissionRequestFileIndexItem
 
 
 class ManifestIndexItem(BaseModel):
@@ -21,6 +23,13 @@ class ManifestIndexItem(BaseModel):
 
     def __hash__(self):
         return int(self.filehash, 16)
+
+    def to_api(self) -> SubmissionRequestFileIndexItem:
+        return SubmissionRequestFileIndexItem(
+            filename=self.filename,
+            filesize=self.filesize,
+            filehash=self.filehash
+        )
 
     class Config:
         extra = Extra.ignore  # or 'allow' str
@@ -66,6 +75,15 @@ class FileUploadHandler(BaseModel, abc.ABC):
     @property
     def current_dir(self) -> Path:
         return self.file.parent
+
+    @property
+    @abc.abstractmethod
+    def is_multipart(self) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
+        pass
 
     @classmethod
     @abc.abstractmethod
@@ -114,6 +132,16 @@ class MultipartUploadHandler(FileUploadHandler):
     uploaded: List[ManifestIndexItem] = Field(default_factory=list)
     parts_dir: Optional[Path]
 
+    @property
+    def is_multipart(self) -> bool:
+        return True
+
+    @property
+    def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
+        return [
+            i.to_api() for i in self.index
+        ]
+
     @classmethod
     def _create(cls, target_file: Path):
         """ Build multipart upload manifest """
@@ -136,6 +164,13 @@ class MultipartUploadHandler(FileUploadHandler):
 
 
 class SinglePartUpload(FileUploadHandler):
+
+    @property
+    def is_multipart(self) -> bool:
+        return False
+
+    def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
+        return None
 
     @classmethod
     def _create(cls, target_file: Path):
