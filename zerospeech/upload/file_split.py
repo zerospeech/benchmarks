@@ -2,7 +2,7 @@ import abc
 import json
 import shutil
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, NamedTuple
 
 import pandas as pd
 from Crypto.Hash import MD5
@@ -12,11 +12,18 @@ from pydantic import BaseModel, Extra, Field
 from .user_api import SubmissionRequestFileIndexItem
 
 
+class UploadItem(NamedTuple):
+    """ Item used for upload iteration """
+    filepath: Path
+    filehash: str
+    filesize: int
+
+
 class ManifestIndexItem(BaseModel):
     """ Model representing a file item in the SplitManifest """
     filename: str
     filesize: int
-    filehash: Optional[str]
+    filehash: str
 
     def __eq__(self, other: 'ManifestIndexItem'):
         return self.filehash == other.filehash
@@ -29,6 +36,21 @@ class ManifestIndexItem(BaseModel):
             filename=self.filename,
             filesize=self.filesize,
             filehash=self.filehash
+        )
+
+    def to_item(self, root: Path) -> UploadItem:
+        return UploadItem(
+            filepath=root / self.filename,
+            filehash=self.filehash,
+            filesize=self.filesize
+        )
+
+    @classmethod
+    def from_item(cls, item: UploadItem) -> "ManifestIndexItem":
+        return cls(
+            filename=item.filepath.name,
+            filehash=item.filehash,
+            filesize=item.filesize
         )
 
     class Config:
@@ -49,7 +71,7 @@ def md5sum(file_path: Path, chunk_size: int = 8192):
     return h.hexdigest()
 
 
-def split_archive(zipfile: Path, chunk_max_size: int = 500000000, hash_parts: bool = True):
+def split_archive(zipfile: Path, chunk_max_size: int = 500000000):
     """ Split an archive to multiple paths """
 
     output_dir = zipfile.parent / f'.{zipfile.stem}.parts'
@@ -59,11 +81,15 @@ def split_archive(zipfile: Path, chunk_max_size: int = 500000000, hash_parts: bo
     fs.bysize(size=chunk_max_size)
 
     df = pd.read_csv(output_dir / fs.manfilename)
-    manifest = [ManifestIndexItem.parse_obj(o) for o in df.to_dict(orient='records')]
-
-    if hash_parts:
-        for item in manifest:
-            item.filehash = md5sum(output_dir / item.filename)
+    manifest = [
+        ManifestIndexItem.parse_obj(
+            dict(
+                filehash=md5sum(file_path=output_dir / Path(o['filename']).name),
+                **o
+            )
+        )
+        for o in df.to_dict(orient='records')
+    ]
 
     return manifest, output_dir
 
@@ -85,6 +111,11 @@ class FileUploadHandler(BaseModel, abc.ABC):
     def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
         pass
 
+    @abc.abstractmethod
+    def mark_completed(self, item: UploadItem):
+        """ Function to mark item as uploaded """
+        pass
+
     @classmethod
     @abc.abstractmethod
     def _create(cls, target_file: Path):
@@ -94,6 +125,11 @@ class FileUploadHandler(BaseModel, abc.ABC):
     @abc.abstractmethod
     def clean(self):
         """ Clean upload temp files """
+        pass
+
+    @abc.abstractmethod
+    def __iter__(self):
+        """ Iterate over files to upload """
         pass
 
     @staticmethod
@@ -142,6 +178,15 @@ class MultipartUploadHandler(FileUploadHandler):
             i.to_api() for i in self.index
         ]
 
+    def __iter__(self):
+        """ Iterate over remaining items to upload """
+        remaining = set(self.index) - set(self.uploaded)
+        return iter([i.to_item(self.parts_dir) for i in remaining])
+
+    def mark_completed(self, item: UploadItem):
+        self.uploaded.append(ManifestIndexItem.from_item(item))
+        self.save()
+
     @classmethod
     def _create(cls, target_file: Path):
         """ Build multipart upload manifest """
@@ -170,11 +215,26 @@ class SinglePartUpload(FileUploadHandler):
         return False
 
     def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
+        # in single-part upload this is not used
         return None
+
+    def mark_completed(self, item: UploadItem):
+        # in single-part upload this is not used
+        # resume function always restarts the upload
+        pass
+
+    def __iter__(self):
+        return iter([
+            UploadItem(
+                filepath=self.file,
+                filehash=self.filehash,
+                filesize=self.file.stat().st_size
+            )
+        ])
 
     @classmethod
     def _create(cls, target_file: Path):
-        """ Build singlepart upload manifest """
+        """ Build single-part upload manifest """
         return cls(
             file=target_file,
             filehash=md5sum(target_file)

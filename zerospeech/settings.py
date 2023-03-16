@@ -21,6 +21,8 @@ from pydantic import (
 
 StrOrCallable = Union[str, Callable[..., str]]
 
+API_URL = os.environ.get('_DEV_API_URL', 'https://api.cognitive-ml.fr')
+
 
 class Token(BaseModel):
     """ Dataclass defining a session token"""
@@ -36,19 +38,17 @@ class Token(BaseModel):
 class ZerospeechAPI(BaseModel):
     client_id: str = "zrc-commandline-benchmark-tool"
     client_secret: str = "wIBhXvNDTZ2xtDh3k0MJGWx+dAFohlKkGfFwV101CWo="
-    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://localhost:5055")
+    API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, API_URL)
     API_ROUTES = {
         "user_login": '/auth/login',
         "user_info": functools.partial(lambda username: f'/users/{username}/profile'),
         "new_model": functools.partial(
             lambda username, author_name: f'/users/{username}/models/create?author_name={author_name}'),
         "new_submission": functools.partial(lambda username: f'/users/{username}/submissions/create'),
-        "submission_content_init": functools.partial(
-            lambda submission_id: f'/submissions/{submission_id}/content/init'),
+        "submission_status": functools.partial(
+            lambda submission_id: f'/submissions/{submission_id}/content/status'),
         "submission_content_add": functools.partial(
-            lambda submission_id: f'/submissions/{submission_id}/content/add'),
-        "submission_content_reset": functools.partial(
-            lambda submission_id: f'/submissions/{submission_id}/content/reset'),
+            lambda submission_id, part_name: f'/submissions/{submission_id}/content/add?part_name={part_name}'),
     }
 
     @staticmethod

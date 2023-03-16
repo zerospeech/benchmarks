@@ -1,3 +1,4 @@
+import functools
 import json
 import shutil
 from pathlib import Path
@@ -12,9 +13,10 @@ from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console
 from zerospeech.settings import get_settings
 from .file_split import (
-    FileUploadHandler, MultipartUploadHandler, SinglePartUpload, ManifestIndexItem, md5sum
+    FileUploadHandler, MultipartUploadHandler, SinglePartUpload, md5sum, UploadItem
 )
-from .user_api import CurrentUser
+from .user_api import CurrentUser, Token, APIHTTPException
+from .requests_w import post
 
 st = get_settings()
 
@@ -31,10 +33,28 @@ def get_first_author(authors: str) -> Tuple[str, str]:
         return "john", "doe"
 
 
-def upload_part(item, user: CurrentUser):
+def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
     # todo: implement upload function
 
-    return "malakies", 200
+    route, headers = st.api.request_params(
+        'submission_content_add', token=token, submission_id=submission_id, part_name=item.filepath.name
+    )
+    # headers["Content-Type"] = f"multipart/form-data; boundary={item.filehash}"
+
+    with item.filepath.open('rb') as fp:
+        files = dict(
+            file_data=fp.read()
+        )
+
+    resp = post(route, headers=headers, files=files, data={})
+
+    if resp.status_code != 200:
+        reason = resp.json().get('detail', '')
+        raise APIHTTPException(
+            method="upload_submission", status_code=resp.status_code, message=reason
+        )
+
+    return resp.json(), resp.status_code
 
 
 class UploadManifest(BaseModel):
@@ -191,6 +211,12 @@ class SubmissionUploader:
             if self._manifest.submission_id is None:
                 self._register_submission()
 
+        # make upload function
+        self.upload_fn = functools.partial(
+            upload_submission,
+            submission_id=self.submission.meta.submission_id,
+            token=self.user.token
+        )
         self.console.print(":heavy_check_mark: Submission valid & ready for upload !!!", style="bold green")
 
     @property
@@ -201,7 +227,7 @@ class SubmissionUploader:
 
     @property
     def ready(self) -> bool:
-        """Check if submission is ready for uplaod """
+        """Check if submission is ready for upload """
         if self._manifest.submission_id is None:
             print("No Submission ID")
             return False
@@ -309,7 +335,7 @@ class SubmissionUploader:
                 filehash=filehash,
                 has_scores=self.submission.has_scores(),
                 leaderboard=leaderboard_file,
-                index= self.upload_handler.api_index()
+                index=self.upload_handler.api_index()
             )
 
             self.submission.meta.set_submission_id(
@@ -325,15 +351,8 @@ class SubmissionUploader:
         shutil.rmtree(self.tmp_dir)
 
     def upload(self):
-        # todo: make uploader by iterating on upload_handler
-        # todo make smart iterator on upload_handler
-        # todo: add mark_complete method
-        # todo: see how to handle errors
-        # for item in self.upload_handler:
-        #     msg, code = upload_part(item, self.user)
-        #
-        #     if code == 200:
-        #         self.upload_handler.mark_completed(item)
-        #     else:
-        #         print(f"Failed item, skipping (try again) {msg}")
-        print(f'Submission was {self.submission.meta.submission_id} was not uploaded !!')
+        """ Upload items to backend by iterating on upload handler"""
+        for item in self.upload_handler:
+            msg, code = self.upload_fn(item)
+            if code == 200:
+                self.upload_handler.mark_completed(item)

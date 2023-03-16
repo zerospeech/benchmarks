@@ -9,6 +9,7 @@ from .cli_lib import CMD
 
 st = get_settings()
 
+
 class SubmitOnline(CMD):
     """ Submit your results to zerospeech.com """
     COMMAND = "submit"
