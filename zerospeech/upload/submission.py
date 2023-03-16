@@ -24,9 +24,9 @@ st = get_settings()
 def get_first_author(authors: str) -> Tuple[str, str]:
     """ Returns a tuple containing first & last name of first author """
     try:
-        # todo parse authors from meta & return fist author (fname, lname)
-        raise ValueError('bad author names')
-    except ValueError:
+        raise NotImplementedError(f'Does not have an good author parser for {authors}')
+    except (ValueError, NotImplementedError):
+        # On failure fetch full name from user
         usr = CurrentUser.load()
         if usr:
             return usr.first_name, usr.last_name
@@ -34,11 +34,12 @@ def get_first_author(authors: str) -> Tuple[str, str]:
 
 
 def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
-    # todo: implement upload function
+    """ Function that performs upload of submission content to the api backend """
 
     route, headers = st.api.request_params(
         'submission_content_add', token=token, submission_id=submission_id, part_name=item.filepath.name
     )
+    # note: this is not needed (does 'requests' library auto-set content-type ????)
     # headers["Content-Type"] = f"multipart/form-data; boundary={item.filehash}"
 
     with item.filepath.open('rb') as fp:
