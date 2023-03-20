@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from zerospeech.model import m_leaderboard
 
@@ -10,7 +10,7 @@ class ABXLSScore(m_leaderboard.LeaderboardScores):
     context_mode: Literal['within', 'any']
     score: float
     pooling: str
-    seed: int
+    seed: Optional[int]
 
 
 class ABXLSEntry(m_leaderboard.LeaderboardEntry):

@@ -3,27 +3,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union, Optional, Dict, Tuple, ClassVar, List
 
-import requests
 from pydantic import BaseModel, EmailStr, Field, AnyHttpUrl
 from rich.console import Console
-from zerospeech.settings import get_settings, Token
 
-from .requests_w import get, post
+from zerospeech.settings import get_settings, Token
+from .requests_w import get, post, APIHTTPException
 
 _st = get_settings()
 out = Console()
-
-
-class APIHTTPException(Exception):
-    def __init__(self, method: str, status_code: int, message: str):
-        self.method = method
-        self.status_code = status_code
-        self.msg = message
-        super().__init__(message)
-
-    def __str__(self):
-        """ String representation """
-        return f"{self.method}: returned {self.status_code} => {self.msg}"
 
 
 class NewModelInfo(BaseModel):
@@ -34,6 +21,7 @@ class NewModelInfo(BaseModel):
     authors: str
     institution: str
     team: str
+    author_label: Optional[str]
     paper_url: Optional[AnyHttpUrl]
     code_url: Optional[AnyHttpUrl]
     created_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -56,6 +44,7 @@ class NewSubmissionInfo(BaseModel):
     hash: str
     has_scores: bool
     multipart: bool
+    author_label: Optional[str]
     index: Optional[List[SubmissionRequestFileIndexItem]]
     leaderboard: Optional[str]
 
@@ -83,10 +72,7 @@ class _UserAPIMethods:
             }
         )
         if response.status_code != 200:
-            reason = response.json().get('detail', '')
-            raise APIHTTPException(
-                method="user_login", status_code=response.status_code, message=reason
-            )
+            raise APIHTTPException.from_request('user_login', response)
         return Token.parse_obj(response.json())
 
     @staticmethod
@@ -98,10 +84,7 @@ class _UserAPIMethods:
             headers=headers
         )
         if response.status_code != 200:
-            reason = response.json().get('detail', '')
-            raise APIHTTPException(
-                method="user_info", status_code=response.status_code, message=reason
-            )
+            raise APIHTTPException.from_request('user_info', response)
         return response.json()
 
     @staticmethod
@@ -115,10 +98,7 @@ class _UserAPIMethods:
             headers=headers
         )
         if response.status_code != 200:
-            reason = response.json().get('detail', '')
-            raise APIHTTPException(
-                method="new_model", status_code=response.status_code, message=reason
-            )
+            raise APIHTTPException.from_request('new_model', response)
         return response.content.decode()
 
     @staticmethod
@@ -129,15 +109,12 @@ class _UserAPIMethods:
 
         response = post(
             route_url,
-            debug=True,
             json=new_sub_info.clean_dict(),
             headers=headers
         )
+
         if response.status_code != 200:
-            reason = response.json().get('detail', '')
-            raise APIHTTPException(
-                method="new_submission", status_code=response.status_code, message=reason
-            )
+            raise APIHTTPException.from_request('new_submission', response)
         return response.content.decode().replace('"', '').replace("'", "")
 
 
@@ -206,7 +183,8 @@ class CurrentUser(BaseModel):
 
     def new_model_id(
             self, *, author_name: str, description: str, gpu_budget: str, train_set: str,
-            authors: str, institution: str, team: str, paper_url: Optional[str], code_url: Optional[str]
+            authors: str, institution: str, team: str, paper_url: Optional[str], code_url: Optional[str],
+            author_label: Optional[str]
     ) -> str:
         """ Create a new model id from the given information """
         model_dt = _UserAPIMethods.make_new_model(
@@ -221,6 +199,7 @@ class CurrentUser(BaseModel):
                 team=team,
                 paper_url=paper_url,
                 code_url=code_url,
+                author_label=author_label
             )),
             token=self.token
         )
@@ -229,6 +208,7 @@ class CurrentUser(BaseModel):
     def make_new_submission(
             self, model_id: str, filename: str, filehash: str,
             has_scores: bool, leaderboard: str,
+            author_label: str,
             index: Optional[List[SubmissionRequestFileIndexItem]] = None
     ):
         return _UserAPIMethods.make_new_submission(
@@ -240,6 +220,7 @@ class CurrentUser(BaseModel):
                 filename=filename,
                 hash=filehash,
                 multipart=index is not None,
+                author_label=author_label,
                 has_scores=has_scores,
                 leaderboard=leaderboard,
                 index=index

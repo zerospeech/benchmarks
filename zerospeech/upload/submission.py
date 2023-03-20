@@ -47,15 +47,11 @@ def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
             file_data=fp.read()
         )
 
-    resp = post(route, headers=headers, files=files, data={})
+    response = post(route, headers=headers, files=files, data={})
 
-    if resp.status_code != 200:
-        reason = resp.json().get('detail', '')
-        raise APIHTTPException(
-            method="upload_submission", status_code=resp.status_code, message=reason
-        )
-
-    return resp.json(), resp.status_code
+    if response.status_code != 200:
+        raise APIHTTPException.from_request('submission_content_add', response)
+    return response.json(), response.status_code
 
 
 class UploadManifest(BaseModel):
@@ -260,7 +256,7 @@ class SubmissionUploader:
                 author_name=first_author_lname, description=self.submission.meta.model_info.system_description,
                 gpu_budget=self.submission.meta.model_info.gpu_budget,
                 train_set=self.submission.meta.model_info.train_set,
-                authors=authors,
+                authors=authors, author_label=f"{first_author_lname} et al.",
                 institution=self.submission.meta.publication.institution,
                 team=self.submission.meta.publication.team,
                 paper_url=self.submission.meta.publication.paper_url,
@@ -336,7 +332,8 @@ class SubmissionUploader:
                 filehash=filehash,
                 has_scores=self.submission.has_scores(),
                 leaderboard=leaderboard_file,
-                index=self.upload_handler.api_index()
+                index=self.upload_handler.api_index,
+                author_label=self.submission.meta.publication.author_label
             )
 
             self.submission.meta.set_submission_id(

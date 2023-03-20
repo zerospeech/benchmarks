@@ -1,14 +1,108 @@
 import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional, List
 
+from zerospeech.benchmarks.tasks.abx import abx_phoneme
+from zerospeech.data_loaders import load_dataframe
+from zerospeech.misc import load_obj
+from zerospeech.model import (
+    m_benchmark, m_datasets, m_data_items, m_meta_file, m_leaderboard, m_score_dir
+)
+from zerospeech.settings import get_settings
+from .leaderboard import ABXLSEntry, ABXLSScore
 from .validators import AbxLSSubmissionValidator
-from ...tasks.abx.abx_phoneme import ABX2Parameters
-from ....misc import load_obj
-from ....model import m_benchmark, m_datasets, m_data_items, m_meta_file
-from ....settings import get_settings
 
 st = get_settings()
+
+
+class ABXLSScoreDir(m_score_dir.ScoreDir):
+    params: Optional[abx_phoneme.ABX2Parameters] = abx_phoneme.ABX2Parameters()
+
+    @property
+    def scores_phonetic(self):
+        csv_file = (self.location / self.params.result_filename).with_suffix('.csv')
+        return load_dataframe(csv_file)
+
+    def get_details(self) -> m_leaderboard.EntryDetails:
+        """ Build entry details """
+        train_set = ""
+        gpu_budget = ""
+
+        if self.meta_file is not None:
+            train_set = self.meta_file.model_info.train_set
+            gpu_budget = self.meta_file.model_info.gpu_budget
+
+        return m_leaderboard.EntryDetails(
+            train_set=train_set,
+            benchmarks=[m_leaderboard.Benchmark.ABX_LS],
+            gpu_budget=gpu_budget,
+            parameters=self.params.to_meta()
+        )
+
+    def build_scores(self) -> List[ABXLSScore]:
+        """ Extract & format scores """
+        scores = []
+        for _, row in self.scores_phonetic.iterrows():
+            try:
+                seed = int(row['seed'])
+            except ValueError:
+                seed = None
+
+            scores.append(
+                ABXLSScore(
+                    subset=row['subset'],
+                    granularity=row['granularity'],
+                    speaker_mode=row['speaker_mode'],
+                    context_mode=row['context_mode'],
+                    score=row['score'],
+                    pooling=row['pooling'],
+                    seed=seed
+                )
+            )
+        return scores
+
+    def build_meta_data(self):
+        """ Build leaderboard metadata """
+        return dict(
+            model_id=self.meta_file.model_info.model_id,
+            submission_id="",
+            index=None,
+            submission_date=datetime.now(),
+            submitted_by=self.meta_file.username,
+            description=self.meta_file.model_info.system_description,
+            publication=dict(
+                author_short=self.meta_file.publication.author_label,
+                authors=self.meta_file.publication.authors,
+                paper_title=self.meta_file.publication.paper_title,
+                paper_ref=self.meta_file.publication.paper_url,
+                bib_ref=self.meta_file.publication.bib_reference,
+                paper_url=self.meta_file.publication.paper_url,
+                pub_year=self.meta_file.publication.publication_year,
+                team_name=self.meta_file.publication.team,
+                institution=self.meta_file.publication.institution,
+                code=self.meta_file.code_url,
+                DOI=self.meta_file.publication.DOI,
+                open_science=self.meta_file.open_source,
+            ),
+            details=dict(
+                train_set=self.meta_file.model_info.train_set,
+                benchmarks=[],
+                gpu_budget=self.meta_file.model_info.gpu_budget,
+                parameters=self.params.to_meta(),
+            )
+        )
+
+    def build_leaderboard(self) -> m_leaderboard.LeaderboardEntry:
+        """ Build leaderboard entry for the current submission """
+        self.load_meta()
+
+        return ABXLSEntry.parse_obj(
+            dict(
+                **self.build_meta_data(),
+                scores=self.build_scores()
+            )
+        )
 
 
 class AbxLSSubmission(m_benchmark.Submission):
@@ -30,7 +124,7 @@ class AbxLSSubmission(m_benchmark.Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            ABX2Parameters().export(submission.params_file)
+            abx_phoneme.ABX2Parameters().export(submission.params_file)
 
         # Load items
         file_ext = submission.params.score_file_type.replace('.', '')
@@ -59,11 +153,11 @@ class AbxLSSubmission(m_benchmark.Submission):
         submission.items = m_datasets.Namespace[m_data_items.Item](store=items)
         return submission
 
-    def load_parameters(self) -> ABX2Parameters:
+    def load_parameters(self) -> abx_phoneme.ABX2Parameters:
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            return ABX2Parameters.parse_obj(obj)
-        return ABX2Parameters()
+            return abx_phoneme.ABX2Parameters.parse_obj(obj)
+        return abx_phoneme.ABX2Parameters()
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
@@ -81,7 +175,7 @@ class AbxLSSubmission(m_benchmark.Submission):
         # scores dir
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        ABX2Parameters().export(location / ABX2Parameters.file_stem)
+        abx_phoneme.ABX2Parameters().export(location / abx_phoneme.ABX2Parameters.file_stem)
         # create meta-template
         template = m_meta_file.MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(
@@ -106,3 +200,11 @@ class AbxLSSubmission(m_benchmark.Submission):
             *[("test-other/", f) for f in self.items.test_other.files_list],
             *[("scores/", f) for f in self.score_dir.iterdir()]
         ]
+
+    def get_scores(self):
+        """ Load score Dir"""
+        return ABXLSScoreDir(
+            submission_dir=self.location,
+            location=self.score_dir,
+            params=self.params
+        )

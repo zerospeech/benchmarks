@@ -214,6 +214,7 @@ class SinglePartUpload(FileUploadHandler):
     def is_multipart(self) -> bool:
         return False
 
+    @property
     def api_index(self) -> Optional[List[SubmissionRequestFileIndexItem]]:
         # in single-part upload this is not used
         return None
