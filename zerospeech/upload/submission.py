@@ -41,12 +41,12 @@ def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
     )
     # note: this is not needed (does 'requests' library auto-set content-type ????)
     # headers["Content-Type"] = f"multipart/form-data; boundary={item.filehash}"
-
-    with item.filepath.open('rb') as fp:
-        files = dict(
-            file_data=fp.read()
-        )
-
+    #
+    # with item.filepath.open('rb') as fp:
+    #     files = dict(
+    #         file_data=fp.read()
+    #     )
+    files = dict(file=item.filepath.open('rb'))
     response = post(route, headers=headers, files=files, data={})
 
     if response.status_code != 200:
