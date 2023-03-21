@@ -47,7 +47,6 @@ class SubmitOnline(CMD):
             uploader.clean()
         except APIHTTPException as e:
             error_console.print(e)
-            error_console.print(' '.join(eval(e.trace)))
             sys.exit(1)
         except BenchmarkClosedError as e:
             error_console.print(e)
