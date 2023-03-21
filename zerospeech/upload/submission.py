@@ -2,7 +2,7 @@ import functools
 import json
 import shutil
 from pathlib import Path
-from typing import Tuple, Optional, Any, Union
+from typing import Tuple, Optional, Any, Union, Dict
 
 from pydantic import BaseModel
 from rich.console import Console
@@ -10,15 +10,20 @@ from rich.console import Console
 from zerospeech.benchmarks import BenchmarkList
 from zerospeech.data_loaders import zip_zippable
 from zerospeech.model import m_benchmark
-from zerospeech.out import void_console, console as std_console
+from zerospeech.out import void_console, console as std_console, error_console
 from zerospeech.settings import get_settings
+from zerospeech.httpw import post as http_post, get as http_get, APIHTTPException
 from .file_split import (
     FileUploadHandler, MultipartUploadHandler, SinglePartUpload, md5sum, UploadItem
 )
-from .user_api import CurrentUser, Token, APIHTTPException
-from .requests_w import post
+from .user_api import CurrentUser, Token
 
 st = get_settings()
+
+
+class BenchmarkClosedError(Exception):
+    """ Benchmark not active or over deadline """
+    pass
 
 
 def get_first_author(authors: str) -> Tuple[str, str]:
@@ -39,24 +44,32 @@ def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
     route, headers = st.api.request_params(
         'submission_content_add', token=token, submission_id=submission_id, part_name=item.filepath.name
     )
-    # note: this is not needed (does 'requests' library auto-set content-type ????)
-    # headers["Content-Type"] = f"multipart/form-data; boundary={item.filehash}"
-    #
-    # with item.filepath.open('rb') as fp:
-    #     files = dict(
-    #         file_data=fp.read()
-    #     )
-    files = dict(file=item.filepath.open('rb'))
-    response = post(route, headers=headers, files=files, data={})
+    with item.filepath.open('rb') as file_data:
+        files = dict(file=file_data)
+        response = http_post(route, headers=headers, files=files, data={})
+
+        if response.status_code != 200:
+            raise APIHTTPException.from_request('submission_content_add', response)
+        return response.json()
+
+
+def get_submission_status(submission_id: str, token: Token) -> Dict[str, Any]:
+    route, headers = st.api.request_params(
+        "submission_status", token=token, submission_id=submission_id
+    )
+
+    response = http_get(route)
 
     if response.status_code != 200:
-        raise APIHTTPException.from_request('submission_content_add', response)
-    return response.json(), response.status_code
+        raise APIHTTPException.from_request('submission_status', response)
+
+    return response.json()
 
 
 class UploadManifest(BaseModel):
     submission_location: Path
     multipart: bool
+    benchmark_id: str
     tmp_dir: Optional[Path] = None
     archive_filename: Optional[str] = None
     submission_id: Optional[str] = None
@@ -65,6 +78,7 @@ class UploadManifest(BaseModel):
     local_data_set: bool = False
     archive_created: bool = False
     quiet: bool = False
+    is_test: bool = False
 
     @staticmethod
     def index_stem() -> str:
@@ -96,7 +110,8 @@ class SubmissionUploader:
     def resume(cls, tmp_dir: Path, quiet: bool = False) -> 'SubmissionUploader':
         """ Resume Uploader from a manifest file """
         man = UploadManifest.load(tmp_dir)
-
+        if not quiet:
+            std_console.print(f"Resuming upload from {tmp_dir}...")
         return cls(
             submission=man.submission_location,
             user_cred=None,
@@ -124,32 +139,43 @@ class SubmissionUploader:
             local_data_set: bool = False,
             archive_created: bool = False,
             model_id: Optional[str] = None,
-            submission_id: Optional[str] = None
+            submission_id: Optional[str] = None,
+            is_test: bool = False,
+            benchmark_id: str = ""
     ):
         self._quiet = quiet
-        if isinstance(submission, Path):
-            bench = BenchmarkList.from_submission(submission)
-            submission = bench.submission.load(submission)
+        with self.console.status("building artifacts"):
+            if isinstance(submission, Path):
+                bench = BenchmarkList.from_submission(submission)
 
-        self.submission = submission
+                # Check benchmark
+                is_test = bench.is_test
+                benchmark_id = bench.name
+                if not bench.is_active():
+                    raise BenchmarkClosedError(f"Benchmark {bench.name} does not accept submissions")
 
-        if user_cred is None:
-            usr = CurrentUser.load()
-            if usr is None:
-                creds = CurrentUser.get_credentials_from_user()
-                usr = CurrentUser.login(creds)
-            self.user = usr
-        elif isinstance(user_cred, CurrentUser):
-            self.user = user_cred
-        else:
-            self.user = CurrentUser.login(user_cred)
+                submission = bench.submission.load(submission)
 
-        if tmp_dir is None:
-            self.tmp_dir = st.mkdtemp(auto_clean=False)
-        else:
-            self.tmp_dir = tmp_dir
+            self.submission = submission
 
-        self.console.print(f"Upload dir:::> {self.tmp_dir}")
+            if user_cred is None:
+                usr = CurrentUser.load()
+                if usr is None:
+                    creds = CurrentUser.get_credentials_from_user()
+                    usr = CurrentUser.login(creds)
+                self.user = usr
+            elif isinstance(user_cred, CurrentUser):
+                self.user = user_cred
+            else:
+                self.user = CurrentUser.login(user_cred)
+
+            if tmp_dir is None:
+                self.tmp_dir = st.mkdtemp(auto_clean=False)
+            else:
+                self.tmp_dir = tmp_dir
+
+        self.console.print(f"UPLOAD DIR :::> {self.tmp_dir}")
+        self.console.print(f"\tUse this directory to resume upload if it fails (--resume)", style="dark_orange3 italic")
 
         if archive_filename is None:
             self.archive_file = self.tmp_dir / f"{self.submission.location.name}.zip"
@@ -167,7 +193,9 @@ class SubmissionUploader:
             submission_id=submission_id,
             model_id=model_id,
             local_data_set=local_data_set,
-            archive_created=archive_created
+            archive_created=archive_created,
+            is_test=is_test,
+            benchmark_id=benchmark_id
         )
         self._manifest.save()
 
@@ -215,6 +243,8 @@ class SubmissionUploader:
             token=self.user.token
         )
         self.console.print(":heavy_check_mark: Submission valid & ready for upload !!!", style="bold green")
+        self.console.print(f"\t SUBMISSION_ID: {self._manifest.submission_id}", style="dark_orange3 italic")
+        self.console.print(f"\t MODEL_ID: {self._manifest.model_id}", style="dark_orange3 italic")
 
     @property
     def console(self) -> Console:
@@ -226,23 +256,23 @@ class SubmissionUploader:
     def ready(self) -> bool:
         """Check if submission is ready for upload """
         if self._manifest.submission_id is None:
-            print("No Submission ID")
+            error_console.print("No Submission ID")
             return False
 
         if self._manifest.model_id is None:
-            print("No Model ID")
+            error_console.print("No Model ID")
             return False
 
         if not self._manifest.submission_validated:
-            print("Submission invalid")
+            error_console.print("Submission invalid")
             return False
 
         if not self._manifest.local_data_set:
-            print("Failed to set all data (check user)")
+            error_console.print("Failed to set all data (check user)")
             return False
 
         if not self._manifest.archive_created:
-            print("No archive created")
+            error_console.print("No archive created")
             return False
 
         return True
@@ -330,27 +360,45 @@ class SubmissionUploader:
                 model_id=self.submission.meta.model_info.model_id,
                 filename=self.archive_file.name,
                 filehash=filehash,
+                benchmark_id=self._manifest.benchmark_id,
                 has_scores=self.submission.has_scores(),
                 leaderboard=leaderboard_file,
                 index=self.upload_handler.api_index,
-                author_label=self.submission.meta.publication.author_label
+                author_label=self.submission.meta.publication.author_label,
+                is_test=self._manifest.is_test
             )
 
             self.submission.meta.set_submission_id(
                 submission_location=self.submission.location,
                 submission_id=resp_obj
             )
+        else:
+            sub_status = get_submission_status(
+                self.submission.meta.submission_id, self.user.token
+            )
+            status = sub_status.get("status", "")
+            if status != "uploading":
+                error_console.print(f"Submission {self.submission.meta.submission_id} has status '{status}' "
+                                    f"and does not allow uploading")
+                error_console.print("Remove the submission_id entry from the meta.yaml to upload to a different id")
+                self.clean(True)
+                raise ValueError('Cannot upload to current submission')
 
         # update manifest
         self._manifest.update('submission_id', self.submission.meta.submission_id)
 
-    def clean(self):
+    def clean(self, quiet: bool = False):
         """ Remove all temp files """
-        shutil.rmtree(self.tmp_dir)
+        if not quiet:
+            with self.console.status("Cleaning up artifacts..."):
+                shutil.rmtree(self.tmp_dir)
+        else:
+            shutil.rmtree(self.tmp_dir)
 
     def upload(self):
         """ Upload items to backend by iterating on upload handler"""
-        for item in self.upload_handler:
-            msg, code = self.upload_fn(item)
-            if code == 200:
+        with self.console.status("Uploading..."):
+            for item in self.upload_handler:
+                _ = self.upload_fn(item)
                 self.upload_handler.mark_completed(item)
+        self.console.print(":heavy_check_mark: upload successful !!", style="bold green")

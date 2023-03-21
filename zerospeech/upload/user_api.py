@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, AnyHttpUrl
 from rich.console import Console
 
 from zerospeech.settings import get_settings, Token
-from .requests_w import get, post, APIHTTPException
+from zerospeech.httpw import post as http_post, get as http_get, APIHTTPException
 
 _st = get_settings()
 out = Console()
@@ -60,7 +60,7 @@ class _UserAPIMethods:
         """ Request Session token from the API by providing valid credentials """
         route_url, _ = _st.api.request_params(route_name='user_login', token=None)
 
-        response = post(
+        response = http_post(
             route_url,
             data={
                 "grant_type": "password",
@@ -79,7 +79,7 @@ class _UserAPIMethods:
     def get_user_info(token: Token) -> Dict:
         route_url, headers = _st.api.request_params(route_name='user_info', token=token, username=token.username)
 
-        response = get(
+        response = http_get(
             route_url,
             headers=headers
         )
@@ -88,26 +88,26 @@ class _UserAPIMethods:
         return response.json()
 
     @staticmethod
-    def make_new_model(username: str, author_name: str, new_model_info: NewModelInfo, token: Token) -> str:
+    def make_new_model(username: str, author_name: str, new_model_info: NewModelInfo, token: Token) -> Optional[str]:
         route_url, headers = _st.api.request_params(
             route_name='new_model', token=token, username=username, author_name=author_name)
 
-        response = post(
+        response = http_post(
             route_url,
             json=new_model_info.clean_dict(),
             headers=headers
         )
         if response.status_code != 200:
             raise APIHTTPException.from_request('new_model', response)
-        return response.content.decode()
+        return response.json().get("model_id", None)
 
     @staticmethod
-    def make_new_submission(username: str, new_sub_info: NewSubmissionInfo, token: Token) -> str:
+    def make_new_submission(username: str, new_sub_info: NewSubmissionInfo, token: Token) -> Optional[str]:
         """ Create a new submission """
         route_url, headers = _st.api.request_params(
             route_name='new_submission', token=token, username=username)
 
-        response = post(
+        response = http_post(
             route_url,
             json=new_sub_info.clean_dict(),
             headers=headers
@@ -115,7 +115,7 @@ class _UserAPIMethods:
 
         if response.status_code != 200:
             raise APIHTTPException.from_request('new_submission', response)
-        return response.content.decode().replace('"', '').replace("'", "")
+        return response.json().get('submission_id', None)
 
 
 class CurrentUser(BaseModel):
@@ -208,15 +208,17 @@ class CurrentUser(BaseModel):
     def make_new_submission(
             self, model_id: str, filename: str, filehash: str,
             has_scores: bool, leaderboard: str,
-            author_label: str,
+            author_label: str, benchmark_id: str, is_test: bool = False,
             index: Optional[List[SubmissionRequestFileIndexItem]] = None
     ):
+        if is_test:
+            benchmark_id = "test-challenge"
+
         return _UserAPIMethods.make_new_submission(
             username=self.username,
             new_sub_info=NewSubmissionInfo(
                 model_id=model_id,
-                # todo setup way to fetch real id
-                benchmark_id="test-challenge",
+                benchmark_id=benchmark_id,
                 filename=filename,
                 hash=filehash,
                 multipart=index is not None,

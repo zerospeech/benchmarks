@@ -1,3 +1,4 @@
+""" Wrapper around HTTP requests """
 import requests
 
 from zerospeech.out import console

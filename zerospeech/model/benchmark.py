@@ -167,8 +167,8 @@ class Submission(BaseModel, abc.ABC):
         return self.location / 'meta.yaml'
 
     @property
-    def leaderboard_file(self):
-        return self.location / 'leaderboard.json'
+    def leaderboard_file(self) -> Path:
+        return self.score_dir / "leaderboard.json"
 
     @property
     def params(self):

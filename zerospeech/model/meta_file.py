@@ -10,7 +10,10 @@ from .leaderboard import PublicationEntry
 from .validation_context import ValidationContext
 from ..misc import load_obj
 
-BenchmarkList = Literal["prosAudit", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15", "test-challenge", ""]
+BenchmarkList = Literal[
+    "prosAudit", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15",
+    "test-prosAudit", "test-sLM21", "test-abxLS", "test-abx17", "test-abx15", "test-tde17", "test-tde15",
+]
 
 
 def check_no_template(obj, root: str = "") -> ValidationContext:

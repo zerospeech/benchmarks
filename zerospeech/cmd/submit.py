@@ -2,9 +2,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from zerospeech.out import console as std, error_console
+from zerospeech.out import error_console
 from zerospeech.settings import get_settings
-from zerospeech.upload import SubmissionUploader, APIHTTPException
+from zerospeech.upload import SubmissionUploader, APIHTTPException, BenchmarkClosedError
 from .cli_lib import CMD
 
 st = get_settings()
@@ -16,7 +16,7 @@ class SubmitOnline(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument('-r', '--resume-dir', action='store_true',
+        parser.add_argument('-r', '--resume', action='store_true',
                             help='Try resuming submission from given directory')
         parser.add_argument('-q', '--quiet', action='store_true',
                             help="Do not print status information")
@@ -27,7 +27,7 @@ class SubmitOnline(CMD):
 
     def run(self, argv: argparse.Namespace):
         try:
-            if argv.resume_dir:
+            if argv.resume:
                 uploader = SubmissionUploader.resume(Path(argv.submission_dir), quiet=argv.quiet)
             else:
                 uploader = SubmissionUploader.from_submission(
@@ -42,11 +42,13 @@ class SubmitOnline(CMD):
 
             # Upload
             uploader.upload()
-            std.print(":heavy_check_mark: Submission Uploaded Successfully !!!", style="bold green")
 
             # clean-up
             uploader.clean()
         except APIHTTPException as e:
             error_console.print(e)
             error_console.print(' '.join(eval(e.trace)))
+            sys.exit(1)
+        except BenchmarkClosedError as e:
+            error_console.print(e)
             sys.exit(1)

@@ -41,14 +41,18 @@ class ZerospeechAPI(BaseModel):
     API_URL: AnyHttpUrl = parse_obj_as(AnyHttpUrl, API_URL)
     API_ROUTES = {
         "user_login": '/auth/login',
+        "benchmark_info": functools.partial(
+            lambda benchmark_id: f'/benchmarks/{benchmark_id}/info'
+        ),
         "user_info": functools.partial(lambda username: f'/users/{username}/profile'),
         "new_model": functools.partial(
             lambda username, author_name: f'/users/{username}/models/create?author_name={author_name}'),
         "new_submission": functools.partial(lambda username: f'/users/{username}/submissions/create'),
-        "submission_status": functools.partial(
-            lambda submission_id: f'/submissions/{submission_id}/content/status'),
         "submission_content_add": functools.partial(
             lambda submission_id, part_name: f'/submissions/{submission_id}/content/add?part_name={part_name}'),
+        "submission_status": functools.partial(
+            lambda submission_id: f"/submissions/{submission_id}/content/status"
+        )
     }
 
     @staticmethod
@@ -66,7 +70,7 @@ class ZerospeechAPI(BaseModel):
 
         return headers
 
-    def request_params(self, route_name: str, token: Optional[Token], **kwargs) -> Tuple[StrOrCallable, Dict[str, Any]]:
+    def request_params(self, route_name: str, token: Optional[Token] = None, **kwargs) -> Tuple[StrOrCallable, Dict[str, Any]]:
         """ Build params for sending request to api """
         sub_route = self.API_ROUTES.get(route_name, None)
         if sub_route is None:
