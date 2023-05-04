@@ -84,7 +84,7 @@ class ABX2Parameters(m_benchmark.BenchmarkParameters):
     # Path to a CPC checkpoint
     path_checkpoint: Optional[str] = None
     # size of a single feature
-    feature_size: Optional[float] = float(0.1)
+    feature_size: Optional[float] = float(0.01)
     # Use the GPU to compute distances
     cuda: bool = True
     # Choose the mode of the ABX score to compute
