@@ -3,10 +3,10 @@ name = "zerospeech-benchmarks"
 readme = "README.md"
 description = "Toolset for usage of the Zero Resource Challenge Benchmarks."
 authors = [
-    {name = "Nicolas Hamilakis", email="nicolas.hamilakis@ens.psl.eu"},
-    {name = "CoML Team", email = "dev@zerospeech.com"}
+    { name = "Nicolas Hamilakis", email = "nicolas.hamilakis@ens.psl.eu" },
+    { name = "CoML Team", email = "dev@zerospeech.com" }
 ]
-license = {file = "LICENSE.txt"}
+license = { file = "LICENSE.txt" }
 requires-python = ">=3.8"
 keywords = [
     "speech", "machine-learning", "challenges",
@@ -27,8 +27,21 @@ repository = "https://github.com/zerospeech/benchmarks"
 
 [project.scripts]
 zrc = "zerospeech.startup:main"
+abxLS-csv = "zerospeech.leaderboards.exporters.abxLS:cmd"
+sLM21-csv = "zerospeech.leaderboards.exporters.sLM21:cmd"
+tde17-csv = "zerospeech.leaderboards.exporters.tde17:cmd"
+
+
+[project.entry-points.'vocolab_ext.leaderboards']
+zrc_leaderboards = "zerospeech.leaderboards.vocolab_ext:VocolabLeaderboardManager"
+
 
 [project.optional-dependencies]
+vocolab = [
+    # todo migrate towards normal install when package is published
+    "git+ssh://github.com:zerospeech/vocolab-ext.git"
+]
+
 abx = [
     "zerospeech-libriabx>=1.0.5"
 ]
@@ -45,7 +58,7 @@ all = [
 ]
 
 dev = [
-   "zerospeech-benchmarks[abx,tde]",
+    "zerospeech-benchmarks[abx,tde]",
     "ipython",
     "jupyter",
     "pytest",
@@ -53,14 +66,12 @@ dev = [
     "build"
 ]
 
-
-
 [build-system]
 requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["."]
