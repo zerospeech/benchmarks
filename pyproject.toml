@@ -39,7 +39,11 @@ zrc_leaderboards = "zerospeech.leaderboards.vocolab_ext:VocolabLeaderboardManage
 [project.optional-dependencies]
 vocolab = [
     # todo migrate towards normal install when package is published
-    "git+ssh://github.com:zerospeech/vocolab-ext.git"
+    "git+ssh://git@github.com/zerospeech/vocolab-ext.git"
+]
+
+tts019 = [
+    "git+ssh://git@github.com/zerospeech/tts019-evaluator.git"
 ]
 
 abx = [
@@ -54,11 +58,11 @@ tde = [
 ]
 
 all = [
-    "zerospeech-benchmarks[abx,tde,abx2]"
+    "zerospeech-benchmarks[tde,abx2]"
 ]
 
 dev = [
-    "zerospeech-benchmarks[abx,tde]",
+    "zerospeech-benchmarks[all]",
     "ipython",
     "jupyter",
     "pytest",
