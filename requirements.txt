@@ -10,3 +10,4 @@ PyYAML
 requests
 joblib
 treelib
+filesplit

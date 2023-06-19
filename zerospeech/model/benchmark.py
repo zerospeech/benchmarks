@@ -1,7 +1,7 @@
 import abc
 from functools import wraps
 from pathlib import Path
-from typing import List, Any, Type, Dict
+from typing import List, Any, Type, Dict, Protocol
 from typing import Optional, ClassVar
 
 from pydantic import BaseModel
@@ -12,7 +12,41 @@ from .datasets import Dataset
 from .datasets import Namespace
 from .meta_file import MetaFile
 from .score_dir import ScoreDir
+from .validation_context import ValidationResponse, ValidationWarning
 from ..out import console as out_console, void_console, error_console, warning_console
+
+
+class ContextualItem(Protocol):
+    """ Item providing context to exceptions """
+
+    def print(self, allow_warnings: bool = False):
+        """ protocol function allowing to print context """
+        pass
+
+
+class ContextualException(Exception):
+    """ Custom exception providing a context """
+
+    def __init__(self, msg: str, ctx: Optional[ContextualItem] = None):
+        self._context: ContextualItem = ctx
+        super().__init__(msg)
+
+    def print_context(self, allow_warnings: bool = False):
+        """ Prints the current context """
+        if self._context:
+            self._context.print(allow_warnings)
+
+
+class ScoresNotFound(ContextualException):
+    pass
+
+
+class MetaYamlNotValid(ContextualException):
+    pass
+
+
+class InvalidSubmissionError(ContextualException):
+    pass
 
 
 def validation_fn(target: str):
@@ -28,64 +62,6 @@ def validation_fn(target: str):
         return _impl
 
     return fn_wrapper
-
-
-class ValidationResponse(abc.ABC):
-    """ Abstract class defining a Message object specifying validation Errors/Warnings/Checks """
-
-    def __init__(self, msg, *, data=None, item_name=None, filename=None, location=None):
-        self.item_name = item_name
-        self.filename = filename
-        self.location = location
-        self.msg = msg
-        self.data = data
-
-    def valid(self):
-        return getattr(self, '__is_valid__', False)
-
-    def warning(self):
-        return getattr(self, '__is_warning__', False)
-
-    def error(self):
-        return getattr(self, '__is_error__', False)
-
-    def ok(self):
-        return getattr(self, '__is_ok__', False)
-
-    def __str__(self):
-        item_name = '-'
-        if self.item_name:
-            item_name = self.item_name
-        filename = '[-'
-        if self.filename:
-            filename = f"[{self.filename}"
-        location = ':-]'
-        if self.location:
-            location = f":{self.location}]"
-        msg = ''
-        if self.msg:
-            msg = self.msg
-
-        cls_name = self.__class__.__name__
-        return f'{cls_name}({item_name}){filename}{location}>> {msg}'
-
-
-class ValidationWarning(ValidationResponse):
-    """ Class designating a validation warning """
-    __is_warning__ = True
-    __is_valid__ = True
-
-
-class ValidationError(ValidationResponse):
-    """ Class designating a validation error """
-    __is_error__ = True
-    __is_valid__ = False
-
-
-class ValidationOK(ValidationResponse):
-    """ Class designating a successful validation check """
-    __is_ok__ = True
-    __is_valid__ = True
 
 
 def add_item(item_name: str, resp: List[ValidationResponse]):
@@ -118,7 +94,6 @@ def show_errors(resp: List[ValidationResponse], allow_warnings: bool = True):
 
 
 class SubmissionValidation(BaseModel, abc.ABC):
-    # todo: add validation of Metafile as well
     dataset: Dataset
 
     def _is_validation_fn(self, fn_name):
@@ -147,11 +122,6 @@ class SubmissionValidation(BaseModel, abc.ABC):
         return results
 
 
-class InvalidSubmissionError(Exception):
-    """ Error used to signal a non valid submission """
-    pass
-
-
 class BenchmarkParameters(BaseModel, abc.ABC):
     """ Abstract Parameter class """
     file_stem: ClassVar[str] = "params.yaml"
@@ -171,11 +141,11 @@ class BenchmarkParameters(BaseModel, abc.ABC):
 class Submission(BaseModel, abc.ABC):
     location: Path
     items: Optional[Namespace[Item]]
-    params_obj: BenchmarkParameters = None
+    params_obj: Optional[BenchmarkParameters] = None
     meta_obj: Optional[MetaFile] = None
-    validation_output: List[ValidationResponse] = Field(default_factory=list)
     __score_dir__: Optional[Path] = None
     __score_cls__: ClassVar[Type[ScoreDir]]
+    validation_output: List[ValidationResponse] = Field(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True
@@ -197,8 +167,8 @@ class Submission(BaseModel, abc.ABC):
         return self.location / 'meta.yaml'
 
     @property
-    def leaderboard_file(self):
-        return self.location / 'leaderboard.json'
+    def leaderboard_file(self) -> Path:
+        return self.score_dir / "leaderboard.json"
 
     @property
     def params(self):
@@ -228,7 +198,6 @@ class Submission(BaseModel, abc.ABC):
         """ Check if score dir is emtpy """
         return len(list(self.score_dir.rglob('*'))) > 0
 
-    @property
     def get_scores(self):
         if self.score_dir.is_dir():
             return self.__score_cls__(

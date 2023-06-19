@@ -1,11 +1,11 @@
-import functools
 from pathlib import Path
 from typing import List, Callable, Any, Type
 
 import numpy as np
 import pandas as pd
 
-from ..model import data_items, m_benchmark
+from zerospeech.model import data_items, m_benchmark
+from zerospeech.model.validation_context import ValidationError, ValidationOK
 
 # Type for base functions
 BASE_VALIDATOR_FN_TYPE = Callable[[Any], List[m_benchmark.ValidationResponse]]
@@ -26,7 +26,7 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
 
             for e_file in has_more_files:
                 res.append(
-                    m_benchmark.ValidationError(
+                    ValidationError(
                         "extra file found",
                         filename=e_file
                     )
@@ -34,14 +34,14 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
         elif len(has_less_files) > 0:
             res = []
             for e_file in has_less_files:
-                res.append(m_benchmark.ValidationError(
+                res.append(ValidationError(
                     "expected file not found",
                     filename=e_file
                 ))
 
         return res
     else:
-        return [m_benchmark.ValidationOK('expected files found')]
+        return [ValidationOK('expected files found')]
 
 
 def file_list_checker(
@@ -57,10 +57,10 @@ def dataframe_column_check(df: pd.DataFrame, expected_columns: List[str]) -> ret
     """ Check that all columns are present in a dataframe """
     columns = list(df.columns)
     if columns != expected_columns:
-        return [m_benchmark.ValidationError(f'columns are not expected '
+        return [ValidationError(f'columns are not expected '
                                             f'expected: {expected_columns}, found: {columns}')]
 
-    return [m_benchmark.ValidationOK(f'Columns of dataframe are valid')]
+    return [ValidationOK('Columns of dataframe are valid')]
 
 
 def dataframe_index_check(df: pd.DataFrame, expected: List[str]) -> return_type:
@@ -75,14 +75,14 @@ def dataframe_type_check(df: pd.DataFrame, col_name: str, expected_type: Type[An
     try:
         df[col_name].astype(expected_type)
     except ValueError:
-        return [m_benchmark.ValidationError(f'Column {col_name} does not march expected type {expected_type}')]
+        return [ValidationError(f'Column {col_name} does not march expected type {expected_type}')]
     return []
 
 
 def numpy_dimensions_check(array: np.ndarray, ndim: int):
     """ Check ndarray matches specified dimensions"""
     if array.ndim != ndim:
-        return [m_benchmark.ValidationError(
+        return [ValidationError(
             f'Array should be of dimensions: {ndim}')]
     return []
 
@@ -90,7 +90,7 @@ def numpy_dimensions_check(array: np.ndarray, ndim: int):
 def numpy_dtype_check(array: np.ndarray, dtype: np.dtype):
     """ Check ndarray matches specified type """
     if array.dtype != dtype:
-        return [m_benchmark.ValidationError(
+        return [ValidationError(
             f'Array should be of type: {dtype}')]
     return []
 
@@ -103,7 +103,7 @@ def numpy_col_comparison(dim: int):
 
         if len(set(ncols)) != 1:
             return [
-                m_benchmark.ValidationError(f'Arrays do not match dimensions {dim}')
+                ValidationError(f'Arrays do not match dimensions {dim}')
             ]
         return []
 

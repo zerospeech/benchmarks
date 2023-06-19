@@ -13,6 +13,7 @@ class ScoreDir(BaseModel, abc.ABC):
     location: DirectoryPath
     params: Optional[Any] = None
     meta_file: Optional[MetaFile] = None
+    leaderboard_file_name: str = "leaderboard.json"
 
     def load_meta(self):
         """ Load metadata from submission """
