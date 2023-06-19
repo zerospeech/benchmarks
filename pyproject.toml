@@ -13,6 +13,10 @@ keywords = [
     "research-tool", "benchmark-speech", "zerospeech"
 ]
 classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -39,11 +43,12 @@ zrc_leaderboards = "zerospeech.leaderboards.vocolab_ext:VocolabLeaderboardManage
 [project.optional-dependencies]
 vocolab = [
     # todo migrate towards normal install when package is published
-    "git+ssh://git@github.com/zerospeech/vocolab-ext.git"
+    "vocolab-extensions @ git+https://github.com/zerospeech/vocolab-ext.git#egg=vocolab_ext"
 ]
 
 tts019 = [
-    "git+ssh://git@github.com/zerospeech/tts019-evaluator.git"
+    # todo migrate towards pypi url once module is public
+    "tts019-evaluator @ https://github.com/zerospeech/tts019-evaluator/archive/master.zip"
 ]
 
 abx = [
@@ -54,15 +59,19 @@ abx2 = [
     "virtual-dataset"
 ]
 tde = [
-    "zerospeech-tde>=2.0.2"
+    "zerospeech-tde>=2.0.3"
 ]
 
 all = [
-    "zerospeech-benchmarks[tde,abx2]"
+    # TDE
+    "zerospeech-tde>=2.0.3",
+    # ABX2
+    "zerospeech-libriabx2>=0.9.8",
+    "virtual-dataset",
+    #
 ]
 
 dev = [
-    "zerospeech-benchmarks[all]",
     "ipython",
     "jupyter",
     "pytest",
