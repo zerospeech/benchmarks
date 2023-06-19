@@ -122,6 +122,7 @@ def download_extract_zip(
 ):
     tmp_dir = st.mkdtemp()
     response = requests.get(zip_url, stream=True)
+    tmp_filename = tmp_dir / "download.zip"
 
     if quiet:
         _console = void_console
@@ -133,7 +134,7 @@ def download_extract_zip(
         total = int(size_in_bytes)
         task1 = progress.add_task(f"[red]Downloading {filename}...", total=total)
 
-        with (tmp_dir / f"download.zip").open("wb") as stream:
+        with tmp_filename.open("wb") as stream:
             for chunk in response.iter_content(chunk_size=1024):
                 stream.write(chunk)
                 progress.update(task1, advance=1024)
@@ -143,7 +144,7 @@ def download_extract_zip(
 
     if md5sum_hash != "":
         with _console.status("[red]Verifying md5sum from repository..."):
-            h = md5sum(tmp_dir / f"download.zip")
+            h = md5sum(tmp_filename)
 
         if h == md5sum_hash:
             _console.print("[green]MD5 sum verified!")
@@ -152,7 +153,7 @@ def download_extract_zip(
             sys.exit(1)
 
     with _console.status("[red]Unzipping archive..."):
-        unzip(tmp_dir / f"download.zip", target_location)
+        unzip(tmp_filename, target_location)
 
 
 def symlink_dir_contents(source: Path, dest: Path):
@@ -176,4 +177,5 @@ def nostdout():
     sys.stdout = io.BytesIO()
     yield
     sys.stdout = save_stdout
+
 

@@ -1,5 +1,5 @@
 from .cmd import (
-    CommandTree, CLI, LIST_OF_COMMANDS
+    CommandTree, CLI
 )
 from .networkio import update_repo_index, check_update_repo_index
 from .out import console

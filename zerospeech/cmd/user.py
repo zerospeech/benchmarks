@@ -6,7 +6,7 @@ from rich.table import Table
 
 from .cli_lib import CMD
 from ..out import console as std_console, error_console, warning_console
-from ..auth import CurrentUser
+from zerospeech.upload import CurrentUser
 
 
 class User(CMD):

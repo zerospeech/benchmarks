@@ -233,7 +233,7 @@ class ProsodySubmission(m_benchmark.Submission):
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
         # create meta-template
-        template = m_meta_file.MetaFile.to_template(benchmark_name="sLMProsody")
+        template = m_meta_file.MetaFile.to_template(benchmark_name="prosAudit")
         ProsodyLMParameters().export(location / ProsodyLMParameters.file_stem)
         template.to_yaml(
             file=location / m_meta_file.MetaFile.file_stem,
