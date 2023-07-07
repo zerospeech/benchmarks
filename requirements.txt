@@ -1,5 +1,5 @@
 distro
-pydantic[email]
+pydantic[email]<2.0
 rich
 pycryptodome
 pandas
