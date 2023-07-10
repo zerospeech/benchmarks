@@ -6,7 +6,7 @@ from rich.padding import Padding
 
 
 from .cli_lib import CMD
-from ..model import datasets
+from zerospeech.datasets import DatasetsDir, Dataset
 from ..networkio import check_update_repo_index, update_repo_index
 from ..out import console, error_console
 from ..settings import get_settings
@@ -23,7 +23,7 @@ class DatasetCMD(CMD):
         parser.add_argument("--local", action="store_true", help="List local datasets only")
 
     def run(self, argv: argparse.Namespace):
-        datasets_dir = datasets.DatasetsDir.load()
+        datasets_dir = DatasetsDir.load()
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
@@ -66,8 +66,8 @@ class PullDatasetCMD(CMD):
         if check_update_repo_index():
             update_repo_index()
 
-        datasets_dir = datasets.DatasetsDir.load()
-        dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
+        datasets_dir = DatasetsDir.load()
+        dataset = datasets_dir.get(argv.name, cls=Dataset)
         dataset.pull(quiet=argv.quiet, show_progress=True, verify=not argv.skip_verification)
 
 
@@ -84,8 +84,8 @@ class ImportDatasetCMD(CMD):
     def run(self, argv: argparse.Namespace):
         error_console.print("This functionality has not been tested !!!!!")
 
-        datasets_dir = datasets.DatasetsDir.load()
-        dataset = datasets_dir.get(argv.name, cls=datasets.Dataset)
+        datasets_dir = DatasetsDir.load()
+        dataset = datasets_dir.get(argv.name, cls=Dataset)
 
         # import the dataset from source
         dataset.import_(location=Path(argv.source), quiet=argv.quiet, show_progress=True)
@@ -100,7 +100,7 @@ class RemoveDatasetCMD(CMD):
         parser.add_argument('name')
 
     def run(self, argv: argparse.Namespace):
-        dataset_dir = datasets.DatasetsDir.load()
+        dataset_dir = DatasetsDir.load()
         dts = dataset_dir.get(argv.name)
         if dts:
             dts.uninstall()

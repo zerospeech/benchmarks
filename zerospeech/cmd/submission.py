@@ -2,10 +2,11 @@ import argparse
 import sys
 from pathlib import Path
 
+from zerospeech.benchmarks import BenchmarkList
+from zerospeech.out import error_console, warning_console, console as std_console
+from zerospeech.submissions import MetaFile, show_errors
+from zerospeech.tasks import BenchmarkParameters
 from .cli_lib import CMD
-from ..benchmarks import BenchmarkList
-from ..model import m_benchmark
-from ..out import error_console, warning_console, console as std_console
 
 
 class Submission(CMD):
@@ -17,6 +18,7 @@ class Submission(CMD):
         parser.print_help()
 
     def run(self, argv: argparse.Namespace):
+        """ """
         pass
 
 
@@ -65,13 +67,13 @@ class BenchmarkParamsCMD(CMD):
 
         benchmark_name = None
         try:
-            benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+            benchmark_name = MetaFile.benchmark_from_submission(location)
             if benchmark_name is None:
                 raise TypeError("benchmark not found")
 
             bench = BenchmarkList(benchmark_name)
         except TypeError:
-            error_console.log(f"Specified submission does not have a valid {m_meta_file.MetaFile.file_stem}"
+            error_console.log(f"Specified submission does not have a valid {MetaFile.file_stem}"
                               f"\nCannot find benchmark type")
             sys.exit(1)
         except ValueError:
@@ -81,7 +83,7 @@ class BenchmarkParamsCMD(CMD):
 
         if argv.reset:
             # remove old params file if exists
-            (location / m_benchmark.BenchmarkParameters.file_stem).unlink(missing_ok=True)
+            (location / BenchmarkParameters.file_stem).unlink(missing_ok=True)
 
         submission = bench.submission.load(path=location)
         if argv.reset:
@@ -106,13 +108,13 @@ class SubmissionVerify(CMD):
 
         benchmark_name = None
         try:
-            benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+            benchmark_name = MetaFile.benchmark_from_submission(location)
             if benchmark_name is None:
                 raise TypeError("benchmark not found")
 
             bench = BenchmarkList(benchmark_name)
         except TypeError:
-            error_console.log(f"Specified submission does not have a valid {m_meta_file.MetaFile.file_stem}"
+            error_console.log(f"Specified submission does not have a valid {MetaFile.file_stem}"
                               f"\nCannot find benchmark type")
             sys.exit(1)
         except ValueError:
@@ -128,4 +130,4 @@ class SubmissionVerify(CMD):
             std_console.print(f"Submission @ {location} is a valid submission for {bench} :heavy_check_mark:",
                               style='bold green')
         else:
-            m_benchmark.show_errors(submission.validation_output)
+            show_errors(submission.validation_output)

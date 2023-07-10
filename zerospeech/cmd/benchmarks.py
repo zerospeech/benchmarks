@@ -4,10 +4,10 @@ from pathlib import Path
 
 from rich.markdown import Markdown
 
+from zerospeech.benchmarks import BenchmarkList
+from zerospeech.out import error_console, warning_console
+from zerospeech.submissions import show_errors
 from .cli_lib import CMD
-from ..benchmarks import BenchmarkList
-from ..model import m_benchmark
-from ..out import error_console, warning_console
 
 
 class BenchmarksCMD(CMD):
@@ -19,11 +19,12 @@ class BenchmarksCMD(CMD):
         """ No extra arguments"""
         pass
 
+    # noinspection PyUnresolvedReferences
     def run(self, argv: argparse.Namespace):
         markdown_text = """#### List of Benchmarks\n\n"""
         for nb, bench in enumerate(BenchmarkList):
-            markdown_text += f"{nb+1}) **{bench.value}**\n\n"
-            markdown_text += f"\t{len(bench.value)* '='} documentation ===> [{bench.doc_url}]({bench.doc_url})\n"
+            markdown_text += f"{nb + 1}) **{bench.value}**\n\n"
+            markdown_text += f"\t{len(bench.value) * '='} documentation ===> [{bench.doc_url}]({bench.doc_url})\n"
         self.console.print(Markdown(markdown_text))
 
 
@@ -74,7 +75,7 @@ class BenchmarkRunCMD(CMD):
             with self.console.status("Validating submission... ", spinner="aesthetic"):
                 if not submission.valid:
                     error_console.print(f"Found Errors in submission: {submission.location}")
-                    m_benchmark.show_errors(submission.validation_output)
+                    show_errors(submission.validation_output)
                     sys.exit(1)
 
             self.console.print(":heavy_check_mark: Submission Valid", style="bold green")

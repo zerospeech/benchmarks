@@ -7,7 +7,7 @@ from typing import Optional, Type
 
 from treelib import Tree, Node
 
-from ..out import console, void_console
+from zerospeech.out import console, void_console
 
 NAMESPACE_SEP = ":"
 LIST_OF_COMMANDS = []
