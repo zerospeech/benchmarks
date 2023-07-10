@@ -2,21 +2,25 @@ import functools
 import json
 import shutil
 from pathlib import Path
-from typing import Tuple, Optional, Any, Union, Dict
+from typing import Tuple, Optional, Any, Union, Dict, TYPE_CHECKING
 
 from pydantic import BaseModel
 from rich.console import Console
 
 from zerospeech.benchmarks import BenchmarkList
 from zerospeech.data_loaders import zip_zippable
-from zerospeech.model import m_benchmark
 from zerospeech.out import void_console, console as std_console, error_console
 from zerospeech.settings import get_settings
 from zerospeech.httpw import post as http_post, get as http_get, APIHTTPException
+from zerospeech.misc import ScoresNotFound, MetaYamlNotValid, InvalidSubmissionError
+from zerospeech.submissions import show_errors
 from .file_split import (
     FileUploadHandler, MultipartUploadHandler, SinglePartUpload, md5sum, UploadItem
 )
 from .user_api import CurrentUser, Token
+
+if TYPE_CHECKING:
+    from zerospeech.submissions import Submission
 
 st = get_settings()
 
@@ -54,7 +58,7 @@ def upload_submission(item: UploadItem, *, submission_id: str, token: Token):
 
 
 def get_submission_status(submission_id: str, token: Token) -> Dict[str, Any]:
-    route, headers = st.api.request_params(
+    route, _ = st.api.request_params(
         "submission_status", token=token, submission_id=submission_id
     )
 
@@ -121,7 +125,7 @@ class SubmissionUploader:
 
     @classmethod
     def from_submission(
-            cls, submission: Union[Path, m_benchmark.Submission], usr: Optional[CurrentUser] = None,
+            cls, submission: Union[Path, "Submission"], usr: Optional[CurrentUser] = None,
             multipart: bool = True, quiet: bool = False
     ) -> 'SubmissionUploader':
         """ Create uploader from submission """
@@ -129,7 +133,7 @@ class SubmissionUploader:
             submission=submission, user_cred=usr, multipart=multipart, quiet=quiet)
 
     def __init__(
-            self, submission: Union[Path, m_benchmark.Submission],
+            self, submission: Union[Path, "Submission"],
             user_cred: Union[CurrentUser, Tuple[str, str], None] = None,
             tmp_dir: Optional[Path] = None,
             archive_filename: Optional[str] = None,
@@ -175,7 +179,7 @@ class SubmissionUploader:
                 self.tmp_dir = tmp_dir
 
         self.console.print(f"UPLOAD DIR :::> {self.tmp_dir}")
-        self.console.print(f"\tUse this directory to resume upload if it fails (--resume)", style="dark_orange3 italic")
+        self.console.print("\tUse this directory to resume upload if it fails (--resume)", style="dark_orange3 italic")
 
         if archive_filename is None:
             self.archive_file = self.tmp_dir / f"{self.submission.location.name}.zip"
@@ -314,17 +318,17 @@ class SubmissionUploader:
         """ Performs all checks on submission before upload to API """
 
         if not self.submission.meta.is_valid():
-            raise m_benchmark.MetaYamlNotValid('meta.yaml not valid', ctx=self.submission.meta.validation_context)
+            raise MetaYamlNotValid('meta.yaml not valid', ctx=self.submission.meta.validation_context)
 
         # validate submission
         if not self.submission.valid:
             # todo convert submission validation to use context protocol
-            m_benchmark.show_errors(self.submission.validation_output)
-            raise m_benchmark.InvalidSubmissionError('submission not valid')
+            show_errors(self.submission.validation_output)
+            raise InvalidSubmissionError('submission not valid')
 
         # check scores (has_scores)
         if not self.submission.has_scores():
-            raise m_benchmark.ScoresNotFound('submission has no scores')
+            raise ScoresNotFound('submission has no scores')
 
         # generate leaderboard
         scores = self.submission.get_scores()

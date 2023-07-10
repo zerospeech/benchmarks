@@ -15,9 +15,13 @@ class User(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ """
         pass
 
     def run(self, argv: argparse.Namespace):
+        std_console.print("Feature Not Yet Available !!!", style="red bold")
+
+    def _run(self, argv: argparse.Namespace):
         current = CurrentUser.load()
         if current is None:
             error_console.print("No current user session, please use login to create a session !")
@@ -41,9 +45,13 @@ class UserLogin(CMD):
     NAMESPACE = "user"
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ """
         pass
 
     def run(self, argv: argparse.Namespace):
+        std_console.print("Feature Not Yet Available !!!", style="red bold")
+
+    def _run(self, argv: argparse.Namespace):
         if CurrentUser.session_file.is_file():
             CurrentUser.clear()
         try:
@@ -59,9 +67,9 @@ class UserClear(CMD):
     NAMESPACE = "user"
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ """
         pass
 
     def run(self, argv: argparse.Namespace):
         if Confirm("Are you sure you want to clear the current session ?", console=warning_console):
             CurrentUser.clear()
-
