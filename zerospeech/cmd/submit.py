@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from zerospeech.out import error_console
+from zerospeech.out import error_console, console as std_console
 from zerospeech.settings import get_settings
 from zerospeech.upload import SubmissionUploader, APIHTTPException, BenchmarkClosedError
 from .cli_lib import CMD
@@ -26,6 +26,9 @@ class SubmitOnline(CMD):
                             help="The directory containing the submission")
 
     def run(self, argv: argparse.Namespace):
+        std_console.print("Feature Not Yet Available !!!", style="red bold")
+
+    def _run(self, argv: argparse.Namespace):
         try:
             if argv.resume:
                 uploader = SubmissionUploader.resume(Path(argv.submission_dir), quiet=argv.quiet)

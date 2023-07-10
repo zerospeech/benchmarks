@@ -3,22 +3,22 @@ from pathlib import Path
 from typing import List, Union, Callable, Any
 
 from zerospeech.data_loaders import load_dataframe, load_numpy_array, FileError
-from zerospeech.model import data_items, m_benchmark
-from zerospeech.model.validation_context import ValidationError, ValidationOK
+from zerospeech.generics import FileItem, FileListItem, FileTypes
+from .base_validators import ValidationError, ValidationOK, ValidationResponse
 from .base_validators import BASE_VALIDATOR_FN_TYPE
 
-return_type = List[m_benchmark.ValidationResponse]
+return_type = List[ValidationResponse]
 COMPLEX_VALIDATION_FN = Callable[[Any, List[BASE_VALIDATOR_FN_TYPE]], return_type]
 
 
 def dataframe_check(
-        item: data_items.FileItem,
+        item: FileItem,
         additional_checks: List[BASE_VALIDATOR_FN_TYPE], **kwargs
 ) -> return_type:
     """ Check validity & apply additional checks to a Dataframe fileItem """
     results = []
 
-    if item.file_type not in data_items.FileTypes.dataframe_types():
+    if item.file_type not in FileTypes.dataframe_types():
         return [ValidationError(f'file type {item.file_type} cannot be converted into a dataframe',
                                             data=item.file)]
 
@@ -35,7 +35,7 @@ def dataframe_check(
     return results
 
 
-def numpy_array_check(file_item: Union[data_items.FileItem, Path],
+def numpy_array_check(file_item: Union[FileItem, Path],
                       additional_checks: List[BASE_VALIDATOR_FN_TYPE]) -> return_type:
     """ Check validity & apply additional checks to a Numpy fileItem """
     warnings.filterwarnings("error")
@@ -53,7 +53,7 @@ def numpy_array_check(file_item: Union[data_items.FileItem, Path],
 
 
 def numpy_array_list_check(
-    item: data_items.FileListItem, f_list_checks: List[BASE_VALIDATOR_FN_TYPE],
+    item: FileListItem, f_list_checks: List[BASE_VALIDATOR_FN_TYPE],
     additional_checks: List[BASE_VALIDATOR_FN_TYPE]
 ) -> return_type:
     """ Check validity & apply additional checks to a list of Numpy fileItems """

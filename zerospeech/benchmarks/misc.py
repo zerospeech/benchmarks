@@ -1,24 +1,25 @@
 import enum
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
-from typing import Type, Any, Dict, Optional
+from typing import Type, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from misc import InvalidSubmissionError
+from zerospeech.benchmarks import sLM21, abxLS, tde17, abx17, prosAudit
 from zerospeech.httpw import get as http_get, APIHTTPException
 from zerospeech.settings import get_settings
-from ..model import m_benchmark, m_meta_file
-from ._benchmarks import sLM_21, abx_LS, tde_17, abx_17, pros_audit
+from zerospeech.submissions import MetaFile
+from ._model import Benchmark
+
+if TYPE_CHECKING:
+    from zerospeech.submissions import Submission
 
 st = get_settings()
 
 
 class InvalidBenchmarkError(Exception):
     pass
-
-
-
-
 
 
 class _InfoSchema(BaseModel):
@@ -43,7 +44,7 @@ class BenchmarkList(str, enum.Enum):
 
     def __new__(
             cls,
-            benchmark: Type[m_benchmark.Benchmark], submission: Type[m_benchmark.Submission]
+            benchmark: Type[Benchmark], submission: Type["Submission"]
     ):
         """ Allow setting parameters on enum """
         label = benchmark._name  # noqa: allow private access
@@ -55,19 +56,19 @@ class BenchmarkList(str, enum.Enum):
         obj.is_test = False
         return obj
 
-    sLM21 = sLM_21.SLM21Benchmark, sLM_21.SLM21Submission
-    abx_LS = abx_LS.AbxLSBenchmark, abx_LS.AbxLSSubmission
-    # TODO: implement score_dir, leaderboard & verification
-    abx_17 = abx_17.ABX17Benchmark, abx_17.ABX17Submission
-    # TODO: implement score_dir, leaderboard & verification
-    tde_17 = tde_17.TDE17Benchmark, tde_17.TDE17Submission
-    pros_audit = pros_audit.SLMProsodyBenchmark, pros_audit.ProsodySubmission
+    sLM21 = sLM21.SLM21Benchmark, sLM21.SLM21Submission
+    abx_LS = abxLS.AbxLSBenchmark, abxLS.AbxLSSubmission
+    pros_audit = prosAudit.SLMProsodyBenchmark, prosAudit.ProsodySubmission
+    # TODO: implement score_dir, leaderboard & validation for 2017 (tde & abx)
+    abx_17 = abx17.ABX17Benchmark, abx17.ABX17Submission
+    tde_17 = tde17.TDE17Benchmark, tde17.TDE17Submission
+
 
     @classmethod
     def from_submission(cls, location: Path) -> "BenchmarkList":
-        benchmark_name = m_meta_file.MetaFile.benchmark_from_submission(location)
+        benchmark_name = MetaFile.benchmark_from_submission(location)
         if benchmark_name is None:
-            raise m_benchmark.InvalidSubmissionError("meta.yaml not found or invalid")
+            raise InvalidSubmissionError("meta.yaml not found or invalid")
 
         try:
             if benchmark_name.startswith("test-"):
@@ -81,12 +82,12 @@ class BenchmarkList(str, enum.Enum):
             raise InvalidBenchmarkError(f"{benchmark_name} is not a valid benchmark !!")
 
     @property
-    def benchmark(self) -> Type[m_benchmark.Benchmark]:
+    def benchmark(self) -> Type[Benchmark]:
         """ Benchmark Class (used for typing mostly) """
         return self._benchmark
 
     @property
-    def submission(self) -> Type[m_benchmark.Submission]:
+    def submission(self) -> Type["Submission"]:
         """ Submission Class property (used for typing mostly) """
         return self._submission
 

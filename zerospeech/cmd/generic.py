@@ -22,6 +22,7 @@ class ResetIndex(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ """
         pass
 
     def run(self, argv: argparse.Namespace):
@@ -35,6 +36,7 @@ class Version(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """ """
         pass
 
     @staticmethod
@@ -79,7 +81,7 @@ class Version(CMD):
         table.add_row(end_section=True)
 
         table.add_row("python", sys.version, end_section=True)
-        os_alias = platform.platform(aliased=True)
+        _ = platform.platform(aliased=True)  # os_alias
         if 'linux' in platform.system().lower():
             table.add_row("Operating System", f"{distro.name(pretty=True)}\n{platform.platform(aliased=True)}")
         else:
@@ -93,9 +95,11 @@ class HelpCMD(CMD):
     NAMESPACE = ""
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """  """
         pass
 
     def run(self, argv: argparse.Namespace):
+        """  """
         pass
 
 
@@ -122,7 +126,8 @@ class DocumentationCMD(CMD):
     NAMESPACE = "support"
 
     def init_parser(self, parser: argparse.ArgumentParser):
+        """  """
         pass
 
     def run(self, argv: argparse.Namespace):
-        webbrowser.open(f'https://zerospeech.com/', new=1)
+        webbrowser.open('https://zerospeech.com/', new=1)
