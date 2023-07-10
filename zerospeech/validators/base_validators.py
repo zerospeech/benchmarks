@@ -4,12 +4,12 @@ from typing import List, Callable, Any, Type
 import numpy as np
 import pandas as pd
 
-from zerospeech.model import data_items, m_benchmark
-from zerospeech.model.validation_context import ValidationError, ValidationOK
+from zerospeech.generics import FileListItem
+from zerospeech.submissions import ValidationResponse, ValidationOK, ValidationError
 
 # Type for base functions
-BASE_VALIDATOR_FN_TYPE = Callable[[Any], List[m_benchmark.ValidationResponse]]
-return_type = List[m_benchmark.ValidationResponse]
+BASE_VALIDATOR_FN_TYPE = Callable[[Any], List[ValidationResponse]]
+return_type = List[ValidationResponse]
 
 
 def list_checker(given: List[str], expected: List[str]) -> return_type:
@@ -45,7 +45,7 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
 
 
 def file_list_checker(
-        item: data_items.FileListItem, expected: List[Path]
+        item: FileListItem, expected: List[Path]
 ) -> return_type:
     """ Check if a file list has expected files in it """
     file_names = [f.stem for f in item.files_list]

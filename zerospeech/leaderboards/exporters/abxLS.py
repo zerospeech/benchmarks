@@ -10,7 +10,7 @@ from typing import Dict, Tuple, List, Optional
 import pandas as pd
 from rich.console import Console
 
-from zerospeech.leaderboards.benchmarks import ABXLSLeaderboard
+from zerospeech.leaderboards.abxLS import ABXLSLeaderboard
 from zerospeech.leaderboards.utils import open_json, clean_label, format_score
 from .base import CSVExporter, LeaderboardExporter
 

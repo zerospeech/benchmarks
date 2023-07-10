@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .settings import get_settings
 from .out import console, error_console
-from .model import repository
+from .generics import repository
 
 import requests
 from pydantic import ValidationError
@@ -21,7 +21,7 @@ def update_repo_index():
         _ = repository.RepositoryIndex(**data)
     except ValidationError:
         error_console.log(f"The given repository @ {st.repository_index} is not valid")
-        error_console.log(f"Please contact the administrator to resolve this issue...")
+        error_console.log("Please contact the administrator to resolve this issue...")
         sys.exit(1)
 
     with st.repository_index.open('w') as fp:

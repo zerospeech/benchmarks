@@ -3,9 +3,9 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, DirectoryPath
 
-from .leaderboard import LeaderboardEntry, PublicationEntry
+from zerospeech.leaderboards import LeaderboardEntry, PublicationEntry
+from zerospeech.misc import load_obj
 from .meta_file import MetaFile
-from ..misc import load_obj
 
 
 class ScoreDir(BaseModel, abc.ABC):

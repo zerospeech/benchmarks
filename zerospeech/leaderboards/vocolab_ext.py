@@ -2,36 +2,34 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Any
 
-from vocolab_ext.leaderboards import LeaderboardEntryBase
-
 from ._models import Leaderboard
-from ._types import Benchmark
-from .benchmarks.abxLS import (
+from ._types import LeaderboardBenchmarkName
+from .abxLS import (
     ABXLSLeaderboard, ABXLSEntry
 )
-from .benchmarks.sLM21 import (
+from .exporters import ABXLSExporter, Slm21Exporter, TDE17Exporter
+from .sLM21 import (
     SLM21Leaderboard, SLM21LeaderboardEntry
 )
-from .benchmarks.tde17 import (
+from .tde17 import (
     TDE17Leaderboard, TDE17Entry
 )
-from .exporters import ABXLSExporter, Slm21Exporter, TDE17Exporter
 
 try:
     from vocolab_ext import LeaderboardManager
+    from vocolab_ext.leaderboards import LeaderboardEntryBase
 except ImportError:
     warnings.warn("vocolab_ext is not installed")
 
-
-    class LeaderboardManager:
-        """Empty class to prevent errors"""
-
-        pass
+    # Fake variables to prevent errors
+    LeaderboardManager = ...
+    LeaderboardEntryBase = ...
 
 
-def get_benchmark(name: str) -> Benchmark:
+
+def get_benchmark(name: str) -> LeaderboardBenchmarkName:
     try:
-        return Benchmark(name)
+        return LeaderboardBenchmarkName(name)
     except ValueError:
         raise ValueError("Leaderboard name not found !!!")
 
@@ -47,11 +45,11 @@ class VocolabLeaderboardManager(LeaderboardManager):
         """Load self from an object"""
         bench = get_benchmark(name)
 
-        if bench == Benchmark.ABX_LS:
+        if bench == LeaderboardBenchmarkName.ABX_LS:
             return cls(ld=ABXLSLeaderboard.parse_obj(obj))
-        elif bench == Benchmark.sLM_21:
+        elif bench == LeaderboardBenchmarkName.sLM_21:
             return cls(ld=SLM21Leaderboard.parse_obj(obj))
-        elif bench == Benchmark.TDE_17:
+        elif bench == LeaderboardBenchmarkName.TDE_17:
             return cls(ld=TDE17Leaderboard.parse_obj(obj))
 
         raise TypeError('Unknown leaderboard type')
@@ -61,11 +59,11 @@ class VocolabLeaderboardManager(LeaderboardManager):
         """ Load entry from benchmark name """
         bench = get_benchmark(name)
 
-        if bench == Benchmark.ABX_LS:
+        if bench == LeaderboardBenchmarkName.ABX_LS:
             return ABXLSEntry.parse_obj(obj)
-        elif bench == Benchmark.sLM_21:
+        elif bench == LeaderboardBenchmarkName.sLM_21:
             return SLM21LeaderboardEntry.parse_obj(obj)
-        elif bench == Benchmark.TDE_17:
+        elif bench == LeaderboardBenchmarkName.TDE_17:
             return TDE17Entry.parse_obj(obj)
 
         raise TypeError('Unknown leaderboard type')
@@ -75,15 +73,15 @@ class VocolabLeaderboardManager(LeaderboardManager):
         """ Create leaderboard from a list of entries"""
         bench = get_benchmark(name)
 
-        if bench == Benchmark.ABX_LS:
+        if bench == LeaderboardBenchmarkName.ABX_LS:
             return cls(ld=ABXLSLeaderboard(
                 data=entries
             ))
-        elif bench == Benchmark.sLM_21:
+        elif bench == LeaderboardBenchmarkName.sLM_21:
             return cls(ld=SLM21Leaderboard(
                 data=entries
             ))
-        elif bench == Benchmark.TDE_17:
+        elif bench == LeaderboardBenchmarkName.TDE_17:
             return cls(ld=TDE17Leaderboard(
                 data=entries
             ))

@@ -1,2 +1,2 @@
-from ._models import Leaderboard
-from ._types import Benchmark
+from ._models import Leaderboard, PublicationEntry, LeaderboardEntry, EntryDetails
+from ._types import LeaderboardBenchmarkName

@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Union
 
 from pydantic import BaseModel, AnyHttpUrl, Field, validator
 
-from ._types import Benchmark
+from ._types import LeaderboardBenchmarkName
 
 
 class ABXScoreTuple(BaseModel):
@@ -101,7 +101,7 @@ class LeaderboardEntry(BaseModel):
 
 
 class Leaderboard(BaseModel):
-    _type: Benchmark
+    _type: LeaderboardBenchmarkName
     last_modified: datetime = Field(default_factory=lambda: datetime.now())
     data: List[LeaderboardEntry]
 

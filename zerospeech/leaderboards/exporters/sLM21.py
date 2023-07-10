@@ -9,8 +9,7 @@ from typing import Optional, List, Tuple, Dict
 import pandas as pd
 from rich.console import Console
 
-from zerospeech.leaderboards.benchmarks import SLM21Leaderboard
-from zerospeech.leaderboards.benchmarks.sLM21 import SLM21LeaderboardEntry
+from zerospeech.leaderboards.sLM21 import SLM21Leaderboard, SLM21LeaderboardEntry
 from zerospeech.leaderboards.utils import open_json, clean_label, format_score
 from .base import LeaderboardExporter, CSVExporter
 

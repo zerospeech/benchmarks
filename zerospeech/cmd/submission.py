@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .cli_lib import CMD
 from ..benchmarks import BenchmarkList
-from ..model import m_benchmark, m_meta_file
+from ..model import m_benchmark
 from ..out import error_console, warning_console, console as std_console
 
 

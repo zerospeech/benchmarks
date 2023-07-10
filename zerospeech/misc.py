@@ -1,24 +1,22 @@
 import contextlib
-import enum
 import io
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional, Protocol
 from zipfile import ZipFile
 
-import humanize
-# from datasize import DataSize todo: find out why this was deleted ? maybe on unpushed thing on laptop?
-from pydantic import ByteSize, BaseModel
 import requests
 from Crypto.Hash import MD5  # noqa: the package name is not the same
+# from datasize import DataSize todo: find out why this was deleted ? maybe on unpushed thing on laptop?
+from pydantic import ByteSize, BaseModel
 
 try:
     import yaml
 except ImportError:
     yaml = None
 try:
-    import tomli # noqa: is not a strict requirement
+    import tomli  # noqa: is not a strict requirement
 except ImportError:
     tomli = None
 
@@ -26,6 +24,39 @@ from .out import with_progress, void_console, console
 from .settings import get_settings
 
 st = get_settings()
+
+
+class ContextualItem(Protocol):
+    """ Item providing context to exceptions """
+
+    def print(self, allow_warnings: bool = False):
+        """ protocol function allowing to print context """
+        pass
+
+
+class ContextualException(Exception):
+    """ Custom exception providing a context """
+
+    def __init__(self, msg: str, ctx: Optional[ContextualItem] = None):
+        self._context: ContextualItem = ctx
+        super().__init__(msg)
+
+    def print_context(self, allow_warnings: bool = False):
+        """ Prints the current context """
+        if self._context:
+            self._context.print(allow_warnings)
+
+
+class ScoresNotFound(ContextualException):
+    pass
+
+
+class MetaYamlNotValid(ContextualException):
+    pass
+
+
+class InvalidSubmissionError(ContextualException):
+    pass
 
 
 class SizeUnit(BaseModel):
@@ -38,6 +69,7 @@ class SizeUnit(BaseModel):
     @property
     def as_bytes(self):
         return self.__root__
+
 
 # todo: see if i can remove this from the codebase ?
 # todo can we remove humanize from requirements ? or is it still used ?
@@ -117,7 +149,7 @@ def zip_folder(archive_file: Path, location: Path):
 
 
 def download_extract_zip(
-        zip_url: str, target_location: Path,  size_in_bytes: int, *, filename: str = "",
+        zip_url: str, target_location: Path, size_in_bytes: int, *, filename: str = "",
         md5sum_hash: str = "", quiet: bool = False, show_progress: bool = True,
 ):
     tmp_dir = st.mkdtemp()
@@ -177,5 +209,3 @@ def nostdout():
     sys.stdout = io.BytesIO()
     yield
     sys.stdout = save_stdout
-
-

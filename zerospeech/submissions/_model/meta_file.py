@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Optional, Union, Dict, ClassVar, Literal
 
 import yaml
-from pydantic import BaseModel, AnyUrl, ValidationError, Field
+from pydantic import BaseModel, AnyUrl, ValidationError
 
-from .leaderboard import PublicationEntry
+from zerospeech.misc import load_obj
+from zerospeech.leaderboards import PublicationEntry
 from .validation_context import ValidationContext
-from ..misc import load_obj
 
 BenchmarkList = Literal[
     "prosAudit", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15",

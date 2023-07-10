@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Benchmark(str, Enum):
+class LeaderboardBenchmarkName(str, Enum):
     ABX_15 = "ABX-15"
     ABX_17 = "ABX-17"
     ABX_LS_LG = "ABX-LS-Legacy"
