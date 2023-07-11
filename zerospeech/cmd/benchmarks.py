@@ -46,11 +46,14 @@ class BenchmarkRunCMD(CMD):
 
     def run(self, argv: argparse.Namespace):
         try:
-            bench = BenchmarkList(argv.name)
+            benchmark_type = BenchmarkList(argv.name)
         except ValueError:
             error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
+
+        # Load benchmark
+        benchmark = benchmark_type.benchmark(quiet=argv.quiet)
 
         spinner = self.console.status("Loading submission !")
         spinner.start()
@@ -67,7 +70,7 @@ class BenchmarkRunCMD(CMD):
         if 'all' not in argv.tasks and len(argv.sets) > 0:
             load_args['tasks'] = argv.tasks
 
-        submission = bench.submission.load(path=sub_dir, **load_args)
+        submission = benchmark.load_submission(location=sub_dir, **load_args)
         spinner.stop()
         self.console.print(":heavy_check_mark: Submission loaded successfully", style="bold green")
 
@@ -83,12 +86,9 @@ class BenchmarkRunCMD(CMD):
         # load saved parameters
         self.console.print(f"Loaded parameters from :arrow_right: {submission.params_file}")
         submission.params_obj = submission.load_parameters()
-
         # update values from args
         submission.params.quiet = argv.quiet
-
-        # Load & run benchmark
-        benchmark = bench.benchmark(quiet=argv.quiet)
+        # run benchmark
         benchmark.run(submission)
 
 

@@ -1,5 +1,6 @@
 import abc
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Type
 
 from pydantic import BaseModel
 from pydantic import root_validator
@@ -11,8 +12,16 @@ if TYPE_CHECKING:
     from zerospeech.datasets import Dataset
 
 
+class NoSubmissionTypeError(Exception):
+    """ This benchmark has not specified submission type"""
+    pass
+
+
 class Benchmark(BaseModel, abc.ABC):
     """ A Generic benchmark class """
+    _name: ClassVar[str] = ...
+    _doc_url: ClassVar[str] = ...
+    __submission_cls__: Type[Submission] = ...
     dataset: "Dataset"
     quiet: bool = False
 
@@ -43,6 +52,17 @@ class Benchmark(BaseModel, abc.ABC):
         assert hasattr(cls, "_name"), f"A benchmark requires a name (add a _name attribute to the subclass {cls})"
         assert hasattr(cls, "_doc_url"), f"A benchmark requires a name (add a _doc_url attribute to the subclass {cls})"
         return values
+
+    def load_submission(self, location: Path, **kwargs) -> "Submission":
+        """ Load a submission using specified submission type """
+        if hasattr(self, '__submission_cls__'):
+            return self.__submission_cls__.load(location, **kwargs)
+        raise NoSubmissionTypeError(f'No submission type in benchmark  {self._name}')
+
+    def init_submission_dir(self, location: Path):
+        if hasattr(self, '__submission_cls__'):
+            return self.__submission_cls__.init_dir(location)
+        raise NoSubmissionTypeError(f'No submission type in benchmark {self._name}')
 
     @abc.abstractmethod
     def run(self, submission: "Submission"):

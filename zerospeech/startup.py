@@ -34,7 +34,7 @@ def main():
     cli = CLI(
         CommandTree("zrc"),
         description="A command line tool to help with the use of the Zerospeech Benchmarks.",
-        usage=f"zrc <command> [<args>]"
+        usage="zrc <command> [<args>]"
     )
     cli.run()
 

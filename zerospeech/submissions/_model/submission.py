@@ -17,6 +17,7 @@ from .validation_context import ValidationResponse, ValidationWarning
 if TYPE_CHECKING:
     from zerospeech.datasets import Dataset
 
+
 def validation_fn(target: str):
     """ Wrapper function to mark validation items """
 
@@ -88,9 +89,6 @@ class SubmissionValidation(BaseModel, abc.ABC):
                 results.append(ValidationWarning("no validation found", item_name=name))
 
         return results
-
-
-
 
 
 class Submission(BaseModel, abc.ABC):

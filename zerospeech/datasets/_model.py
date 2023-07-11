@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional, TypeVar, ClassVar, Type, Union
+from typing import Optional, TypeVar, ClassVar, Type, Union, Tuple
 
 from pydantic import BaseModel, validator
 
@@ -25,7 +25,6 @@ class DatasetNotInstalledError(Exception):
 class DatasetNotFoundError(Exception):
     """ Exception used for a non available dataset """
     pass
-
 
 
 class DatasetIndex(BaseModel):

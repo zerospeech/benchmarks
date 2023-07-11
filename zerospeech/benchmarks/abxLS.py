@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict, ClassVar
+from typing import Tuple, List, Dict, ClassVar, Type
 
 import pandas
 import pandas as pd
@@ -9,6 +9,7 @@ from zerospeech.generics import (
     FileItem, FileListItem
 )
 from zerospeech.submissions.abxLS import AbxLSSubmission
+from zerospeech.submissions import Submission
 from zerospeech.tasks.abx.abx_phoneme import SimpleABXPhonemeTask, ContextMode
 from ._model import Benchmark
 
@@ -167,6 +168,7 @@ class AbxLSBenchmark(Benchmark):
     """
     _name: ClassVar[str] = "abxLS"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_1/tasks_goals/"
+    __submission_cls__: Type[Submission] = AbxLSSubmission
     dataset: AbxLSDataset = Field(default_factory=lambda: AbxLSDataset.load())
 
     def run(self, submission: AbxLSSubmission):

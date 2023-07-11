@@ -1,15 +1,14 @@
 import argparse
 from pathlib import Path
 
-from rich.table import Table
 from rich.padding import Padding
+from rich.table import Table
 
-
-from .cli_lib import CMD
 from zerospeech.datasets import DatasetsDir, Dataset
-from ..networkio import check_update_repo_index, update_repo_index
-from ..out import console, error_console
-from ..settings import get_settings
+from zerospeech.networkio import check_update_repo_index, update_repo_index
+from zerospeech.out import console, error_console
+from zerospeech.settings import get_settings
+from .cli_lib import CMD
 
 st = get_settings()
 

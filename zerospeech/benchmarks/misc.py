@@ -5,15 +5,12 @@ from typing import Type, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from misc import InvalidSubmissionError
 from zerospeech.benchmarks import sLM21, abxLS, tde17, abx17, prosAudit
 from zerospeech.httpw import get as http_get, APIHTTPException
+from zerospeech.misc import InvalidSubmissionError
 from zerospeech.settings import get_settings
 from zerospeech.submissions import MetaFile
 from ._model import Benchmark
-
-if TYPE_CHECKING:
-    from zerospeech.submissions import Submission
 
 st = get_settings()
 
@@ -42,27 +39,22 @@ class _InfoSchema(BaseModel):
 class BenchmarkList(str, enum.Enum):
     """ Simplified enum """
 
-    def __new__(
-            cls,
-            benchmark: Type[Benchmark], submission: Type["Submission"]
-    ):
+    def __new__(cls, benchmark: Type[Benchmark]):
         """ Allow setting parameters on enum """
         label = benchmark._name  # noqa: allow private access
         obj = str.__new__(cls, label)
         obj._value_ = label
         obj._benchmark = benchmark
-        obj._submission = submission
         obj._doc_url = benchmark._doc_url  # noqa: allow private access
         obj.is_test = False
         return obj
 
-    sLM21 = sLM21.SLM21Benchmark, sLM21.SLM21Submission
-    abx_LS = abxLS.AbxLSBenchmark, abxLS.AbxLSSubmission
-    pros_audit = prosAudit.SLMProsodyBenchmark, prosAudit.ProsodySubmission
+    sLM21 = sLM21.SLM21Benchmark
+    abx_LS = abxLS.AbxLSBenchmark
+    pros_audit = prosAudit.SLMProsodyBenchmark
     # TODO: implement score_dir, leaderboard & validation for 2017 (tde & abx)
-    abx_17 = abx17.ABX17Benchmark, abx17.ABX17Submission
-    tde_17 = tde17.TDE17Benchmark, tde17.TDE17Submission
-
+    abx_17 = abx17.ABX17Benchmark
+    tde_17 = tde17.TDE17Benchmark
 
     @classmethod
     def from_submission(cls, location: Path) -> "BenchmarkList":
@@ -85,11 +77,6 @@ class BenchmarkList(str, enum.Enum):
     def benchmark(self) -> Type[Benchmark]:
         """ Benchmark Class (used for typing mostly) """
         return self._benchmark
-
-    @property
-    def submission(self) -> Type["Submission"]:
-        """ Submission Class property (used for typing mostly) """
-        return self._submission
 
     @property
     def doc_url(self) -> str:

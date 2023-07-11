@@ -1,15 +1,13 @@
-from typing import Tuple, ClassVar, TYPE_CHECKING
+from typing import Tuple, ClassVar, Type
 
 from pydantic import Field
 
-
 from zerospeech.datasets import ZRC2017Dataset
-from zerospeech.tasks import tde
 from zerospeech.generics import FileItem
+from zerospeech.submissions import Submission
+from zerospeech.submissions.tde17 import TDE17Submission
+from zerospeech.tasks import tde
 from ._model import Benchmark
-
-if TYPE_CHECKING:
-    from zerospeech.submissions.tde17 import TDE17Submission
 
 
 class TDE17Task(tde.TDETask):
@@ -56,6 +54,7 @@ class TDE17Benchmark(Benchmark):
     """
     _name: ClassVar[str] = "tde17"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_2/tasks_goals/"
+    __submission_cls__: Type[Submission] = TDE17Submission
     dataset: "ZRC2017Dataset" = Field(default_factory=lambda: ZRC2017Dataset.load())
 
     def run(self, submission: "TDE17Submission"):
@@ -70,5 +69,3 @@ class TDE17Benchmark(Benchmark):
 
         self.console.print('[green]:heavy_check_mark:[/green]Evaluation of benchmark completed successfully ')
         self.console.print(f"Scores can be found @ {submission.score_dir}")
-
-

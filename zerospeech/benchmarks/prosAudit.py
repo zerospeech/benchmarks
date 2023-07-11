@@ -1,13 +1,12 @@
-from typing import ClassVar, TYPE_CHECKING
+from typing import ClassVar, Type
 
 from pydantic import Field
 
 from zerospeech.datasets import ProsAuditLMDataset
+from zerospeech.submissions import Submission
+from zerospeech.submissions.prosAudit import ProsodySubmission
 from zerospeech.tasks.lm import ProsodicTask
 from ._model import Benchmark
-
-if TYPE_CHECKING:
-    from zerospeech.submissions.prosAudit import ProsodySubmission
 
 
 class SLMProsodyBenchmark(Benchmark):
@@ -17,6 +16,7 @@ class SLMProsodyBenchmark(Benchmark):
     """
     _name: ClassVar[str] = "prosAudit"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_4/tasks_goals/#prosody"
+    __submission_cls__: Type[Submission] = ProsodySubmission
     dataset: ProsAuditLMDataset = Field(default_factory=lambda: ProsAuditLMDataset.load())
 
     def run(self, submission: "ProsodySubmission"):
