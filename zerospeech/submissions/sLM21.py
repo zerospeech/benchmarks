@@ -10,11 +10,10 @@ import pandas as pd
 from pydantic import Extra, Field
 
 import zerospeech.validators as validators
-from generics import FileTypes
 from zerospeech.data_loaders import load_dataframe
 from zerospeech.datasets import SLM21Dataset
 from zerospeech.generics import (
-    FileItem, Namespace, Item, FileListItem
+    FileItem, Namespace, Item, FileListItem, FileTypes
 )
 from zerospeech.leaderboards import EntryDetails, LeaderboardBenchmarkName
 from zerospeech.leaderboards.sLM21 import (

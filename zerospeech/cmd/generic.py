@@ -10,8 +10,8 @@ import distro
 from rich.table import Table
 
 from .cli_lib import CMD
-from ..settings import get_settings
-from ..out import error_console, console as std_console
+from zerospeech.settings import get_settings
+from zerospeech.out import error_console, console as std_console
 
 st = get_settings()
 

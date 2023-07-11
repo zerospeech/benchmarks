@@ -1,13 +1,13 @@
-from typing import ClassVar, TYPE_CHECKING
+from pathlib import Path
+from typing import ClassVar, TYPE_CHECKING, Type
 
 from pydantic import Field
 
 from zerospeech.datasets import SLM21Dataset
 from zerospeech.tasks.lm import LexicalTask, SyntacticTask, SemanticTask
+from zerospeech.submissions import Submission
+from zerospeech.submissions.sLM21 import SLM21Submission
 from ._model import Benchmark
-
-if TYPE_CHECKING:
-    from zerospeech.submissions.sLM21 import SLM21Submission
 
 
 class SLM21Benchmark(Benchmark):
@@ -23,6 +23,7 @@ class SLM21Benchmark(Benchmark):
     """
     _name: ClassVar[str] = "sLM21"
     _doc_url: ClassVar[str] = "https://zerospeech.com/tasks/task_4/tasks_goals/"
+    __submission_cls__: Type[Submission] = SLM21Submission
     dataset: SLM21Dataset = Field(default_factory=lambda: SLM21Dataset.load())
 
     def run(self, submission: "SLM21Submission"):

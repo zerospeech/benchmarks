@@ -59,7 +59,7 @@ class TDEScoreTuple(BaseModel):
 
 class EntryDetails(BaseModel):
     train_set: Optional[str]
-    benchmarks: List[Benchmark]
+    benchmarks: List[LeaderboardBenchmarkName]
     gpu_budget: Optional[str]
     parameters: Dict = Field(default_factory=dict)
 

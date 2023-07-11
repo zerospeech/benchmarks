@@ -39,7 +39,7 @@ class ABX17Submission(Submission):
         file_ext = FileTypes(file_ext)
         items = dict()
 
-        if 'english' is tasks:
+        if 'english' in tasks:
             if '1s' in sets:
                 items['english_1s'] = FileListItem.from_dir(
                     path / 'english/1s', f_type=file_ext

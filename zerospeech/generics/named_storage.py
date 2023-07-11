@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Dict, Generic, Any, TypeVar
+from typing import Optional, Dict, Generic, Any, TypeVar, Tuple
 
 from pydantic import BaseModel, validator, Field
 from pydantic.generics import GenericModel
@@ -10,9 +10,14 @@ from .data_items import (
 
 T = TypeVar("T")
 
+
 class Namespace(GenericModel, Generic[T]):
     """ Simple object for storing attributes. """
     store: Dict[str, T] = Field(default_factory=dict)
+
+    @property
+    def names(self) -> Tuple[str, ...]:
+        return tuple(self.store.keys())
 
     @property
     def as_dict(self) -> Dict[str, T]:
@@ -36,6 +41,10 @@ class Namespace(GenericModel, Generic[T]):
 class Subset(BaseModel):
     """ A subset of a dataset containing various items."""
     items: Namespace[Item]
+
+    @property
+    def names(self) -> Tuple[str, ...]:
+        return self.items.names
 
     @validator("items", pre=True)
     def items_parse(cls, values):
@@ -62,4 +71,3 @@ class Subset(BaseModel):
         """ Convert all items to absolute paths """
         for _, item in self.items:
             item.absolute_to(root_dir)
-

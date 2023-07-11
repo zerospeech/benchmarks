@@ -33,11 +33,14 @@ class SubmissionInit(CMD):
 
     def run(self, argv: argparse.Namespace):
         try:
-            bench = BenchmarkList(argv.name)
+            benchmark_type = BenchmarkList(argv.name)
         except ValueError:
             error_console.log(f"Specified benchmark ({argv.name}) does not exist !!!!")
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
+
+        # Load benchmark
+        benchmark = benchmark_type.benchmark(quiet=argv.quiet)
 
         location = Path(argv.location)
         if location.is_dir():
@@ -45,7 +48,7 @@ class SubmissionInit(CMD):
             sys.exit(2)
 
         with std_console.status("Initialising submission dir"):
-            bench.submission.init_dir(location)
+            benchmark.init_submission_dir(location)
 
         std_console.print(f"Submission directory created @ {location}", style="green bold")
 
@@ -71,7 +74,7 @@ class BenchmarkParamsCMD(CMD):
             if benchmark_name is None:
                 raise TypeError("benchmark not found")
 
-            bench = BenchmarkList(benchmark_name)
+            benchmark_type = BenchmarkList(benchmark_name)
         except TypeError:
             error_console.log(f"Specified submission does not have a valid {MetaFile.file_stem}"
                               f"\nCannot find benchmark type")
@@ -81,11 +84,14 @@ class BenchmarkParamsCMD(CMD):
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
 
+        # Load benchmark
+        benchmark = benchmark_type.benchmark(quiet=argv.quiet)
+
         if argv.reset:
             # remove old params file if exists
             (location / BenchmarkParameters.file_stem).unlink(missing_ok=True)
 
-        submission = bench.submission.load(path=location)
+        submission = benchmark.load_submission(location)
         if argv.reset:
             self.console.log(f"Params file created/reset at @ {submission.params_file}")
 
@@ -112,7 +118,7 @@ class SubmissionVerify(CMD):
             if benchmark_name is None:
                 raise TypeError("benchmark not found")
 
-            bench = BenchmarkList(benchmark_name)
+            benchmark_type = BenchmarkList(benchmark_name)
         except TypeError:
             error_console.log(f"Specified submission does not have a valid {MetaFile.file_stem}"
                               f"\nCannot find benchmark type")
@@ -122,7 +128,9 @@ class SubmissionVerify(CMD):
             warning_console.log(f"Use one of the following : {','.join(b for b in BenchmarkList)}")
             sys.exit(1)
 
-        submission = bench.submission.load(location)
+        # Load benchmark
+        benchmark = benchmark_type.benchmark(quiet=argv.quiet)
+        submission = benchmark.load_submission(location)
         with std_console.status(f"Validating submission @ {location}"):
             _ = submission.valid
 
