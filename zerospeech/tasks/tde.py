@@ -4,7 +4,8 @@ import os
 import signal
 import sys
 import warnings
-from typing import Tuple, Set, TYPE_CHECKING
+from pathlib import Path
+from typing import Tuple, Set, TYPE_CHECKING, List, Optional
 
 import joblib
 

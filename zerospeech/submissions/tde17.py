@@ -1,14 +1,22 @@
 import json
+import os
 import shutil
+import sys
 from pathlib import Path
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple, Dict, Any, Optional, Type, List
 
 import yaml
+from pydantic import Field
 
 from zerospeech.generics import FileItem, Item, Namespace
 from zerospeech.misc import load_obj
-from ._model import MetaFile, Submission
-from zerospeech.tasks import BenchmarkParameters
+from zerospeech.tasks import BenchmarkParameters, tde
+from zerospeech.datasets.zrc_2017 import ZRC2017Dataset
+from zerospeech.validators import BASE_VALIDATOR_FN_TYPE
+from ._model import (
+    MetaFile, Submission, validation_fn, SubmissionValidation,
+    ValidationResponse, ValidationError, ValidationOK
+)
 
 
 class TDE17BenchmarkParams(BenchmarkParameters):
@@ -31,12 +39,67 @@ class TDE17BenchmarkParams(BenchmarkParameters):
 
         # conversion order  self -> json -> pydict -> yaml
         # json is added in before pydict to leverage the pydantic serializer for
-        # more complex types as Enum, datetimes, etc. as a simpler chain of
+        # more complex types as Enum, datetime, etc. as a simpler chain of
         # self -> pydict -> yaml leaves those unserialised and the yaml serializer fails.
         # see https://pydantic-docs.helpmanual.io/usage/types/#standard-library-types
         as_obj = json.loads(self.json(exclude=excluded))
         with file.open('w') as fp:
             yaml.dump(as_obj, fp)
+
+
+def tde_class_file_check(
+        file_location: Path, additional_checks: Optional[List[BASE_VALIDATOR_FN_TYPE]] = None
+) -> List[ValidationResponse]:
+    """ Check a TDE class file """
+    if not file_location.is_file():
+        return [ValidationError(
+            'Given TDE Disc file does not exist !!!', data=file_location.name, location=file_location.parent
+        )]
+
+    # Disc class prints a bunch of nonsense, so we force it to be quiet
+    sys.stdout = open(os.devnull, 'w')
+    try:
+        disc = tde.Disc(str(file_location))
+    except Exception as e:  # noqa: broad exception on purpose
+        return [ValidationError(f'{e}', data=file_location)]
+    finally:
+        sys.stdout = sys.__stdout__
+
+    results = [ValidationOK('File is a Disc TDE file !', data=file_location)]
+
+    if additional_checks:
+        for fn in additional_checks:
+            results.extend(fn(disc))
+
+    return results
+
+
+class TDE17SubmissionValidation(SubmissionValidation):
+    dataset: ZRC2017Dataset = Field(default_factory=lambda: ZRC2017Dataset.load())
+
+    @property
+    def params_class(self) -> Type[TDE17BenchmarkParams]:
+        return TDE17BenchmarkParams
+
+    @validation_fn(target='english')
+    def validating_english(self, class_file: FileItem):
+        return tde_class_file_check(class_file.file)
+
+    @validation_fn(target='french')
+    def validating_english(self, class_file: FileItem):
+        return tde_class_file_check(class_file.file)
+
+    @validation_fn(target='mandarin')
+    def validating_english(self, class_file: FileItem):
+        return tde_class_file_check(class_file.file)
+
+    @validation_fn(target='german')
+    def validating_english(self, class_file: FileItem):
+        return tde_class_file_check(class_file.file)
+
+    @validation_fn(target='wolof')
+    def validating_english(self, class_file: FileItem):
+        return tde_class_file_check(class_file.file)
 
 
 class TDE17Submission(Submission):
@@ -97,8 +160,7 @@ class TDE17Submission(Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        # TODO: make a validator
-        pass
+        self.validation_output = TDE17SubmissionValidation().validate(self)
 
     @classmethod
     def init_dir(cls, location: Path):
