@@ -2,6 +2,10 @@ import contextlib
 import io
 import json
 import sys
+import sys
+import threading
+import _thread as thread
+from time import sleep
 from pathlib import Path
 from typing import Dict, List, Union, Optional, Protocol
 from zipfile import ZipFile
@@ -24,6 +28,45 @@ from .out import with_progress, void_console, console
 from .settings import get_settings
 
 st = get_settings()
+
+
+def exit_after(s):
+    """ Decorator that kills function after s number of seconds
+    Usage:
+
+        @exit_after(10)
+        def f():
+            # complex computation
+
+
+        try:
+            f()
+        except KeyboardInterrupt:
+            print('Function f could not finish in 10 seconds and was interrupted')
+
+    """
+
+    def process_quit():
+        """ Raise a Keyboard interrupt"""
+        thread.interrupt_main()  # raises KeyboardInterrupt
+
+    def outer(fn):
+        def inner(*args, **kwargs):
+            """
+            Uses a timer from threading module to raise a KeyboardInterrupt after s seconds.
+            """
+            timer = threading.Timer(s, process_quit)
+            timer.start()
+            try:
+                result = fn(*args, **kwargs)
+            finally:
+                """ Cancel timer if function finished processing """
+                timer.cancel()
+            return result
+
+        return inner
+
+    return outer
 
 
 class ContextualItem(Protocol):
