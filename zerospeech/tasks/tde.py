@@ -21,6 +21,7 @@ except ImportError:
     TokenType, Disc, Gold = ..., ..., ...
     warnings.warn('tde module was not installed')
 
+from zerospeech.misc import exit_after
 from zerospeech.generics import FileItem
 from zerospeech.tasks import Task
 
@@ -94,26 +95,24 @@ class TDETask(Task, abc.ABC):
 
         # Grouping
         if 'grouping' in self.metrics:
-            def handler(signum, frame):  # noqa: needs to follow signature
-                self.console.print(f'==> Grouping of {lang} takes too long, skipping..', style='red bold')
-                raise TimeoutError('timeout')
 
-            # todo: investigate why a timeout is needed ?
-            # todo investigate if a better way exists to add a timeout
-            signal.signal(signal.SIGALRM, handler)
-            signal.alarm(self.grouping_max_time)
-
-            try:
+            @exit_after(self.grouping_max_time)
+            def compute_grouping():
+                """ Compute grouping within allocated time """
                 with self.console.status(f"Computing {lang} Grouping"):
                     grouping = Grouping(discovered)
                     grouping.compute_grouping()
-                    scores['grouping'].update(dict(
+                    return dict(
                         precision=grouping.precision,
                         recall=grouping.recall,
                         fscore=grouping.fscore
-                    ))
+                    )
+
+            try:
+                grouping_score = compute_grouping()
+                scores['grouping'].update(grouping_score)
                 self.console.print(f"Grouping computed for {lang} :heavy_check_mark:", style="bold green")
-            except TimeoutError:
+            except KeyboardInterrupt:
                 scores['grouping'].update(dict(
                     precision=None,
                     recall=None,
