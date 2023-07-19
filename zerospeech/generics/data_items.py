@@ -17,7 +17,7 @@ class FileTypes(str, Enum):
     yaml = "yaml"
     phn = "phn"  # phone alignment file
     wrd = "wrd"  # words alignment file
-    vad = "vad.csv" # vad segmentation file in csv format
+    vad = "vad.csv"  # vad segmentation file in csv format
 
     @property
     def ext(self) -> str:

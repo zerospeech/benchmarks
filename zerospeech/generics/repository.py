@@ -62,7 +62,7 @@ class RepositoryItem(BaseModel):
         if current_type == 'internal':
             assert values.get('zip_url') is not None \
                    or values.get('zip_parts') is not None, \
-                   "Internal Items must have either a zip_url or a zip_parts value."
+                "Internal Items must have either a zip_url or a zip_parts value."
         elif values.get('type') == 'external':
             assert values.get('install_config') is not None, "External items must have an install_config field"
         return values
@@ -146,8 +146,8 @@ class ImportableItem(OriginItem, abc.ABC):
     """Abstract class to define item that can be imported from a local resource """
 
     @abc.abstractmethod
-    def import_(self, location: Path, *, verify: bool = True, quiet: bool = False, show_progress: bool = False):
-        """Import items from source material located locally """
+    def import_zip(self, *, archive: Path):
+        """ Import dataset from an archive """
         pass
 
 
@@ -172,7 +172,15 @@ class RepoItemDir(BaseModel, abc.ABC):
         item_list: List[RepositoryItem] = getattr(index, self.item_type.key_name, [])
         return [d.name for d in item_list]
 
-    def find_in_repository(self, name: str) -> Optional[RepositoryItem]:
+    def find_by_hash(self, hash_code: str) -> Optional[RepositoryItem]:
+        index = RepositoryIndex.load()
+        item_list: List[RepositoryItem] = getattr(index, self.item_type.key_name, [])
+        for d in item_list:
+            if d.md5sum == hash_code:
+                return d
+        return None
+
+    def find_by_name(self, name: str) -> Optional[RepositoryItem]:
         """Find all relevant items with the same type in repository """
         index = RepositoryIndex.load()
         item_list: List[RepositoryItem] = getattr(index, self.item_type.key_name, [])
@@ -183,7 +191,7 @@ class RepoItemDir(BaseModel, abc.ABC):
 
     def get(self, name, cls: Union[Type[DownloadableItem], Type[ImportableItem]] = None):
         loc = self.root_dir / name
-        repo = self.find_in_repository(name)
+        repo = self.find_by_name(name)
         if repo is None:
             return None
 

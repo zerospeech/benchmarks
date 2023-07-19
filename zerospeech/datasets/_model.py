@@ -1,14 +1,13 @@
 import json
 from pathlib import Path
-from typing import Optional, TypeVar, ClassVar, Type, Union, Tuple
+from typing import Optional, TypeVar, ClassVar, Type, Union
 
 from pydantic import BaseModel, validator
 
 from zerospeech.generics import (
-    RepoItemDir, ImportableItem, DownloadableItem, InstallConfig,
-    Namespace, Subset
+    RepoItemDir, ImportableItem, DownloadableItem, Namespace, Subset
 )
-from zerospeech.misc import download_extract_zip, load_obj, download_file
+from zerospeech.misc import download_extract_zip, md5sum, unzip
 from zerospeech.out import console
 from zerospeech.settings import get_settings
 
@@ -89,44 +88,10 @@ class Dataset(DownloadableItem, ImportableItem):
         if not quiet:
             console.print(f"[green]Dataset {self.name} installed successfully !!")
 
-    def import_(self, *, location: Path, verify: bool = True, quiet: bool = False, show_progress: bool = False):
-        """ Import dataset from a directory """
-        # todo: add informational prints
-        if self.origin.type == "Internal":
-            raise ValueError("internal datasets cannot be imported")
-
-        # 1) verify location is valid
-        if not location.is_dir():
-            raise ValueError(f'Cannot import from {location} as its not a valid location')
-
-        # 2) create target dir
-        self.location.mkdir(exist_ok=True, parents=True)
-
-        # 3) download & load configuration file
-        download_file(url=self.origin.install_config, dest=(self.location / "install_config.json"))
-        install_config = InstallConfig.parse_obj(load_obj(self.location / "install_config.json"))
-        # 4) Perform installation actions
-        for _, rule in sorted(install_config.rules.items()):
-            if rule.action == 'download':
-                target = self.location / rule.target
-                target.parent.mkdir(exist_ok=True, parents=True)
-                download_file(url=rule.source, dest=target)
-            elif rule.action == 'symlink':
-                for src, tgt in rule.source_target:
-                    file = self.location / src
-                    file.parent.mkdir(exist_ok=True)
-                    file.symlink_to(location / tgt)
-            elif rule.action == 'download_extract':
-                download_extract_zip(
-                    zip_url=rule.source, target_location=(self.location / rule.target),
-                    size_in_bytes=int(rule.source_size), quiet=quiet, show_progress=show_progress
-                )
-            else:
-                raise ValueError(f'Unknown action {rule.action}')
-
-        # 5) export index from config file
-        with self.index_path.open('w') as fp:
-            json.dump(install_config.index_obj, fp)
+    def import_zip(self, *, archive: Path):
+        """ Import dataset from an archive """
+        # extract archive
+        unzip(archive, self.location)
 
 
 class DatasetsDir(RepoItemDir):

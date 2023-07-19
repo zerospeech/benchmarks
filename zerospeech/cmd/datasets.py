@@ -1,12 +1,14 @@
 import argparse
+import sys
 from pathlib import Path
 
 from rich.padding import Padding
 from rich.table import Table
 
 from zerospeech.datasets import DatasetsDir, Dataset
+from zerospeech.misc import md5sum, unzip
 from zerospeech.networkio import check_update_repo_index, update_repo_index
-from zerospeech.out import console, error_console
+from zerospeech.out import console, error_console, warning_console, void_console
 from zerospeech.settings import get_settings
 from .cli_lib import CMD
 
@@ -71,23 +73,47 @@ class PullDatasetCMD(CMD):
 
 
 class ImportDatasetCMD(CMD):
-    """ Import a dataset """
+    """ Import a dataset from a zip file """
     COMMAND = "import"
     NAMESPACE = "datasets"
 
     def init_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument('name')
-        parser.add_argument('source')
-        parser.add_argument('-q', '--quiet', action='store_true', help='Suppress download info output')
+        parser.add_argument('zip_file')
+        parser.add_argument('-u', '--skip-verification', action='store_true',
+                            help='Do not check hash in repo index.')
+        parser.add_argument('-q', '--quiet', action='store_true',
+                            help='Suppress download info output')
 
     def run(self, argv: argparse.Namespace):
-        error_console.print("This functionality has not been tested !!!!!")
-
         datasets_dir = DatasetsDir.load()
-        dataset = datasets_dir.get(argv.name, cls=Dataset)
+        archive = Path(argv.zip_file)
+        std_out = console
+        if argv.quiet:
+            std_out = void_console
 
-        # import the dataset from source
-        dataset.import_(location=Path(argv.source), quiet=argv.quiet, show_progress=True)
+        if not archive.is_file() and archive.suffix != '.zip':
+            error_console.print(f'Given archive ({archive}) does not exist or is not a valid zip archive !!!')
+            sys.exit(1)
+
+        if not argv.skip_verification:
+            with std_out.status(f'Hashing {archive.name}'):
+                md5hash = md5sum(archive)
+            item = datasets_dir.find_by_hash(md5hash)
+
+            if item is None:
+                error_console.print(f'Archive {archive.name} does not correspond to a registered dataset')
+                sys.exit(1)
+            name = item.name
+            std_out.print(f"[green]Dataset {name} detected")
+        else:
+            name = archive.stem
+            warning_console.print(f"Importing {name} without checking, could be naming/file mismatch")
+
+        # unzip dataset
+        with std_out.status(f"Unzipping {name}..."):
+            unzip(archive, datasets_dir.root_dir / name)
+
+        std_out.print(f"[green]Dataset {name} installed successfully !!")
 
 
 class RemoveDatasetCMD(CMD):

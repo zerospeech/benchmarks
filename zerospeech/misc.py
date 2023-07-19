@@ -1,11 +1,9 @@
+import _thread as thread
 import contextlib
 import io
 import json
 import sys
-import sys
 import threading
-import _thread as thread
-from time import sleep
 from pathlib import Path
 from typing import Dict, List, Union, Optional, Protocol
 from zipfile import ZipFile
@@ -112,38 +110,6 @@ class SizeUnit(BaseModel):
     @property
     def as_bytes(self):
         return self.__root__
-
-
-# todo: see if i can remove this from the codebase ?
-# todo can we remove humanize from requirements ? or is it still used ?
-# class SizeUnit(enum.Enum):
-#     BYTES = 1
-#     KB = 2
-#     MB = 3
-#     GB = 4
-#
-#     @staticmethod
-#     def get_unit(text):
-#         """ Check contents of text to find units of measurement"""
-#
-#         if any(x in text for x in ("KB", "Ko", "K")):
-#             return SizeUnit.KB
-#         elif any(x in text for x in ("MB", "Mo", "M")):
-#             return SizeUnit.MB
-#         elif any(x in text for x in ("GB", "Go", "G")):
-#             return SizeUnit.GB
-#         else:
-#             return SizeUnit.BYTES
-#
-#     @staticmethod
-#     def convert_to_bytes(size_with_unit: str) -> float:
-#         # todo: replace this ??
-#         #: DataSize(size_with_unit.replace(' ', ''))
-#         return float("123.532")
-#
-#     @staticmethod
-#     def fmt(num: Union[int, float]) -> str:
-#         return humanize.naturalsize(num).replace(' ', '')
 
 
 def load_obj(location: Path) -> Union[Dict, List]:
