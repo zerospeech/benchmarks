@@ -51,10 +51,12 @@ tts019 = [
     "tts019-evaluator @ https://github.com/zerospeech/tts019-evaluator/archive/master.zip"
 ]
 
-abx = [
-    "zerospeech-libriabx>=1.0.5"
+abx17 = [
+    "zerospeech-libriabx>=1.0.5",
+    "virtual-dataset"
 ]
-abx2 = [
+abxLS = [
+    # ABX2 used for ABXLS
     "zerospeech-libriabx2>=0.9.7",
     "virtual-dataset"
 ]
@@ -65,10 +67,11 @@ tde = [
 all = [
     # TDE
     "zerospeech-tde>=2.0.3",
-    # ABX2
+    # ABX2 used for ABXLS
     "zerospeech-libriabx2>=0.9.8",
     "virtual-dataset",
-    #
+    # ABXLS Legacy (used for abx17)
+    "zerospeech-libriabx>=1.0.5"
 ]
 
 dev = [
