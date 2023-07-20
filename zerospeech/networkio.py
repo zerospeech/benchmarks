@@ -25,7 +25,7 @@ def update_repo_index():
         sys.exit(1)
 
     with st.repository_index.open('w') as fp:
-        json.dump(data, fp)
+        json.dump(data, fp, indent=4)
     console.log("RepositoryIndex has been updated successfully !!")
 
 
@@ -56,6 +56,6 @@ def check_update_repo_index() -> bool:
             last_update_local = datetime.fromisoformat(json.load(fp).get('last_modified'))
     except ValueError:
         warnings.warn("Local index missing or corrupted !!!")
-        return False
+        return True
 
     return last_update_online > last_update_local

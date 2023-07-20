@@ -6,7 +6,7 @@ from rich.padding import Padding
 from rich.table import Table
 
 from zerospeech.datasets import DatasetsDir, Dataset
-from zerospeech.misc import md5sum, unzip
+from zerospeech.misc import md5sum, extract
 from zerospeech.networkio import check_update_repo_index, update_repo_index
 from zerospeech.out import console, error_console, warning_console, void_console
 from zerospeech.settings import get_settings
@@ -111,7 +111,7 @@ class ImportDatasetCMD(CMD):
 
         # unzip dataset
         with std_out.status(f"Unzipping {name}..."):
-            unzip(archive, datasets_dir.root_dir / name)
+            extract(archive, datasets_dir.root_dir / name)
 
         std_out.print(f"[green]Dataset {name} installed successfully !!")
 

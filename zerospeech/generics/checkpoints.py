@@ -1,9 +1,9 @@
 from typing import ClassVar, Type
 
-from ..misc import download_extract_zip
-from ..out import console
+from zerospeech.misc import download_extract_archive
+from zerospeech.out import console
+from zerospeech.settings import get_settings
 from .repository import DownloadableItem, RepoItemDir, RepositoryItemType
-from ..settings import get_settings
 
 st = get_settings()
 
@@ -17,8 +17,8 @@ class CheckPointItem(DownloadableItem):
             md5_hash = self.origin.md5sum
 
         # download & extract archive
-        download_extract_zip(self.origin.zip_url, self.location, int(self.origin.total_size),
-                             filename=self.name, md5sum_hash=md5_hash, quiet=quiet, show_progress=show_progress)
+        download_extract_archive(self.origin.zip_url, self.location, int(self.origin.total_size),
+                                 filename=self.name, md5sum_hash=md5_hash, quiet=quiet, show_progress=show_progress)
         if not quiet:
             console.print(f"[green]Checkpoint set {self.name} installed successfully !!")
 

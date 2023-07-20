@@ -2,8 +2,11 @@ import _thread as thread
 import contextlib
 import io
 import json
+import re
 import sys
+import tarfile
 import threading
+import urllib.parse
 from pathlib import Path
 from typing import Dict, List, Union, Optional, Protocol
 from zipfile import ZipFile
@@ -150,6 +153,25 @@ def unzip(archive: Path, output: Path):
         zipObj.extractall(output)
 
 
+def untar(archive: Path, output: Path):
+    """ Extract a tar archive (supports gzipped format) into the output directory"""
+    # create folder if it does not exist
+    output.mkdir(exist_ok=True, parents=True)
+    # Open & extract
+    with tarfile.open(archive, 'r') as tar:
+        tar.extractall(path=output)
+
+
+def extract(archive: Path, output: Path):
+    """ Extract an archive into the output directory """
+    if archive.suffix in ('.zip',):
+        unzip(archive, output)
+    elif archive.suffix in ('.tar', '.gz', '.tgz', '.bz2', '.tbz2', '.xz', '.txz'):
+        untar(archive, output)
+    else:
+        raise ValueError(f'{archive.suffix}: Unsupported archive format')
+
+
 def zip_folder(archive_file: Path, location: Path):
     """ Create a zip archive from a folder """
     with ZipFile(archive_file, 'w') as zip_obj:
@@ -157,13 +179,21 @@ def zip_folder(archive_file: Path, location: Path):
             zip_obj.write(file, str(file.relative_to(location)))
 
 
-def download_extract_zip(
-        zip_url: str, target_location: Path, size_in_bytes: int, *, filename: str = "",
+def get_request_filename(response: requests.Response) -> str:
+    """ Get filename from response """
+    if "Content-Disposition" in response.headers.keys():
+        return re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
+    else:
+        return Path(urllib.parse.unquote(response.url)).name
+
+
+def download_extract_archive(
+        archive_url: str, target_location: Path, size_in_bytes: int, *, filename: str = "",
         md5sum_hash: str = "", quiet: bool = False, show_progress: bool = True,
 ):
     tmp_dir = st.mkdtemp()
-    response = requests.get(zip_url, stream=True)
-    tmp_filename = tmp_dir / "download.zip"
+    response = requests.get(archive_url, stream=True)
+    tmp_filename = tmp_dir / get_request_filename(response)
 
     if quiet:
         _console = void_console
@@ -193,8 +223,8 @@ def download_extract_zip(
             _console.print("[green]MD5sum Failed, Check with repository administrator.\nExiting...")
             sys.exit(1)
 
-    with _console.status("[red]Unzipping archive..."):
-        unzip(tmp_filename, target_location)
+    with _console.status("[red]Extracting archive..."):
+        extract(tmp_filename, target_location)
 
 
 def symlink_dir_contents(source: Path, dest: Path):
