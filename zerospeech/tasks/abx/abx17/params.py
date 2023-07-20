@@ -41,9 +41,9 @@ class ABXParameters(BenchmarkParameters):
     # Use the GPU to compute distances
     cuda: bool = True
     # Choose the mode of the ABX score to compute
-    mode: ABXMode = 'all'
+    mode: ABXMode = ABXMode.all
     # Choose the kind of distance to use to compute
-    distance_mode: ABXDistanceMode = 'cosine'
+    distance_mode: ABXDistanceMode = ABXDistanceMode.cosine
     # Max size of a group while computing the ABX score
     max_size_group: int = 10
     # When computing the ABX across score, maximum

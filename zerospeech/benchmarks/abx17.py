@@ -7,7 +7,7 @@ from zerospeech.datasets import ZRC2017Dataset
 from zerospeech.generics import FileListItem, FileItem
 from zerospeech.submissions import Submission
 from zerospeech.submissions.abx17 import ABX17Submission
-from zerospeech.tasks.abx.abx_librispeech import SimpleABXTask
+from zerospeech.tasks.abx.abx17 import SimpleABXTask
 from ._model import Benchmark
 
 return_type = List[Tuple[str, FileListItem, FileItem]]

@@ -10,7 +10,7 @@ from zerospeech.generics import (
 )
 from zerospeech.submissions.abxLS import AbxLSSubmission
 from zerospeech.submissions import Submission
-from zerospeech.tasks.abx.abx_phoneme import SimpleABXPhonemeTask, ContextMode
+from zerospeech.tasks.abx.abxLS_phoneme import SimpleABXPhonemeTask, ContextMode
 from ._model import Benchmark
 
 return_type = Tuple[str, FileItem, FileListItem, ContextMode]
