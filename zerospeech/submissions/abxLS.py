@@ -19,7 +19,7 @@ from zerospeech.leaderboards.abxLS import (
 )
 from zerospeech.misc import load_obj
 from zerospeech.settings import get_settings
-from zerospeech.tasks.abx import abx_phoneme
+from zerospeech.tasks.abx import abxLS_phoneme
 from ._model import ScoreDir, MetaFile, SubmissionValidation, validation_fn, add_item, Submission
 
 st = get_settings()
@@ -155,7 +155,7 @@ class AbxLSSubmissionValidator(SubmissionValidation):
 
 
 class ABXLSScoreDir(ScoreDir):
-    params: Optional[abx_phoneme.ABX2Parameters] = abx_phoneme.ABX2Parameters()
+    params: Optional[abxLS_phoneme.ABX2Parameters] = abxLS_phoneme.ABX2Parameters()
 
     @property
     def scores_phonetic(self):
@@ -262,7 +262,7 @@ class AbxLSSubmission(Submission):
 
         # if params not set export defaults
         if not submission.params_file.is_file():
-            abx_phoneme.ABX2Parameters().export(submission.params_file)
+            abxLS_phoneme.ABX2Parameters().export(submission.params_file)
 
         # Load items
         file_ext = submission.params.score_file_type.replace('.', '')
@@ -291,11 +291,11 @@ class AbxLSSubmission(Submission):
         submission.items = Namespace[Item](store=items)
         return submission
 
-    def load_parameters(self) -> abx_phoneme.ABX2Parameters:
+    def load_parameters(self) -> abxLS_phoneme.ABX2Parameters:
         if self.params_file.is_file():
             obj = load_obj(self.params_file)
-            return abx_phoneme.ABX2Parameters.parse_obj(obj)
-        return abx_phoneme.ABX2Parameters()
+            return abxLS_phoneme.ABX2Parameters.parse_obj(obj)
+        return abxLS_phoneme.ABX2Parameters()
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
@@ -313,7 +313,7 @@ class AbxLSSubmission(Submission):
         # scores dir
         (location / 'scores').mkdir(exist_ok=True, parents=True)
         # create parameters file
-        abx_phoneme.ABX2Parameters().export(location / abx_phoneme.ABX2Parameters.file_stem)
+        abxLS_phoneme.ABX2Parameters().export(location / abxLS_phoneme.ABX2Parameters.file_stem)
         # create meta-template
         template = MetaFile.to_template(benchmark_name="abxLS")
         template.to_yaml(

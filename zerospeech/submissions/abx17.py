@@ -6,7 +6,7 @@ from zerospeech.misc import load_obj
 from zerospeech.generics import (
     FileTypes, FileListItem, Namespace, Item
 )
-from zerospeech.tasks.abx.abx_librispeech import ABXParameters
+from zerospeech.tasks.abx.abx17 import ABXParameters
 from ._model import MetaFile, Submission
 
 
