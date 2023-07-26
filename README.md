@@ -27,10 +27,10 @@ Once python is installed you can install the package using :
 pip install "zerospeech-benchmarks[all]"
 ```
 
-If you are a conda user you can install from conda  :
+If you are a conda user you can use our prepackaged environment  :
 
 ```
-conda install -c coml zerospeech-benchmarks
+conda env create coml/zrc-toolkit
 ```
 
 
