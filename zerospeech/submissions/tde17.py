@@ -2,17 +2,21 @@ import json
 import os
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, Any, Optional, Type, List
 
 import yaml
 from pydantic import Field
 
+from zerospeech.datasets.zrc_2017 import ZRC2017Dataset
 from zerospeech.generics import FileItem, Item, Namespace
+from zerospeech.leaderboards import EntryDetails, LeaderboardBenchmarkName, LeaderboardEntry
+from zerospeech.leaderboards.tde17 import TDE17Scores, TDE17Entry
 from zerospeech.misc import load_obj
 from zerospeech.tasks import BenchmarkParameters, tde
-from zerospeech.datasets.zrc_2017 import ZRC2017Dataset
 from zerospeech.validators import BASE_VALIDATOR_FN_TYPE
+from . import ScoreDir
 from ._model import (
     MetaFile, Submission, validation_fn, SubmissionValidation,
     ValidationResponse, ValidationError, ValidationOK
@@ -22,6 +26,7 @@ from ._model import (
 class TDE17BenchmarkParams(BenchmarkParameters):
     """ Parameters for the TDE-17 benchmark """
     # location to output the results
+    njobs: int = 1  # CPU cores to use for eval
     out: Optional[str] = None
     result_filename: str = "scores.json"
 
@@ -100,6 +105,77 @@ class TDE17SubmissionValidation(SubmissionValidation):
     @validation_fn(target='wolof')
     def validating_english(self, class_file: FileItem):
         return tde_class_file_check(class_file.file)
+
+
+class TDE17ScoreDir(ScoreDir):
+    params: Optional[TDE17BenchmarkParams] = TDE17BenchmarkParams()
+
+    @property
+    def scores(self):
+        pass
+
+    def get_details(self) -> EntryDetails:
+        """ Build entry details """
+        train_set = ""
+        gpu_budget = ""
+
+        if self.meta_file is not None:
+            train_set = self.meta_file.model_info.train_set
+            gpu_budget = self.meta_file.model_info.gpu_budget
+
+        return EntryDetails(
+            train_set=train_set,
+            benchmarks=[LeaderboardBenchmarkName.TDE_17],
+            gpu_budget=gpu_budget,
+            parameters=self.params.to_meta()
+        )
+
+    def build_scores(self) -> TDE17Scores:
+        df = self.scores
+        # todo: compile scores into format
+        return ...
+
+    def build_meta_data(self):
+        """ Build leaderboard metadata """
+        return dict(
+            model_id=self.meta_file.model_info.model_id,
+            submission_id="",
+            index=None,
+            submission_date=datetime.now(),
+            submitted_by=self.meta_file.username,
+            description=self.meta_file.model_info.system_description,
+            publication=dict(
+                author_short=self.meta_file.publication.author_label,
+                authors=self.meta_file.publication.authors,
+                paper_title=self.meta_file.publication.paper_title,
+                paper_ref=self.meta_file.publication.paper_url,
+                bib_ref=self.meta_file.publication.bib_reference,
+                paper_url=self.meta_file.publication.paper_url,
+                pub_year=self.meta_file.publication.publication_year,
+                team_name=self.meta_file.publication.team,
+                institution=self.meta_file.publication.institution,
+                code=self.meta_file.code_url,
+                DOI=self.meta_file.publication.DOI,
+                open_science=self.meta_file.open_source,
+            ),
+            details=dict(
+                train_set=self.meta_file.model_info.train_set,
+                benchmarks=[],
+                gpu_budget=self.meta_file.model_info.gpu_budget,
+                parameters=self.params.to_meta(),
+            )
+        )
+
+    def build_leaderboard(self) -> LeaderboardEntry:
+        """ Build leaderboard entry for the current submission """
+        self.load_meta()
+
+        return TDE17Entry.parse_obj(
+            dict(
+                **self.build_meta_data(),
+                scores=self.build_scores()
+            )
+        )
 
 
 class TDE17Submission(Submission):

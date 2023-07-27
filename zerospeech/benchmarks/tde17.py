@@ -3,7 +3,6 @@ from typing import Tuple, ClassVar, Type
 from pydantic import Field
 
 from zerospeech.datasets import ZRC2017Dataset
-from zerospeech.generics import FileItem
 from zerospeech.submissions import Submission
 from zerospeech.submissions.tde17 import TDE17Submission
 from zerospeech.tasks import tde
@@ -13,24 +12,19 @@ from ._model import Benchmark
 class TDE17Task(tde.TDETask):
     tasks: Tuple = ('english', 'french', 'mandarin', 'german', 'wolof')
 
-    def from_submission(self, submission: "TDE17Submission", lang: str) -> FileItem:
-        """ Extract current input class file from submission """
-        current_input_classes_file = submission.items.get(lang)
-        if current_input_classes_file is None:
-            raise ValueError(f'Language {lang} was not found in current submission : {submission.location}')
-
-        return current_input_classes_file
-
-    def load_gold(self, dataset: ZRC2017Dataset, lang: str):
-        """ Load gold object for current language set """
+    def gather_items(self, lang: str, submission: "TDE17Submission", dataset: ZRC2017Dataset):
         current_data = dataset.index.subsets.get(lang)
         if current_data is None:
             raise ValueError(f'Language {lang} was not found in {dataset.name}')
 
-        # load gold files
-        return tde.Gold(
-            wrd_path=str(current_data.items.alignment_words.file),
-            phn_path=str(current_data.items.alignment_phones.file)
+        current_input_classes_file = submission.items.get(lang)
+        if current_input_classes_file is None:
+            raise ValueError(f'Language {lang} was not found in current submission : {submission.location}')
+
+        return tde.TDEItems(
+            wrd_path=current_data.items.alignment_words.file,
+            phn_path=current_data.items.alignment_phones.file,
+            input_classes=current_input_classes_file.file
         )
 
 

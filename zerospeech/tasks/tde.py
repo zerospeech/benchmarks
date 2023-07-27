@@ -1,10 +1,10 @@
 import abc
 import json
 import os
-import signal
 import sys
 import warnings
-from typing import Tuple, Set, TYPE_CHECKING
+from pathlib import Path
+from typing import Tuple, Set, TYPE_CHECKING, NamedTuple
 
 import joblib
 
@@ -30,22 +30,28 @@ if TYPE_CHECKING:
     from zerospeech.submissions import Submission
 
 
+class TDEItems(NamedTuple):
+    wrd_path: Path
+    phn_path: Path
+    input_classes: Path
+
+
 class TDETask(Task, abc.ABC):
     """ TDE Task """
     _name = "tde-task"
     tasks: Tuple
     metrics: Set = {'grouping', 'matching', 'boundary', 'token_type', 'nlp'}
-    n_jobs: int = 1
+    njobs: int = 1
     result_filename: str = "scores.json"
     grouping_max_time: int = 7200
 
     @staticmethod
-    def read_discovered(item: FileItem, gold: Gold):
+    def read_discovered(item: Path, gold: Gold):
         """ Load discovered Intervals """
         # Disc class prints a bunch of nonsense, so we force it to be quiet
         sys.stdout = open(os.devnull, 'w')
         try:
-            return Disc(str(item.file), gold)
+            return Disc(str(item), gold)
         finally:
             sys.stdout = sys.__stdout__
 
@@ -127,38 +133,44 @@ class TDETask(Task, abc.ABC):
 
         return {m: score_or_none(score) for m, score in scores.items()}
 
-    @abc.abstractmethod
-    def from_submission(self, submission: "Submission", lang: str) -> FileItem:
-        """ Extract current input class file from submission """
-        pass
-
-    @abc.abstractmethod
-    def load_gold(self, dataset: "Dataset", lang: str) -> Gold:
+    @staticmethod
+    def load_gold(wrd: Path, phn: Path) -> Gold:
         """ Load gold object for current language set """
-        pass
+        # load gold files
+        return Gold(
+            wrd_path=str(wrd),
+            phn_path=str(phn)
+        )
 
-    def _eval_lang(self, submission: "Submission", dataset: "Dataset", lang: str):
+    def _eval_lang(self, lang: str, items: TDEItems):
         """ Evaluate tde for specific language """
-        current_input_classes_file = self.from_submission(submission, lang)
         self.console.print(f"Loading gold for {lang}...")
-        gold = self.load_gold(dataset, lang)
+        gold = self.load_gold(wrd=items.wrd_path, phn=items.phn_path)
 
         # load discovered intervals
         self.console.print(f"Loading class discovery for {lang}...")
         discovered = self.read_discovered(
-            current_input_classes_file, gold
+            items.input_classes, gold
         )
 
-        # return results
         self.console.print(f"Gathering metrics for {lang} ...")
         return lang, self.gather_metrics(gold, discovered, lang)
 
+    @abc.abstractmethod
+    def gather_items(self, lang: str, submission: "Submission", dataset: "Dataset") -> TDEItems:
+        pass
+
     def eval(self, submission: "Submission", dataset: "Dataset"):
         """ Evaluate the submission """
-
+        print(f"Running with {self.njobs} cores!!")
         # Run evaluation with multiprocess if specified
-        res = joblib.Parallel(n_jobs=self.n_jobs)(
-            joblib.delayed(self._eval_lang)(submission, dataset, lang) for lang in self.tasks
+        eval_items = {
+            lang: self.gather_items(lang=lang, submission=submission, dataset=dataset)
+            for lang in self.tasks
+        }
+
+        res = joblib.Parallel(n_jobs=self.njobs)(
+            joblib.delayed(self._eval_lang)(lang, items) for lang, items in eval_items.items()
         )
         scores = dict(res)
         self.console.print(f":pencil: writing scores {self.result_filename}", style="underline yellow4")
