@@ -637,7 +637,7 @@ class SLM21Submission(Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        self.validation_output = SLM21SubmissionValidator().validate(self)
+        self.validation_output += SLM21SubmissionValidator().validate(self)
 
     def get_scores(self):
         """ """

@@ -1,4 +1,5 @@
 import abc
+import copy
 from typing import Optional, Protocol, Literal, List, Union
 
 from zerospeech.out import error_console, warning_console
@@ -75,12 +76,33 @@ class ValidationContext:
         """ Initially context is empty """
         self._outputs: List[ValidationResponse] = []
 
+    def __len__(self):
+        """ Return the number of Responses in context """
+        return len(self._outputs)
+
     def __invert__(self) -> List[ValidationResponse]:
-        """ Bitwise invert extracts the context """
+        """ Bitwise invert extracts the context
+
+        ex:
+            ctx = ValidationContext()
+            res: List[ValidationResponse] = ~ctx
+        """
         return self._outputs
 
     def __lshift__(self, item: Union[ValidationResponse, List[ValidationResponse]]):
-        """ Extend outputs """
+        """ Extend outputs
+
+        ex:
+            ctx = ValidationContext()
+
+            # appends a list of responses into the context
+            res: List[ValidationResponse] = ... # do validation stuff
+            ctx << res
+
+            # append singular item to the context
+            a_random_resp: ValidationResponse = ... # some other validation
+            ctx << a_random_resp
+        """
         if isinstance(item, list):
             self._outputs.extend(item)
         else:
@@ -89,7 +111,15 @@ class ValidationContext:
             self._outputs.append(item)
 
     def __add__(self, other: "ValidationContext") -> "ValidationContext":
-        """ Addition creates new context """
+        """ Addition creates new context
+
+        ex:
+        ctx1: ValidationContext = ... # a validation process
+        ctx2: ValidationContext = ... # another validation process
+
+        # ctx3 contains ctx1 and ctx2 responses
+        ctx3: ValidationContext = ctx1 + ctx2
+        """
         if not isinstance(other, self.__class__):
             raise ValueError(f'Cannot add item of type {type(other)}')
 
@@ -101,11 +131,11 @@ class ValidationContext:
         return nw_ctx
 
     def __iadd__(self, other: "ValidationContext") -> "ValidationContext":
+        """ Allow += of two contexts """
         if not isinstance(other, self.__class__):
             raise ValueError(f'Cannot add item of type {type(other)}')
 
-        self._outputs.extend(other._outputs)
-        return self
+        return self + other
 
     def assertion(self, expr: bool, as_type: Literal['error', 'warning'], msg: str, **kwargs):
         """ Create an assertion """
@@ -159,18 +189,21 @@ class ValidationContext:
         for i in self._outputs:
             i.item_name = item_name
 
-    def print(self, allow_warnings: bool = True):
+    def print(self, allow_warnings: bool = True, limit: int = -1):
         """ Print Outputs """
         error_list = [r for r in self._outputs if not r.ok()]
+
+        if limit > 0:
+            error_list = error_list[:limit]
 
         if not allow_warnings:
             error_list = [r for r in self._outputs if not r.warning()]
 
         for item in error_list:
             if item.warning() and allow_warnings:
-                warning_console.log(item)
+                warning_console.print(item)
             else:
-                error_console.log(item)
+                error_console.print(item)
 
     def fails(self) -> bool:
         """ Check if Validation Fails """
@@ -181,14 +214,20 @@ class ValidationContext:
         """ Check if Validation has warnings """
         return len([r for r in self._outputs if r.warning()]) > 0
 
-    def get_ok(self):
+    def get_ok(self) -> "ValidationContext":
         """ Filter Ok Messages """
-        return [r for r in self._outputs if r.ok()]
+        vtx = ValidationContext()
+        vtx << [r for r in self._outputs if r.ok()]
+        return vtx
 
-    def get_warnings(self):
+    def get_warnings(self) -> "ValidationContext":
         """ Filter Warning Messages """
-        return [r for r in self._outputs if r.warning()]
+        vtx = ValidationContext()
+        vtx << [r for r in self._outputs if r.warning()]
+        return vtx
 
-    def get_errors(self):
+    def get_errors(self) -> "ValidationContext":
         """Filter Error Messages """
-        return [r for r in self._outputs if r.error()]
+        vtx = ValidationContext()
+        vtx << [r for r in self._outputs if r.error()]
+        return vtx

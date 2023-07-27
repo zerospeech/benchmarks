@@ -1,13 +1,229 @@
+import collections
+import functools
 import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
-from zerospeech.misc import load_obj
+import numpy as np
+import pandas as pd
+from pydantic import Field
+
+from zerospeech import validators
+from zerospeech.data_loaders import load_dataframe
+from zerospeech.datasets import ZRC2017Dataset
 from zerospeech.generics import (
-    FileTypes, FileListItem, Namespace, Item
+    FileTypes, FileListItem, Namespace, Item, FileItem
 )
+from zerospeech.leaderboards import EntryDetails, LeaderboardBenchmarkName, LeaderboardEntry
+from zerospeech.leaderboards.abx17 import ABX17LeaderboardEntry, ABX17LeaderboardScores
+from zerospeech.misc import load_obj
 from zerospeech.tasks.abx.abx17 import ABXParameters
-from ._model import MetaFile, Submission
+from ._model import MetaFile, Submission, SubmissionValidation, validation_fn, add_item, ScoreDir
+
+
+class ABX17SubmissionValidator(SubmissionValidation):
+    """ File Validation for an ABX17 submission"""
+    dataset: ZRC2017Dataset = Field(default_factory=lambda: ZRC2017Dataset.load())
+
+    @staticmethod
+    def basic_abx_checks(item_list: FileListItem, abx_item: FileItem, tag: str):
+        # wav_list are compared to items inside item file
+        df = pd.read_csv(abx_item.file, sep=' ')
+
+        f_list_checks = [
+            # Verify that all necessary files are present
+            functools.partial(
+                validators.file_list_stem_check,
+                expected=[str(f) for f in df['#file']]
+            )
+        ]
+        additional_checks = [
+            # Verify that type of array is float
+            functools.partial(
+                validators.numpy_dtype_check,
+                dtype=np.dtype('float')
+            ),
+            # Verify that array has 2 dimensions
+            functools.partial(
+                validators.numpy_dimensions_check,
+                ndim=2
+            ),
+            # Verify that files have the same dimensions
+            validators.numpy_col_comparison(1)
+        ]
+        results = validators.numpy_array_list_check(
+            item_list, f_list_checks=f_list_checks, additional_checks=additional_checks
+        )
+        # add item tag
+        add_item(tag, results)
+        return results
+
+    @validation_fn(target='english_1s')
+    def validate_english_1s(self, english_1s: FileListItem):
+        abx_item = self.dataset.index.subsets.english.items.abx_1s_item
+        return self.basic_abx_checks(item_list=english_1s, abx_item=abx_item,
+                                     tag='english_1s')
+
+    @validation_fn(target='english_10s')
+    def validate_english_10s(self, english_10s: FileListItem):
+        abx_item = self.dataset.index.subsets.english.items.abx_10s_item
+        return self.basic_abx_checks(item_list=english_10s, abx_item=abx_item,
+                                     tag='english_10s')
+
+    @validation_fn(target='english_120s')
+    def validate_english_120s(self, english_120s: FileListItem):
+        abx_item = self.dataset.index.subsets.english.items.abx_120s_item
+        return self.basic_abx_checks(item_list=english_120s, abx_item=abx_item,
+                                     tag='english_120s')
+
+    @validation_fn(target='french_1s')
+    def validate_french_1s(self, french_1s: FileListItem):
+        abx_item = self.dataset.index.subsets.french.items.abx_1s_item
+        return self.basic_abx_checks(item_list=french_1s, abx_item=abx_item,
+                                     tag='french_1s')
+
+    @validation_fn(target='french_10s')
+    def validate_french_10s(self, french_10s: FileListItem):
+        abx_item = self.dataset.index.subsets.french.items.abx_10s_item
+        return self.basic_abx_checks(item_list=french_10s, abx_item=abx_item,
+                                     tag='french_10s')
+
+    @validation_fn(target='french_120s')
+    def validate_french_120s(self, french_120s: FileListItem):
+        abx_item = self.dataset.index.subsets.french.items.abx_120s_item
+        return self.basic_abx_checks(item_list=french_120s, abx_item=abx_item,
+                                     tag='french_120s')
+
+    @validation_fn(target='mandarin_1s')
+    def validate_mandarin_1s(self, mandarin_1s: FileListItem):
+        abx_item = self.dataset.index.subsets.mandarin.items.abx_1s_item
+        return self.basic_abx_checks(item_list=mandarin_1s, abx_item=abx_item,
+                                     tag='mandarin_1s')
+
+    @validation_fn(target='mandarin_10s')
+    def validate_mandarin_10s(self, mandarin_10s: FileListItem):
+        abx_item = self.dataset.index.subsets.mandarin.items.abx_10s_item
+        return self.basic_abx_checks(item_list=mandarin_10s, abx_item=abx_item,
+                                     tag='mandarin_10s')
+
+    @validation_fn(target='mandarin_120s')
+    def validate_mandarin_120s(self, mandarin_120s: FileListItem):
+        abx_item = self.dataset.index.subsets.mandarin.items.abx_120s_item
+        return self.basic_abx_checks(item_list=mandarin_120s, abx_item=abx_item,
+                                     tag='mandarin_120s')
+
+    @validation_fn(target='german_1s')
+    def validate_german_1s(self, german_1s: FileListItem):
+        abx_item = self.dataset.index.subsets.german.items.abx_1s_item
+        return self.basic_abx_checks(item_list=german_1s, abx_item=abx_item,
+                                     tag='german_1s')
+
+    @validation_fn(target='german_10s')
+    def validate_german_10s(self, german_10s: FileListItem):
+        abx_item = self.dataset.index.subsets.german.items.abx_10s_item
+        return self.basic_abx_checks(item_list=german_10s, abx_item=abx_item,
+                                     tag='german_10s')
+
+    @validation_fn(target='german_120s')
+    def validate_german_120s(self, german_120s: FileListItem):
+        abx_item = self.dataset.index.subsets.german.items.abx_120s_item
+        return self.basic_abx_checks(item_list=german_120s, abx_item=abx_item,
+                                     tag='german_120s')
+
+    @validation_fn(target='wolof_1s')
+    def validate_wolof_1s(self, wolof_1s: FileListItem):
+        abx_item = self.dataset.index.subsets.wolof.items.abx_1s_item
+        return self.basic_abx_checks(item_list=wolof_1s, abx_item=abx_item,
+                                     tag='wolof_1s')
+
+    @validation_fn(target='wolof_10s')
+    def validate_wolof_10s(self, wolof_10s: FileListItem):
+        abx_item = self.dataset.index.subsets.wolof.items.abx_10s_item
+        return self.basic_abx_checks(item_list=wolof_10s, abx_item=abx_item,
+                                     tag='wolof_10s')
+
+    @validation_fn(target='wolof_120s')
+    def validate_wolof_120s(self, wolof_120s: FileListItem):
+        abx_item = self.dataset.index.subsets.wolof.items.abx_120s_item
+        return self.basic_abx_checks(item_list=wolof_120s, abx_item=abx_item,
+                                     tag='wolof_120s')
+
+
+class ABX17ScoreDir(ScoreDir):
+    params: Optional[ABXParameters] = ABXParameters()
+
+    @property
+    def scores(self):
+        csv_file = (self.location / self.params.result_filename).with_suffix('.csv')
+        return load_dataframe(csv_file)
+
+    def get_details(self) -> EntryDetails:
+        """ Build entry details """
+        train_set = ""
+        gpu_budget = ""
+
+        if self.meta_file is not None:
+            train_set = self.meta_file.model_info.train_set
+            gpu_budget = self.meta_file.model_info.gpu_budget
+
+        return EntryDetails(
+            train_set=train_set,
+            benchmarks=[LeaderboardBenchmarkName.ABX_17],
+            gpu_budget=gpu_budget,
+            parameters=self.params.to_meta()
+        )
+
+    def build_scores(self) -> ABX17LeaderboardScores:
+        """ extract scores from csv """
+        score_template = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+
+        for _, row in self.scores.iterrows():
+            score_template[row['language']][f"t_{row['duration']}"][row['type']] = row["score"]
+
+        return ABX17LeaderboardScores.parse_obj(score_template)
+
+    def build_meta_data(self):
+        """ Build leaderboard metadata """
+        return dict(
+            model_id=self.meta_file.model_info.model_id,
+            submission_id="",
+            index=None,
+            submission_date=datetime.now(),
+            submitted_by=self.meta_file.username,
+            description=self.meta_file.model_info.system_description,
+            publication=dict(
+                author_short=self.meta_file.publication.author_label,
+                authors=self.meta_file.publication.authors,
+                paper_title=self.meta_file.publication.paper_title,
+                paper_ref=self.meta_file.publication.paper_url,
+                bib_ref=self.meta_file.publication.bib_reference,
+                paper_url=self.meta_file.publication.paper_url,
+                pub_year=self.meta_file.publication.publication_year,
+                team_name=self.meta_file.publication.team,
+                institution=self.meta_file.publication.institution,
+                code=self.meta_file.code_url,
+                DOI=self.meta_file.publication.DOI,
+                open_science=self.meta_file.open_source,
+            ),
+            details=dict(
+                train_set=self.meta_file.model_info.train_set,
+                benchmarks=[],
+                gpu_budget=self.meta_file.model_info.gpu_budget,
+                parameters=self.params.to_meta(),
+            )
+        )
+
+    def build_leaderboard(self) -> LeaderboardEntry:
+        """ Build leaderboard entry for the current submission """
+        self.load_meta()
+
+        return ABX17LeaderboardEntry.parse_obj(
+            dict(
+                **self.build_meta_data(),
+                scores=self.build_scores()
+            )
+        )
 
 
 class ABX17Submission(Submission):
@@ -126,8 +342,15 @@ class ABX17Submission(Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        # TODO make a validator
-        pass
+        self.validation_output += ABX17SubmissionValidator().validate(self)
+
+    def get_scores(self):
+        """ Load score Dir"""
+        return ABX17ScoreDir(
+            submission_dir=self.location,
+            location=self.score_dir,
+            params=self.params
+        )
 
     def __zippable__(self):
         return [
