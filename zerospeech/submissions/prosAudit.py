@@ -259,7 +259,7 @@ class ProsodySubmission(Submission):
 
     def __validate_submission__(self):
         """ Validate that all files are present in submission """
-        self.validation_output = ProsodySubmissionValidation().validate(self)
+        self.validation_output += ProsodySubmissionValidation().validate(self)
 
     def get_scores(self) -> ProsAuditScoreDir:
         return ProsAuditScoreDir(

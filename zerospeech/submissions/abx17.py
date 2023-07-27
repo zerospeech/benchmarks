@@ -1,20 +1,25 @@
+import collections
 import functools
 import shutil
+from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import pandas as pd
 from pydantic import Field
 
 from zerospeech import validators
+from zerospeech.data_loaders import load_dataframe
 from zerospeech.datasets import ZRC2017Dataset
 from zerospeech.generics import (
     FileTypes, FileListItem, Namespace, Item, FileItem
 )
+from zerospeech.leaderboards import EntryDetails, LeaderboardBenchmarkName, LeaderboardEntry
+from zerospeech.leaderboards.abx17 import ABX17LeaderboardEntry, ABX17LeaderboardScores
 from zerospeech.misc import load_obj
 from zerospeech.tasks.abx.abx17 import ABXParameters
-from ._model import MetaFile, Submission, SubmissionValidation, validation_fn, add_item
+from ._model import MetaFile, Submission, SubmissionValidation, validation_fn, add_item, ScoreDir
 
 
 class ABX17SubmissionValidator(SubmissionValidation):
@@ -145,6 +150,82 @@ class ABX17SubmissionValidator(SubmissionValidation):
                                      tag='wolof_120s')
 
 
+class ABX17ScoreDir(ScoreDir):
+    params: Optional[ABXParameters] = ABXParameters()
+
+    @property
+    def scores(self):
+        csv_file = (self.location / self.params.result_filename).with_suffix('.csv')
+        return load_dataframe(csv_file)
+
+    def get_details(self) -> EntryDetails:
+        """ Build entry details """
+        train_set = ""
+        gpu_budget = ""
+
+        if self.meta_file is not None:
+            train_set = self.meta_file.model_info.train_set
+            gpu_budget = self.meta_file.model_info.gpu_budget
+
+        return EntryDetails(
+            train_set=train_set,
+            benchmarks=[LeaderboardBenchmarkName.ABX_17],
+            gpu_budget=gpu_budget,
+            parameters=self.params.to_meta()
+        )
+
+    def build_scores(self) -> ABX17LeaderboardScores:
+        """ extract scores from csv """
+        score_template = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+
+        for _, row in self.scores.iterrows():
+            score_template[row['language']][f"t_{row['duration']}"][row['type']] = row["score"]
+
+        return ABX17LeaderboardScores.parse_obj(score_template)
+
+    def build_meta_data(self):
+        """ Build leaderboard metadata """
+        return dict(
+            model_id=self.meta_file.model_info.model_id,
+            submission_id="",
+            index=None,
+            submission_date=datetime.now(),
+            submitted_by=self.meta_file.username,
+            description=self.meta_file.model_info.system_description,
+            publication=dict(
+                author_short=self.meta_file.publication.author_label,
+                authors=self.meta_file.publication.authors,
+                paper_title=self.meta_file.publication.paper_title,
+                paper_ref=self.meta_file.publication.paper_url,
+                bib_ref=self.meta_file.publication.bib_reference,
+                paper_url=self.meta_file.publication.paper_url,
+                pub_year=self.meta_file.publication.publication_year,
+                team_name=self.meta_file.publication.team,
+                institution=self.meta_file.publication.institution,
+                code=self.meta_file.code_url,
+                DOI=self.meta_file.publication.DOI,
+                open_science=self.meta_file.open_source,
+            ),
+            details=dict(
+                train_set=self.meta_file.model_info.train_set,
+                benchmarks=[],
+                gpu_budget=self.meta_file.model_info.gpu_budget,
+                parameters=self.params.to_meta(),
+            )
+        )
+
+    def build_leaderboard(self) -> LeaderboardEntry:
+        """ Build leaderboard entry for the current submission """
+        self.load_meta()
+
+        return ABX17LeaderboardEntry.parse_obj(
+            dict(
+                **self.build_meta_data(),
+                scores=self.build_scores()
+            )
+        )
+
+
 class ABX17Submission(Submission):
     """ Submission for ABX-17 """
     sets: Tuple = ('1s', '10s', '120s')
@@ -262,6 +343,14 @@ class ABX17Submission(Submission):
     def __validate_submission__(self):
         """ Run validation on the submission data """
         self.validation_output += ABX17SubmissionValidator().validate(self)
+
+    def get_scores(self):
+        """ Load score Dir"""
+        return ABX17ScoreDir(
+            submission_dir=self.location,
+            location=self.score_dir,
+            params=self.params
+        )
 
     def __zippable__(self):
         return [

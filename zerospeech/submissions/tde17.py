@@ -160,7 +160,7 @@ class TDE17Submission(Submission):
 
     def __validate_submission__(self):
         """ Run validation on the submission data """
-        self.validation_output = TDE17SubmissionValidation().validate(self)
+        self.validation_output += TDE17SubmissionValidation().validate(self)
 
     @classmethod
     def init_dir(cls, location: Path):

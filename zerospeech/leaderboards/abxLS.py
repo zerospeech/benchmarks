@@ -1,9 +1,9 @@
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, validator
 
-from ._types import LeaderboardBenchmarkName
 from ._models import LeaderboardScores, LeaderboardEntry, Leaderboard
+from ._types import LeaderboardBenchmarkName
 
 
 class ABXLSScoreSubType(BaseModel):
