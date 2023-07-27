@@ -43,13 +43,17 @@
 
 - [X] sLM21
 - [X] abxLS
-- [ ] abx17
-> TODO: add score dir and leaderboard generation
+- [X] abx17
 - [X] tde17
 - [ ] tts019
-> TODO: find the correct dataset
-> TODO: find the eval code, and figure out an implementation.
-
+  - [ ] TODO: eval implementation
+  - [ ] Add dataset
+  - [ ] Add random submission
+  - [ ] TODO: Benchmark & task integration
+  - [ ] TODO: Submission
+  - [ ] TODO: Submission Validation
+  - [ ] TODO: Leaderboard & ScoreDir
+   
 
 #### potential extensions & plugins
 
