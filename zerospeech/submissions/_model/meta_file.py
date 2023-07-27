@@ -11,8 +11,8 @@ from zerospeech.leaderboards import PublicationEntry
 from .validation_context import ValidationContext
 
 BenchmarkList = Literal[
-    "prosAudit", "sLM21", "abxLS", "abx17", "abx15", "tde17", "tde15",
-    "test-prosAudit", "test-sLM21", "test-abxLS", "test-abx17", "test-abx15", "test-tde17", "test-tde15",
+    "prosAudit", "sLM21", "abxLS", "abx17", "tde17",
+    "test-prosAudit", "test-sLM21", "test-abxLS", "test-abx17", "test-tde17",
 ]
 
 

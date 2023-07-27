@@ -47,10 +47,19 @@ def list_checker(given: List[str], expected: List[str]) -> return_type:
 def file_list_checker(
         item: FileListItem, expected: List[Path]
 ) -> return_type:
-    """ Check if a file list has expected files in it """
+    """ Check if a file list has expected files in it (ignoring file suffix) """
     file_names = [f.stem for f in item.files_list]
     expected_names = [f.stem for f in expected]
     return list_checker(given=file_names, expected=expected_names)
+
+
+def file_list_stem_check(
+        item: FileListItem, expected: List[str]
+) -> return_type:
+    """ Check if a file list has expected filenames in it (ignoring file suffix)"""
+    file_names = [f.stem for f in item.files_list]
+    return list_checker(given=file_names, expected=expected)
+
 
 
 def dataframe_column_check(df: pd.DataFrame, expected_columns: List[str]) -> return_type:

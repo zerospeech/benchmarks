@@ -12,7 +12,7 @@ from zerospeech.out import error_console, warning_console
 from zerospeech.tasks import BenchmarkParameters
 from .meta_file import MetaFile
 from .score_dir import ScoreDir
-from .validation_context import ValidationResponse, ValidationWarning
+from .validation_context import ValidationResponse, ValidationWarning, ValidationContext
 
 if TYPE_CHECKING:
     from zerospeech.datasets import Dataset
@@ -73,22 +73,24 @@ class SubmissionValidation(BaseModel, abc.ABC):
         fn = getattr(self, fn_name, {})
         return getattr(fn, '_validation_target')
 
-    def validate(self, submission: 'Submission') -> List[ValidationResponse]:
+    def validate(self, submission: 'Submission') -> ValidationContext:
+        """ Run validation --> A validation context """
+        vd_ctx = ValidationContext()
+
         validators_items = {
             f"{self._get_validation_target(a)}": getattr(self, a)
             for a in dir(self) if self._is_validation_fn(a)
         }
 
-        results = []
         for name, item in iter(submission.items):
             validator = validators_items.get(name, None)
             if validator is not None:
                 res = validator(item)
-                results.extend(res)
+                vd_ctx << res
             else:
-                results.append(ValidationWarning("no validation found", item_name=name))
+                vd_ctx << ValidationWarning("no validation found", item_name=name)
 
-        return results
+        return vd_ctx
 
 
 class Submission(BaseModel, abc.ABC):
@@ -98,7 +100,7 @@ class Submission(BaseModel, abc.ABC):
     meta_obj: Optional[MetaFile] = None
     __score_dir__: Optional[Path] = None
     __score_cls__: ClassVar[Type[ScoreDir]]
-    validation_output: List[ValidationResponse] = Field(default_factory=list)
+    validation_output: ValidationContext = ValidationContext()
 
     class Config:
         arbitrary_types_allowed = True
@@ -108,8 +110,7 @@ class Submission(BaseModel, abc.ABC):
         if len(self.validation_output) == 0:
             self.__validate_submission__()
 
-        bad_res = [rs for rs in self.validation_output if not rs.valid()]
-        return len(bad_res) == 0
+        return not self.validation_output.fails()
 
     @property
     def params_file(self):
