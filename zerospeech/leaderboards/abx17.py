@@ -1,6 +1,6 @@
-from typing import List, Literal, Optional
+from typing import List
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 from ._models import LeaderboardScores, LeaderboardEntry, Leaderboard
 from ._types import LeaderboardBenchmarkName
