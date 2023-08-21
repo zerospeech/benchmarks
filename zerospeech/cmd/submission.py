@@ -40,7 +40,7 @@ class SubmissionInit(CMD):
             sys.exit(1)
 
         # Load benchmark
-        benchmark = benchmark_type.benchmark(quiet=argv.quiet)
+        benchmark = benchmark_type.benchmark()
 
         location = Path(argv.location)
         if location.is_dir():
