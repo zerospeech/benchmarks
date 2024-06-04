@@ -118,7 +118,7 @@ class SimpleABXPhonemeTask(Task, abc.ABC):
         """ Simple Phoneme ABX evaluation """
         output_dir = submission.score_dir
         results = {}
-        abx_sets = self.extract_sets(submission, dataset)
+        abx_sets = self.extract_sets(submission, dataset, context=submission.params.context)
 
         if self.cuda:
             warning_console.print("WARNING: gpu mode is set. You can disable this in the parameters.")
