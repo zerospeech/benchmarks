@@ -31,9 +31,11 @@ repository = "https://github.com/zerospeech/benchmarks"
 
 [project.scripts]
 zrc = "zerospeech.startup:main"
+dt-info = "zerospeech.info_cmd:datasets_info"
 abxLS-csv = "zerospeech.leaderboards.exporters.abxLS:cmd"
 sLM21-csv = "zerospeech.leaderboards.exporters.sLM21:cmd"
 tde17-csv = "zerospeech.leaderboards.exporters.tde17:cmd"
+
 
 
 [project.entry-points.'vocolab_ext.leaderboards']
@@ -62,6 +64,11 @@ abxLS = [
 ]
 tde = [
     "zerospeech-tde>=2.0.3"
+]
+
+pyCurl = [
+    "pycurl",
+    "certifi"
 ]
 
 all = [

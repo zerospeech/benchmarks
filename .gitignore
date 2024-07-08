@@ -6,3 +6,4 @@ dataset_tests.ipynb
 *.egg-info/
 dist/
 build/
+test_dl.py

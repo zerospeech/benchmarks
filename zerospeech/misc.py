@@ -2,19 +2,32 @@ import _thread as thread
 import contextlib
 import io
 import json
+import os
 import re
+import shutil
+import subprocess
 import sys
 import tarfile
 import threading
 import urllib.parse
 from pathlib import Path
-from typing import Dict, List, Union, Optional, Protocol
+from typing import Dict, List, Union, Optional, Protocol, TYPE_CHECKING
 from zipfile import ZipFile
 
 import requests
 from Crypto.Hash import MD5  # noqa: the package name is not the same
 # from datasize import DataSize todo: find out why this was deleted ? maybe on unpushed thing on laptop?
 from pydantic import ByteSize, BaseModel
+
+if TYPE_CHECKING:
+    pass
+
+try:
+    import pycurl
+    import certifi
+except ImportError:
+    pycurl = None
+    certifi = None
 
 try:
     import yaml
@@ -187,13 +200,108 @@ def get_request_filename(response: requests.Response) -> str:
         return Path(urllib.parse.unquote(response.url)).name
 
 
+def _download_file_requests(url: str, target: Path, size_in_bytes: int, *, show_progress: bool = True):
+    """" Download a file from url using requests library """
+    response = requests.get(url, stream=True)
+
+    with with_progress(show=show_progress, file_transfer=True) as progress:
+        total = int(size_in_bytes)
+        task1 = progress.add_task(f"[red]Downloading {target.name}...", total=total)
+
+        with target.open("wb") as stream:
+            for chunk in response.iter_content(chunk_size=1024):
+                stream.write(chunk)
+                progress.update(task1, advance=1024)
+        progress.update(task1, completed=total, visible=False)
+
+
+def _download_file_pycurl(url: str, target: Path, size_in_bytes: int, *, show_progress: bool = True):
+    """ Download a file from url using pycurl library """
+    if None in (pycurl, certifi):
+        raise OSError('Using backend pycurl is not supported.')
+
+    with with_progress(show=show_progress, file_transfer=True) as progress:
+        total = int(size_in_bytes)
+        task1 = progress.add_task(f"[red]Downloading {target.name}...", total=total)
+        total_dl_d = [0]
+
+        def status(download_t, download_d: int, upload_t, upload_d, total=total_dl_d):
+            progress.update(task1, advance=download_d - total[0])
+            # update the total dl'd amount
+            total[0] = download_d
+
+        with target.open("wb") as buffer:
+            c = pycurl.Curl()
+            c.setopt(c.URL, url)
+            c.setopt(c.WRITEDATA, buffer)
+            c.setopt(c.CAINFO, certifi.where())
+            # follow redirects:
+            c.setopt(c.FOLLOWLOCATION, True)
+            # custom progress bar
+            c.setopt(c.NOPROGRESS, False)
+            c.setopt(c.XFERINFOFUNCTION, status)
+            c.perform()
+            c.close()
+    print()
+
+
+def _download_file_curl(url: str, target: Path, *, show_progress: bool = True):
+    """ Download a file from url using curl command """
+    if shutil.which('curl') is None:
+        raise OSError('curl download backend is not available.')
+
+    if show_progress:
+        cmd = f"{shutil.which('curl')} --retry 7 -o {target} {url}"
+    else:
+        cmd = f"{shutil.which('curl')} --retry 7 --silent -S -o {target} {url}"
+
+    # Run as subprocess command
+    subprocess.run(cmd, shell=True, check=True)
+
+
+def _download_file_wget(url: str, target: Path, *, show_progress: bool = True):
+    """ Download a file from url using curl command """
+    max_tries = os.environ.get("MAX_TRIES", 10)
+
+    if shutil.which('wget') is None:
+        raise OSError('wget download backend is not available.')
+
+    if show_progress:
+        cmd = f"{shutil.which('wget')} --tries={max_tries} -O {target} {url}"
+    else:
+        cmd = f"{shutil.which('wget')} --quiet --tries={max_tries} -O {target} {url}"
+
+    # Run as subprocess command
+    subprocess.run(cmd, shell=True, check=True)
+
+
+def download_file2(url: str, target: Path, size_in_bytes: int, *, show_progress: bool = True):
+    """ Download a file from url using the optimal library """
+    download_backend = os.environ.get("DL_BACKEND", "wget")  # lookup backend
+
+    try:
+
+        if download_backend == "pycurl":
+            _download_file_pycurl(url, target, size_in_bytes, show_progress=show_progress)
+        elif download_backend == "requests":
+            _download_file_requests(url, target, size_in_bytes, show_progress=show_progress)
+        elif download_backend == "curl":
+            _download_file_curl(url, target, show_progress=show_progress)
+        else:
+            _download_file_wget(url, target, show_progress=show_progress)
+    except OSError:
+        # Fallback on requests if others not found
+        _download_file_requests(url, target, size_in_bytes, show_progress=show_progress)
+
+
 def download_extract_archive(
         archive_url: str, target_location: Path, size_in_bytes: int, *, filename: str = "",
         md5sum_hash: str = "", quiet: bool = False, show_progress: bool = True,
 ):
     tmp_dir = st.mkdtemp()
-    response = requests.get(archive_url, stream=True)
-    tmp_filename = tmp_dir / get_request_filename(response)
+    tmp_filename = tmp_dir / Path(archive_url).name
+    if filename:
+        tmp_filename = tmp_dir / filename
 
     if quiet:
         _console = void_console
@@ -201,17 +309,8 @@ def download_extract_archive(
     else:
         _console = console
 
-    with with_progress(show=show_progress, file_transfer=True) as progress:
-        total = int(size_in_bytes)
-        task1 = progress.add_task(f"[red]Downloading {filename}...", total=total)
-
-        with tmp_filename.open("wb") as stream:
-            for chunk in response.iter_content(chunk_size=1024):
-                stream.write(chunk)
-                progress.update(task1, advance=1024)
-
-        progress.update(task1, completed=total, visible=False)
-        _console.print("[green]Download completed Successfully!")
+    download_file2(archive_url, tmp_filename, size_in_bytes, show_progress=show_progress)
+    _console.print("[green]Download completed Successfully!")
 
     if md5sum_hash != "":
         with _console.status("[red]Verifying md5sum from repository..."):
