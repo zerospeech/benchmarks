@@ -215,52 +215,47 @@ def _download_file_requests(url: str, target: Path, size_in_bytes: int, *, show_
         progress.update(task1, completed=total, visible=False)
 
 
-def _download_file_pycurl(url: str, target: Path, size_in_bytes: int, *, show_progress: bool = True):
-    """ Download a file from url using pycurl library """
+def _download_file_curl(url: str, target: Path, size_in_bytes: int, *, show_progress: bool = True):
+    """ Download a file from url using libcurl library (either as binding or as subprocess) """
     if None in (pycurl, certifi):
-        raise OSError('Using backend pycurl is not supported.')
+        if shutil.which('curl') is None:
+            raise OSError('curl download backend is not available.')
+        # Use subprocess
+        if show_progress:
+            cmd = f"{shutil.which('curl')} --retry 7 -o {target} {url}"
+        else:
+            cmd = f"{shutil.which('curl')} --retry 7 --silent -S -o {target} {url}"
 
-    with with_progress(show=show_progress, file_transfer=True) as progress:
-        total = int(size_in_bytes)
-        task1 = progress.add_task(f"[red]Downloading {target.name}...", total=total)
-        total_dl_d = [0]
-
-        def status(download_t, download_d: int, upload_t, upload_d, total=total_dl_d):
-            progress.update(task1, advance=download_d - total[0])
-            # update the total dl'd amount
-            total[0] = download_d
-
-        with target.open("wb") as buffer:
-            c = pycurl.Curl()
-            c.setopt(c.URL, url)
-            c.setopt(c.WRITEDATA, buffer)
-            c.setopt(c.CAINFO, certifi.where())
-            # follow redirects:
-            c.setopt(c.FOLLOWLOCATION, True)
-            # custom progress bar
-            c.setopt(c.NOPROGRESS, False)
-            c.setopt(c.XFERINFOFUNCTION, status)
-            c.perform()
-            c.close()
-    print()
-
-
-def _download_file_curl(url: str, target: Path, *, show_progress: bool = True):
-    """ Download a file from url using curl command """
-    if shutil.which('curl') is None:
-        raise OSError('curl download backend is not available.')
-
-    if show_progress:
-        cmd = f"{shutil.which('curl')} --retry 7 -o {target} {url}"
+        # Run as subprocess command
+        subprocess.run(cmd, shell=True, check=True)
     else:
-        cmd = f"{shutil.which('curl')} --retry 7 --silent -S -o {target} {url}"
+        with with_progress(show=show_progress, file_transfer=True) as progress:
+            total = int(size_in_bytes)
+            task1 = progress.add_task(f"[red]Downloading {target.name}...", total=total)
+            total_dl_d = [0]
 
-    # Run as subprocess command
-    subprocess.run(cmd, shell=True, check=True)
+            def status(download_t, download_d: int, upload_t, upload_d, total=total_dl_d):
+                progress.update(task1, advance=download_d - total[0])
+                # update the total dl'd amount
+                total[0] = download_d
+
+            with target.open("wb") as buffer:
+                c = pycurl.Curl()
+                c.setopt(c.URL, url)
+                c.setopt(c.WRITEDATA, buffer)
+                c.setopt(c.CAINFO, certifi.where())
+                # follow redirects:
+                c.setopt(c.FOLLOWLOCATION, True)
+                # custom progress bar
+                c.setopt(c.NOPROGRESS, False)
+                c.setopt(c.XFERINFOFUNCTION, status)
+                c.perform()
+                c.close()
+        print()
 
 
 def _download_file_wget(url: str, target: Path, *, show_progress: bool = True):
-    """ Download a file from url using curl command """
+    """ Download a file from url using wget """
     max_tries = os.environ.get("MAX_TRIES", 10)
 
     if shutil.which('wget') is None:
@@ -280,13 +275,10 @@ def download_file2(url: str, target: Path, size_in_bytes: int, *, show_progress:
     download_backend = os.environ.get("DL_BACKEND", "wget")  # lookup backend
 
     try:
-
-        if download_backend == "pycurl":
-            _download_file_pycurl(url, target, size_in_bytes, show_progress=show_progress)
+        if download_backend == "curl":
+            _download_file_curl(url, target, size_in_bytes, show_progress=show_progress)
         elif download_backend == "requests":
             _download_file_requests(url, target, size_in_bytes, show_progress=show_progress)
-        elif download_backend == "curl":
-            _download_file_curl(url, target, show_progress=show_progress)
         else:
             _download_file_wget(url, target, show_progress=show_progress)
     except OSError:
